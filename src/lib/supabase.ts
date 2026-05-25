@@ -306,11 +306,10 @@ export async function submitListing(formData: {
 }) {
   // Start a transaction by using RPC or multiple inserts
   
-  // 1. Create the business
+  // 1. Create the business (without owner_profile_id for public submissions)
   const { data: business, error: businessError } = await supabase
     .from('businesses')
     .insert({
-      owner_user_id: formData.user_id || null,
       business_name: formData.business_name,
       slug: formData.slug,
       description_short: formData.description_short,
