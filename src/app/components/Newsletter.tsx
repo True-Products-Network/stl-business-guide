@@ -1,29 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { Mail, Send, CheckCircle, Gift, Star, Zap } from "lucide-react";
+import { Mail, Gift, Star, Zap } from "lucide-react";
+
+const benefits = [
+  { icon: Gift, text: "Exclusive deals & coupons" },
+  { icon: Star, text: "New business announcements" },
+  { icon: Zap, text: "Local event updates" },
+];
 
 export default function Newsletter() {
-  const [email, setEmail] = useState("");
-  const [isSubmitted, setIsSubmitted] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      setIsSubmitted(true);
-      setTimeout(() => {
-        setIsSubmitted(false);
-        setEmail("");
-      }, 3000);
-    }
-  };
-
-  const benefits = [
-    { icon: Gift, text: "Exclusive deals & coupons" },
-    { icon: Star, text: "New business announcements" },
-    { icon: Zap, text: "Local event updates" },
-  ];
-
   return (
     <section className="section-padding bg-gradient-to-br from-[#371a5b] via-[#54afe6] to-[#bb7ce4] relative overflow-hidden">
       {/* Background Decorations */}
@@ -64,7 +49,7 @@ export default function Newsletter() {
             </div>
           </div>
 
-          {/* Right Content - Form */}
+          {/* Right Content - GHL Newsletter Form */}
           <div className="bg-white rounded-3xl p-8 shadow-2xl">
             <h3 className="text-2xl font-bold text-[#371a5b] mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
               Subscribe to Our Newsletter
@@ -73,53 +58,31 @@ export default function Newsletter() {
               Join our community and never miss out on local deals!
             </p>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#54afe6] focus:border-transparent transition-all"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-start">
-                <input
-                  type="checkbox"
-                  id="consent"
-                  className="mt-1 w-4 h-4 text-[#54afe6] rounded border-gray-300 focus:ring-[#54afe6]"
-                  required
-                />
-                <label htmlFor="consent" className="ml-3 text-sm text-gray-600">
-                  I agree to receive marketing emails and accept the{" "}
-                  <a href="/privacy" className="text-[#54afe6] hover:underline">Privacy Policy</a>
-                  .
-                </label>
-              </div>
-
-              <a
-                href="/contact"
-                className="w-full btn-primary py-4 rounded-xl text-white font-semibold flex items-center justify-center space-x-2"
-              >
-                <span>Subscribe Now</span>
-                <Send className="w-5 h-5" />
-              </a>
+            <div className="w-full" style={{ height: '934px' }}>
+              <iframe
+                src="https://link.leadprospectrr.com/widget/form/5e01wgF05YFBhAevtaLC"
+                style={{ width: '100%', height: '100%', border: 'none', borderRadius: '25px' }}
+                id="inline-5e01wgF05YFBhAevtaLC"
+                data-layout="{'id':'INLINE'}"
+                data-trigger-type="alwaysShow"
+                data-trigger-value=""
+                data-activation-type="alwaysActivated"
+                data-activation-value=""
+                data-deactivation-type="neverDeactivate"
+                data-deactivation-value=""
+                data-form-name="Subscribe to Our Newsletter"
+                data-height="934"
+                data-layout-iframe-id="inline-5e01wgF05YFBhAevtaLC"
+                data-form-id="5e01wgF05YFBhAevtaLC"
+                title="Subscribe to Our Newsletter"
+              />
             </div>
-
-            <p className="text-center text-sm text-gray-500 mt-4">
-              No spam, unsubscribe anytime. We respect your privacy.
-            </p>
           </div>
         </div>
       </div>
+
+      {/* GHL Form Embed Script */}
+      <script src="https://link.leadprospectrr.com/js/form_embed.js" async />
     </section>
   );
 }
