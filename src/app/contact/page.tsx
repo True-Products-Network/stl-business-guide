@@ -69,7 +69,7 @@ export default function ContactPage() {
           </div>
 
           {/* GHL Contact Form */}
-          <div className="bg-white rounded-2xl shadow-lg p-8">
+          <div>
             <div className="w-full" style={{ height: '634px' }}>
               <iframe
                 src="https://link.leadprospectrr.com/widget/form/TCFXwIdc88eaKtFPjO5p"
