@@ -4,9 +4,9 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { getListingPlans, getCategories, submitListing, signUp, signIn } from '@/lib/supabase';
+import { getListingPlans, getCategories, getLocations, submitListing, signUp, signIn } from '@/lib/supabase';
 import { handleFreePlanSignupForGHL } from '@/lib/ghl';
-import type { ListingPlan, Category } from '@/lib/supabase';
+import type { ListingPlan, Category, Location } from '@/lib/supabase';
 
 function SubmitListingForm() {
   const searchParams = useSearchParams();
@@ -15,6 +15,7 @@ function SubmitListingForm() {
   const [step, setStep] = useState(1);
   const [plans, setPlans] = useState<ListingPlan[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(planParam);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +42,7 @@ function SubmitListingForm() {
     state: 'MO',
     zip_code: '',
     service_area: '',
+    location_id: '',
     // Categories
     category_ids: [] as string[]
   });
@@ -50,12 +52,14 @@ function SubmitListingForm() {
   }, []);
 
   async function loadData() {
-    const [plansData, categoriesData] = await Promise.all([
+    const [plansData, categoriesData, locationsData] = await Promise.all([
       getListingPlans(),
-      getCategories()
+      getCategories(),
+      getLocations()
     ]);
     setPlans(plansData);
     setCategories(categoriesData);
+    setLocations(locationsData);
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -71,6 +75,9 @@ function SubmitListingForm() {
         : [...prev.category_ids, categoryId]
     }));
   };
+
+  // Get selected plan details
+  const selectedPlanObj = plans.find(p => p.id === selectedPlan);
 
   const generateSlug = (name: string) => {
     return name
@@ -436,29 +443,79 @@ function SubmitListingForm() {
                 />
               </div>
 
+              {/* Location */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Service Area / Location *</label>
+                <select
+                  name="location_id"
+                  value={formData.location_id}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select your service area</option>
+                  {locations.map((location) => (
+                    <option key={location.id} value={location.id}>
+                      {location.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Categories */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Categories *</label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Categories * 
+                  <span className="text-xs text-gray-500 ml-2">
+                    ({selectedPlanObj?.plan_name === 'Free' ? 'Select 1' : selectedPlanObj?.plan_name === 'Premium' ? 'Select up to 3' : 'Select unlimited'})
+                  </span>
+                </label>
+                <select
+                  name="category_ids"
+                  value={formData.category_ids[0] || ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value) {
+                      const maxCategories = selectedPlanObj?.plan_name === 'Free' ? 1 : selectedPlanObj?.plan_name === 'Premium' ? 3 : 999;
+                      setFormData(prev => ({
+                        ...prev,
+                        category_ids: prev.category_ids.length < maxCategories 
+                          ? [...prev.category_ids, value]
+                          : [value] // Replace if at max
+                      }));
+                    }
+                  }}
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-2"
+                >
+                  <option value="">Select a category</option>
                   {categories.map((category) => (
-                    <label
-                      key={category.id}
-                      className={`flex items-center p-3 border rounded-lg cursor-pointer transition ${
-                        formData.category_ids.includes(category.id)
-                          ? 'border-blue-600 bg-blue-50'
-                          : 'border-gray-200 hover:border-blue-300'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={formData.category_ids.includes(category.id)}
-                        onChange={() => handleCategoryChange(category.id)}
-                        className="sr-only"
-                      />
-                      <span className="text-sm">{category.name}</span>
-                    </label>
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
                   ))}
-                </div>
+                </select>
+                
+                {/* Show selected categories */}
+                {formData.category_ids.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {formData.category_ids.map((catId) => {
+                      const cat = categories.find(c => c.id === catId);
+                      return cat ? (
+                        <span key={catId} className="inline-flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                          {cat.name}
+                          <button
+                            type="button"
+                            onClick={() => handleCategoryChange(catId)}
+                            className="ml-2 text-blue-600 hover:text-blue-800"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ) : null;
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Description */}

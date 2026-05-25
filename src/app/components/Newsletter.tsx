@@ -17,6 +17,19 @@ export default function Newsletter() {
       <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-[#ffc107]/10 rounded-full blur-xl"></div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Section Header */}
+        <div className="text-center mb-24 pt-16">
+          <span className="inline-block px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-4 border border-white/20 text-white/90 text-sm font-medium">
+            Stay Updated
+          </span>
+          <h2 className="text-4xl font-bold text-white mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            Newsletter
+          </h2>
+          <p className="text-white/80 max-w-2xl mx-auto">
+            Get the latest local business news and exclusive deals delivered to your inbox
+          </p>
+        </div>
+
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
           <div className="text-white self-start">

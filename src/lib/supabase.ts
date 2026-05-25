@@ -28,6 +28,17 @@ export interface Category {
   is_active: boolean;
 }
 
+export interface Location {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ListingPlan {
   id: string;
   plan_name: 'Free' | 'Premium' | 'VIP';
@@ -239,6 +250,122 @@ export async function getCategories() {
   }
 
   return data as Category[];
+}
+
+// ============================================
+// LOCATIONS FUNCTIONS
+// ============================================
+
+// Get all active locations
+export async function getLocations() {
+  const { data, error } = await supabase
+    .from('locations')
+    .select('*')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching locations:', error);
+    return [];
+  }
+
+  return data as Location[];
+}
+
+// Admin: Create new location
+export async function createLocation(locationData: Partial<Location>) {
+  const { data, error } = await supabase
+    .from('locations')
+    .insert(locationData)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating location:', error);
+    return { success: false, error };
+  }
+
+  return { success: true, data };
+}
+
+// Admin: Update location
+export async function updateLocation(id: string, locationData: Partial<Location>) {
+  const { data, error } = await supabase
+    .from('locations')
+    .update(locationData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating location:', error);
+    return { success: false, error };
+  }
+
+  return { success: true, data };
+}
+
+// Admin: Delete location (soft delete)
+export async function deleteLocation(id: string) {
+  const { error } = await supabase
+    .from('locations')
+    .update({ is_active: false })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting location:', error);
+    return { success: false, error };
+  }
+
+  return { success: true };
+}
+
+// Admin: Create new category
+export async function createCategory(categoryData: Partial<Category>) {
+  const { data, error } = await supabase
+    .from('categories')
+    .insert(categoryData)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating category:', error);
+    return { success: false, error };
+  }
+
+  return { success: true, data };
+}
+
+// Admin: Update category
+export async function updateCategory(id: string, categoryData: Partial<Category>) {
+  const { data, error } = await supabase
+    .from('categories')
+    .update(categoryData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating category:', error);
+    return { success: false, error };
+  }
+
+  return { success: true, data };
+}
+
+// Admin: Delete category (soft delete)
+export async function deleteCategory(id: string) {
+  const { error } = await supabase
+    .from('categories')
+    .update({ is_active: false })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting category:', error);
+    return { success: false, error };
+  }
+
+  return { success: true };
 }
 
 // Get all cities
