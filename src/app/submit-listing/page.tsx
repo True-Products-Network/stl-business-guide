@@ -194,10 +194,14 @@ function SubmitListingForm() {
     <main className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-12">
-        <div className="max-w-4xl mx-auto px-4">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Submit Your Business Listing</h1>
-          <p className="text-blue-100">Join the St. Louis area's premier business directory</p>
+      <div className="bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white pt-32 pb-20">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            List Your Business
+          </h1>
+          <p className="text-xl text-white/80 max-w-2xl mx-auto">
+            Join the St. Louis area's premier business directory and get discovered by thousands of local customers
+          </p>
         </div>
       </div>
 
