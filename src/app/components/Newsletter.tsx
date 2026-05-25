@@ -73,56 +73,46 @@ export default function Newsletter() {
               Join our community and never miss out on local deals!
             </p>
 
-            {isSubmitted ? (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#86c540]/20 flex items-center justify-center">
-                  <CheckCircle className="w-8 h-8 text-[#86c540]" />
-                </div>
-                <h4 className="text-xl font-bold text-[#371a5b] mb-2">You're Subscribed!</h4>
-                <p className="text-gray-600">Check your inbox for a welcome email.</p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Enter your email"
-                      className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#54afe6] focus:border-transparent transition-all"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-start">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
-                    type="checkbox"
-                    id="consent"
-                    className="mt-1 w-4 h-4 text-[#54afe6] rounded border-gray-300 focus:ring-[#54afe6]"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#54afe6] focus:border-transparent transition-all"
                     required
                   />
-                  <label htmlFor="consent" className="ml-3 text-sm text-gray-600">
-                    I agree to receive marketing emails and accept the{" "}
-                    <a href="#" className="text-[#54afe6] hover:underline">Privacy Policy</a>
-                    .
-                  </label>
                 </div>
+              </div>
 
-                <button
-                  type="submit"
-                  className="w-full btn-primary py-4 rounded-xl text-white font-semibold flex items-center justify-center space-x-2"
-                >
-                  <span>Subscribe Now</span>
-                  <Send className="w-5 h-5" />
-                </button>
-              </form>
-            )}
+              <div className="flex items-start">
+                <input
+                  type="checkbox"
+                  id="consent"
+                  className="mt-1 w-4 h-4 text-[#54afe6] rounded border-gray-300 focus:ring-[#54afe6]"
+                  required
+                />
+                <label htmlFor="consent" className="ml-3 text-sm text-gray-600">
+                  I agree to receive marketing emails and accept the{" "}
+                  <a href="/privacy" className="text-[#54afe6] hover:underline">Privacy Policy</a>
+                  .
+                </label>
+              </div>
+
+              <a
+                href="/contact"
+                className="w-full btn-primary py-4 rounded-xl text-white font-semibold flex items-center justify-center space-x-2"
+              >
+                <span>Subscribe Now</span>
+                <Send className="w-5 h-5" />
+              </a>
+            </div>
 
             <p className="text-center text-sm text-gray-500 mt-4">
               No spam, unsubscribe anytime. We respect your privacy.

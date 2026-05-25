@@ -5,27 +5,27 @@ import { Mail, Phone, MapPin } from "lucide-react";
 
 const footerLinks = {
   business: [
-    { name: "Browse Businesses", href: "#businesses" },
-    { name: "Add Your Business", href: "#pricing" },
-    { name: "Pricing Plans", href: "#pricing" },
-    { name: "Success Stories", href: "#" },
+    { name: "Browse Businesses", href: "/listings" },
+    { name: "Add Your Business", href: "/submit-listing?plan=free" },
+    { name: "Pricing Plans", href: "/pricing" },
+    { name: "Success Stories", href: "/testimonials" },
   ],
   resources: [
-    { name: "Marketing Tips", href: "#" },
-    { name: "SEO Guide", href: "#" },
-    { name: "Business Blog", href: "#" },
-    { name: "Help Center", href: "#" },
+    { name: "Marketing Tips", href: "/blog/marketing-tips" },
+    { name: "SEO Guide", href: "/blog/seo-guide" },
+    { name: "Business Blog", href: "/blog" },
+    { name: "Help Center", href: "/help" },
   ],
   company: [
-    { name: "About Us", href: "#about" },
-    { name: "Contact", href: "#contact" },
-    { name: "Careers", href: "#" },
-    { name: "Press Kit", href: "#" },
+    { name: "About Us", href: "/about" },
+    { name: "Contact", href: "/contact" },
+    { name: "Careers", href: "/careers" },
+    { name: "Press Kit", href: "/press" },
   ],
   legal: [
-    { name: "Privacy Policy", href: "#" },
-    { name: "Terms of Service", href: "#" },
-    { name: "Cookie Policy", href: "#" },
+    { name: "Privacy Policy", href: "/privacy" },
+    { name: "Terms of Service", href: "/terms" },
+    { name: "Cookie Policy", href: "/cookies" },
   ],
 };
 

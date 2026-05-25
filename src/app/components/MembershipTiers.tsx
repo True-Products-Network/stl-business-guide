@@ -155,7 +155,7 @@ export default function MembershipTiers() {
 
                 {/* CTA */}
                 <Link
-                  href={`/signup?plan=${tier.name.toLowerCase().replace(' ', '-')}`}
+                  href={tier.name === 'Free Listing' ? '/submit-listing?plan=free' : '/pricing'}
                   className={`flex items-center justify-center w-full py-4 rounded-xl font-semibold transition-all duration-300 ${
                     tier.popular
                       ? 'btn-primary text-white'
@@ -179,7 +179,7 @@ export default function MembershipTiers() {
           </p>
           <p className="text-sm text-gray-500">
             Need a custom plan?{" "}
-            <Link href="#contact" className="text-[#54afe6] hover:underline font-medium">
+            <Link href="/contact" className="text-[#54afe6] hover:underline font-medium">
               Contact us
             </Link>{" "}
             for enterprise solutions.

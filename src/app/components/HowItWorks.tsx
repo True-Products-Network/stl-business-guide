@@ -89,7 +89,7 @@ export default function HowItWorks() {
               </p>
             </div>
             <a
-              href="#pricing"
+              href="/submit-listing?plan=free"
               className="btn-gold px-8 py-4 rounded-xl text-[#371a5b] font-bold whitespace-nowrap"
             >
               List Your Business
