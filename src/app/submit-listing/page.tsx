@@ -165,6 +165,19 @@ function SubmitListingForm() {
     return (
       <main className="min-h-screen bg-gray-50">
         <Navbar />
+        
+        {/* Hero Section */}
+        <div className="bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white pt-32 pb-20">
+          <div className="max-w-4xl mx-auto px-4 text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              Submission Received!
+            </h1>
+            <p className="text-xl text-white/80 max-w-2xl mx-auto">
+              Thank you for listing your business with STL Business Guide
+            </p>
+          </div>
+        </div>
+
         <div className="max-w-2xl mx-auto px-4 py-16">
           <div className="bg-white rounded-xl shadow-lg p-8 text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -172,17 +185,27 @@ function SubmitListingForm() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">Submission Received!</h1>
+            <h2 className="text-2xl font-bold text-[#371a5b] mb-2">Thank You!</h2>
             <p className="text-gray-600 mb-6">
-              Thank you for submitting your business listing. Our team will review it within 24-48 hours.
+              Your business listing has been submitted successfully. Our team will review it within 24-48 hours.
               You will receive an email notification once your listing is approved.
             </p>
-            <a
-              href="/"
-              className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-            >
-              Return to Home
-            </a>
+            <div className="space-y-3">
+              <a
+                href="/"
+                className="inline-block bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
+              >
+                Return to Home
+              </a>
+              <div>
+                <a
+                  href="/dashboard"
+                  className="inline-block text-[#54afe6] hover:text-[#371a5b] font-medium mt-2"
+                >
+                  Go to Dashboard →
+                </a>
+              </div>
+            </div>
           </div>
         </div>
         <Footer />
