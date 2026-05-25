@@ -1,6 +1,9 @@
+'use client';
+
+import { useState } from 'react';
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { Check, Crown, Star, Zap } from "lucide-react";
+import { Check, Crown, Star, Zap, Loader2 } from "lucide-react";
 import Link from "next/link";
 
 const plans = [
@@ -68,6 +71,36 @@ const plans = [
 ];
 
 export default function PricingPage() {
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const handleCheckout = async (plan: string) => {
+    setLoading(plan);
+    try {
+      const response = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          plan,
+          businessId: 'temp-business-id', // You'll replace this with actual business ID
+          businessName: 'Business Listing',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.url) {
+        window.location.href = data.url;
+      } else {
+        alert('Failed to start checkout. Please try again.');
+        setLoading(null);
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      alert('Failed to start checkout. Please try again.');
+      setLoading(null);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gray-50">
       <Navbar />
@@ -163,18 +196,35 @@ export default function PricingPage() {
                   </ul>
 
                   {/* CTA */}
-                  <Link
-                    href={plan.href}
-                    className={`block w-full text-center py-3 rounded-xl font-semibold mt-6 transition ${
-                      plan.popular
-                        ? 'bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white hover:opacity-90'
-                        : plan.color === 'gold'
-                        ? 'bg-gradient-to-r from-[#ffc107] to-[#f68712] text-white hover:opacity-90'
-                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                    }`}
-                  >
-                    {plan.cta}
-                  </Link>
+                  {plan.name === 'Free' ? (
+                    <Link
+                      href={plan.href}
+                      className="block w-full text-center py-3 rounded-xl font-semibold mt-6 bg-gray-100 text-gray-900 hover:bg-gray-200 transition"
+                    >
+                      {plan.cta}
+                    </Link>
+                  ) : (
+                    <button
+                      onClick={() => handleCheckout(plan.name.toLowerCase())}
+                      disabled={loading === plan.name.toLowerCase()}
+                      className={`block w-full text-center py-3 rounded-xl font-semibold mt-6 transition ${
+                        plan.popular
+                          ? 'bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white hover:opacity-90'
+                          : plan.color === 'gold'
+                          ? 'bg-gradient-to-r from-[#ffc107] to-[#f68712] text-white hover:opacity-90'
+                          : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    >
+                      {loading === plan.name.toLowerCase() ? (
+                        <span className="flex items-center justify-center">
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Loading...
+                        </span>
+                      ) : (
+                        plan.cta
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             );
