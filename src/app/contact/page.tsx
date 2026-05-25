@@ -1,6 +1,6 @@
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { Mail, Phone, MapPin, Send } from "lucide-react";
+import { Mail, Phone, MapPin } from "lucide-react";
 
 export default function ContactPage() {
   return (
@@ -28,7 +28,7 @@ export default function ContactPage() {
               Get in Touch
             </h2>
             <p className="text-gray-600 mb-8">
-              Whether you&apos;re a business owner interested in listing your business, 
+              Whether you&apos;re a business owner interested in listing your business,
               or a customer with feedback, we&apos;re here to help.
             </p>
 
@@ -68,69 +68,34 @@ export default function ContactPage() {
             </div>
           </div>
 
-          {/* Contact Form */}
+          {/* GHL Contact Form */}
           <div className="bg-white rounded-2xl shadow-lg p-8">
             <h3 className="text-xl font-bold text-[#371a5b] mb-6">Send us a Message</h3>
-            <form className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-[#54afe6]"
-                    placeholder="John"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-[#54afe6]"
-                    placeholder="Smith"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input
-                  type="email"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-[#54afe6]"
-                  placeholder="you@example.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-[#54afe6]">
-                  <option>General Inquiry</option>
-                  <option>Business Listing Question</option>
-                  <option>Technical Support</option>
-                  <option>Partnership Opportunity</option>
-                  <option>Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
-                <textarea
-                  rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-[#54afe6]"
-                  placeholder="How can we help you?"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white py-3 rounded-lg font-semibold hover:opacity-90 transition flex items-center justify-center"
-              >
-                <Send className="w-4 h-4 mr-2" />
-                Send Message
-              </button>
-            </form>
+            <div className="w-full" style={{ height: '634px' }}>
+              <iframe
+                src="https://link.leadprospectrr.com/widget/form/TCFXwIdc88eaKtFPjO5p"
+                style={{ width: '100%', height: '100%', border: 'none', borderRadius: '8px' }}
+                id="inline-TCFXwIdc88eaKtFPjO5p"
+                data-layout="{'id':'INLINE'}"
+                data-trigger-type="alwaysShow"
+                data-trigger-value=""
+                data-activation-type="alwaysActivated"
+                data-activation-value=""
+                data-deactivation-type="neverDeactivate"
+                data-deactivation-value=""
+                data-form-name="ACT | Business Listing | Contact Form"
+                data-height="634"
+                data-layout-iframe-id="inline-TCFXwIdc88eaKtFPjO5p"
+                data-form-id="TCFXwIdc88eaKtFPjO5p"
+                title="ACT | Business Listing | Contact Form"
+              />
+            </div>
           </div>
         </div>
       </div>
+
+      {/* GHL Form Embed Script */}
+      <script src="https://link.leadprospectrr.com/js/form_embed.js" async />
 
       <Footer />
     </main>
