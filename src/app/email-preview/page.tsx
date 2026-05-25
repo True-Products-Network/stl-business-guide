@@ -217,7 +217,7 @@ const smsMessages = [
   {
     id: 'sms3',
     name: 'SMS Final (Day 15)',
-    content: '[First Name], last message from me. Your free listing is active. When you're ready to get more visibility, here's the link: [SHORT LINK] -Nigel',
+    content: "[First Name], last message from me. Your free listing is active. When you're ready to get more visibility, here's the link: [SHORT LINK] -Nigel",
   },
 ];
 
