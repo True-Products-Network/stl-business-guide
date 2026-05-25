@@ -75,9 +75,11 @@ function SearchResults() {
       } else {
         // Filter by category client-side
         let results = data || [];
-        if (categoryParam) {
+        if (categoryParam && categoryParam !== '') {
           results = results.filter((b: PublicListing) => 
-            b.categories?.some((c: { name: string }) => c.name === categoryParam)
+            b.categories?.some((c: { name: string; slug: string }) => 
+              c.name === categoryParam || c.slug === categoryParam
+            )
           );
         }
         setBusinesses(results);
@@ -94,6 +96,12 @@ function SearchResults() {
     if (searchQuery) params.set('q', searchQuery);
     if (selectedCategory) params.set('category', selectedCategory);
     window.location.href = `/search?${params.toString()}`;
+  }
+
+  function clearFilters() {
+    setSearchQuery('');
+    setSelectedCategory('');
+    window.location.href = '/search';
   }
 
   function getPlanBadge(planKey?: string | null) {
@@ -137,7 +145,7 @@ function SearchResults() {
             >
               <option value="">All Categories</option>
               {categories.map((cat) => (
-                <option key={cat.id} value={cat.name}>{cat.name}</option>
+                <option key={cat.id} value={cat.slug}>{cat.name}</option>
               ))}
             </select>
             <button
@@ -158,12 +166,20 @@ function SearchResults() {
           </div>
         ) : (
           <>
-            <div className="mb-6">
+            <div className="mb-6 flex items-center justify-between">
               <p className="text-gray-600">
                 Found <span className="font-semibold">{businesses.length}</span> business{businesses.length !== 1 ? 'es' : ''}
                 {query && ` matching "${query}"`}
-                {categoryParam && ` in ${categoryParam}`}
+                {categoryParam && ` in ${categories.find(c => c.slug === categoryParam)?.name || categoryParam}`}
               </p>
+              {(query || categoryParam) && (
+                <button
+                  onClick={clearFilters}
+                  className="text-[#54afe6] hover:text-[#371a5b] font-medium text-sm underline"
+                >
+                  Clear Filters
+                </button>
+              )}
             </div>
 
             {businesses.length === 0 ? (
