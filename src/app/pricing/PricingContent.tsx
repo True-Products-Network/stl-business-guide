@@ -84,6 +84,7 @@ export default function PricingContent() {
   }, [searchParams]);
 
   const handleCheckout = async (planKey: string, planName: string) => {
+    console.log('Starting checkout for:', planKey, planName);
     setLoading(planKey);
     try {
       const response = await fetch('/api/stripe/create-checkout', {
@@ -98,11 +99,12 @@ export default function PricingContent() {
       });
 
       const data = await response.json();
+      console.log('Checkout response:', data);
 
       if (data.success && data.url) {
         window.location.href = data.url;
       } else {
-        alert('Failed to start checkout. Please try again.');
+        alert(`Failed to start checkout: ${data.error || 'Unknown error'}`);
         setLoading(null);
       }
     } catch (error) {

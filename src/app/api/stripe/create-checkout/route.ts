@@ -13,11 +13,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const priceId = plan === 'premium' ? STRIPE_PRICE_IDS.premium : STRIPE_PRICE_IDS.vip;
+    let priceId: string;
+    if (plan === 'premium') {
+      priceId = STRIPE_PRICE_IDS.premium;
+    } else if (plan === 'vip') {
+      priceId = STRIPE_PRICE_IDS.vip;
+    } else {
+      return NextResponse.json(
+        { error: `Invalid plan: ${plan}` },
+        { status: 400 }
+      );
+    }
 
     if (!priceId) {
       return NextResponse.json(
-        { error: 'Invalid plan or price not configured' },
+        { error: `Price not configured for plan: ${plan}` },
         { status: 400 }
       );
     }
