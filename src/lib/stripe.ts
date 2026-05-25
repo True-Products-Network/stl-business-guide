@@ -1,9 +1,21 @@
 import Stripe from 'stripe';
 
 // Initialize Stripe with the secret key from environment variables
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2026-04-22.dahlia', // Latest API version
-});
+// This is lazy-loaded to avoid errors during build time
+let stripeInstance: Stripe | null = null;
+
+export function getStripe(): Stripe {
+  if (!stripeInstance) {
+    const secretKey = process.env.STRIPE_SECRET_KEY;
+    if (!secretKey) {
+      throw new Error('STRIPE_SECRET_KEY is not set');
+    }
+    stripeInstance = new Stripe(secretKey, {
+      apiVersion: '2026-04-22.dahlia',
+    });
+  }
+  return stripeInstance;
+}
 
 // Price IDs for your products - you'll create these in Stripe Dashboard
 export const STRIPE_PRICE_IDS = {
@@ -25,6 +37,7 @@ export async function createCheckoutSession(
   customerEmail?: string
 ) {
   try {
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -53,6 +66,8 @@ export async function createCheckoutSession(
 // Create Stripe products for Premium and VIP
 export async function createProducts() {
   try {
+    const stripe = getStripe();
+    
     // Create Premium Product
     const premiumProduct = await stripe.products.create({
       name: 'Premium Business Listing',
@@ -103,6 +118,7 @@ export async function createProducts() {
 // Verify webhook signature
 export function verifyWebhookSignature(payload: string, signature: string) {
   try {
+    const stripe = getStripe();
     const event = stripe.webhooks.constructEvent(
       payload,
       signature,
