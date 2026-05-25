@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import { supabase } from "../../../lib/supabase";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, Mail } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,11 +14,14 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [resendingEmail, setResendingEmail] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setResendSuccess(false);
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -26,7 +29,12 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setError(error.message);
+      // Check if the error is about email not confirmed
+      if (error.message.includes("Email not confirmed") || error.message.includes("not confirmed")) {
+        setError("Please verify your email before logging in. Check your inbox for the verification link.");
+      } else {
+        setError(error.message);
+      }
       setLoading(false);
       return;
     }
@@ -34,6 +42,32 @@ export default function LoginPage() {
     if (data.user) {
       router.push("/dashboard");
     }
+  }
+
+  async function resendVerificationEmail() {
+    if (!email) {
+      setError("Please enter your email address first");
+      return;
+    }
+
+    setResendingEmail(true);
+    setError("");
+
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email: email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setResendSuccess(true);
+    }
+
+    setResendingEmail(false);
   }
 
   return (
@@ -65,6 +99,22 @@ export default function LoginPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
               {error}
+              {error.includes("verify your email") && (
+                <button
+                  onClick={resendVerificationEmail}
+                  disabled={resendingEmail}
+                  className="block mt-2 text-[#54afe6] hover:text-[#371a5b] font-medium underline"
+                >
+                  {resendingEmail ? "Sending..." : "Resend verification email"}
+                </button>
+              )}
+            </div>
+          )}
+
+          {resendSuccess && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center">
+              <Mail className="w-5 h-5 mr-2" />
+              Verification email sent! Please check your inbox.
             </div>
           )}
 
