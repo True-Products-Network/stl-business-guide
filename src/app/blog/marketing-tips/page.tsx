@@ -7,28 +7,28 @@ export default function MarketingTipsPage() {
     <main className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <article className="max-w-4xl mx-auto px-4 py-16">
-        {/* Back Link */}
-        <a
-          href="/blog"
-          className="inline-flex items-center text-[#54afe6] hover:text-[#371a5b] mb-8 transition"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Blog
-        </a>
+      {/* Hero Header */}
+      <div className="bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white pt-32 pb-20">
+        <div className="max-w-4xl mx-auto px-4">
+          {/* Back Link */}
+          <a
+            href="/blog"
+            className="inline-flex items-center text-white/80 hover:text-white mb-6 transition"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Blog
+          </a>
 
-        {/* Header */}
-        <header className="mb-8">
-          <span className="inline-block bg-[#54afe6]/10 text-[#54afe6] px-3 py-1 rounded-full text-sm font-medium mb-4">
+          <span className="inline-block bg-white/20 text-white px-3 py-1 rounded-full text-sm font-medium mb-4">
             Marketing
           </span>
           <h1
-            className="text-4xl font-bold text-[#371a5b] mb-4"
+            className="text-4xl md:text-5xl font-bold mb-4"
             style={{ fontFamily: "Montserrat, sans-serif" }}
           >
             10 Local Marketing Tips for Small Businesses
           </h1>
-          <div className="flex items-center text-gray-500 space-x-6">
+          <div className="flex items-center text-white/80 space-x-6">
             <span className="flex items-center">
               <User className="w-4 h-4 mr-2" />
               Nigel Lear
@@ -42,8 +42,10 @@ export default function MarketingTipsPage() {
               5 min read
             </span>
           </div>
-        </header>
+        </div>
+      </div>
 
+      <article className="max-w-4xl mx-auto px-4 py-16">
         {/* Content */}
         <div className="bg-white rounded-2xl shadow-lg p-8 prose max-w-none">
           <p className="text-lg text-gray-600 mb-6">
