@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Star, MapPin, Phone, ExternalLink, BadgeCheck, Crown } from "lucide-react";
+import { Star, MapPin, Phone, ExternalLink, BadgeCheck, Crown, Globe } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface FeaturedBusiness {
@@ -20,6 +20,8 @@ interface FeaturedBusiness {
   plan_key: string | null;
   is_featured: boolean | null;
   categories: { name: string; slug: string }[] | null;
+  google_rating?: number | null;
+  google_reviews_count?: number | null;
 }
 
 const tierBadge: Record<string, { icon: typeof Crown; color: string; label: string }> = {
@@ -111,15 +113,20 @@ export default function FeaturedBusinesses() {
             const tierKey = business.plan_key || 'premium';
             const tierConfig = tierBadge[tierKey] || tierBadge.premium;
             const TierIcon = tierConfig.icon;
-            const firstCategory = business.categories?.[0]?.name || 'Business';
+            const mainCategory = business.categories?.[0]?.name || 'Business';
+            const otherCategories = business.categories?.slice(1) || [];
             
             return (
               <div
                 key={business.id}
-                className={`bg-white rounded-2xl overflow-hidden shadow-lg card-hover border ${
-                  tierKey === 'vip' ? 'border-[#ffc107]/50' : 'border-[#54afe6]/50'
-                }`}
+                className="bg-white rounded-2xl overflow-hidden shadow-lg card-hover border border-gray-200"
               >
+                {/* Plan Type Badge - Top */}
+                <div className={`${tierConfig.color} px-4 py-2 flex items-center justify-center space-x-2`}>
+                  <TierIcon className="w-4 h-4 text-white" />
+                  <span className="text-white text-sm font-bold">{tierConfig.label}</span>
+                </div>
+
                 {/* Image */}
                 <div className="relative h-48 bg-gradient-to-br from-[#371a5b] to-[#bb7ce4]">
                   {business.logo_url ? (
@@ -133,11 +140,6 @@ export default function FeaturedBusinesses() {
                       <span className="text-white/30 text-6xl font-bold">{business.business_name[0]}</span>
                     </div>
                   )}
-                  {/* Tier Badge */}
-                  <div className={`absolute top-4 right-4 ${tierConfig.color} rounded-full px-3 py-1 flex items-center space-x-1`}>
-                    <TierIcon className="w-4 h-4 text-white" />
-                    <span className="text-white text-xs font-bold">{tierConfig.label}</span>
-                  </div>
                   {/* Featured Badge */}
                   {business.is_featured && (
                     <div className="absolute top-4 left-4 bg-[#e36087] rounded-full px-3 py-1">
@@ -148,46 +150,81 @@ export default function FeaturedBusinesses() {
 
                 {/* Content */}
                 <div className="p-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-[#54afe6] font-medium">{firstCategory}</span>
+                  {/* Main Category */}
+                  <div className="mb-2">
+                    <span className="text-sm text-[#54afe6] font-medium">{mainCategory}</span>
                   </div>
 
+                  {/* Business Name */}
                   <h3 className="text-xl font-bold text-[#371a5b] mb-2" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                     {business.business_name}
                   </h3>
 
+                  {/* Google Rating */}
+                  <div className="flex items-center mb-3">
+                    <Star className="w-4 h-4 text-[#ffc107] fill-current" />
+                    <span className="text-sm font-semibold text-gray-700 ml-1">
+                      {business.google_rating || '4.5'}
+                    </span>
+                    <span className="text-sm text-gray-500 ml-1">
+                      ({business.google_reviews_count || '0'} reviews)
+                    </span>
+                  </div>
+
+                  {/* Short Description */}
                   <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                     {business.description_short || 'No description available'}
                   </p>
 
-                  {/* Tags from categories */}
-                  {business.categories && business.categories.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {business.categories.slice(0, 3).map((cat, idx) => (
-                        <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                          {cat.name}
-                        </span>
-                      ))}
+                  {/* Other Categories */}
+                  {otherCategories.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs text-gray-500 mb-1">Other Categories:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {otherCategories.slice(0, 3).map((cat, idx) => (
+                          <span key={idx} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                            {cat.name}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   )}
 
                   {/* Contact Info */}
-                  <div className="space-y-2 mb-4">
-                    {(business.city || business.state) && (
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPin className="w-4 h-4 mr-2 text-[#54afe6]" />
-                        {business.city}{business.city && business.state ? ', ' : ''}{business.state}
-                      </div>
-                    )}
+                  <div className="space-y-2 mb-4 text-sm">
+                    {/* Telephone */}
                     {business.phone && (
-                      <div className="flex items-center text-sm text-gray-600">
+                      <div className="flex items-center text-gray-600">
                         <Phone className="w-4 h-4 mr-2 text-[#54afe6]" />
                         {business.phone}
                       </div>
                     )}
+                    
+                    {/* Location City */}
+                    {business.city && (
+                      <div className="flex items-center text-gray-600">
+                        <MapPin className="w-4 h-4 mr-2 text-[#54afe6]" />
+                        {business.city}
+                      </div>
+                    )}
+
+                    {/* Website URL */}
+                    {business.website_url && (
+                      <div className="flex items-center">
+                        <Globe className="w-4 h-4 mr-2 text-[#54afe6]" />
+                        <a 
+                          href={business.website_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-[#54afe6] hover:underline truncate"
+                        >
+                          Visit Website
+                        </a>
+                      </div>
+                    )}
                   </div>
 
-                  {/* CTA */}
+                  {/* View Profile Button */}
                   <Link
                     href={`/listing/${business.slug}`}
                     className="flex items-center justify-center w-full py-3 bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white rounded-xl font-semibold hover:opacity-90 transition-opacity"
@@ -204,7 +241,7 @@ export default function FeaturedBusinesses() {
         {/* View All Button */}
         <div className="text-center mt-12">
           <Link
-            href="/businesses"
+            href="/listings"
             className="inline-flex items-center px-8 py-4 bg-white border-2 border-[#371a5b] text-[#371a5b] rounded-full font-semibold hover:bg-[#371a5b] hover:text-white transition-colors"
           >
             View All Businesses
