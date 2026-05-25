@@ -70,7 +70,6 @@ export default function ContactPage() {
 
           {/* GHL Contact Form */}
           <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h3 className="text-xl font-bold text-[#371a5b] mb-6">Send us a Message</h3>
             <div className="w-full" style={{ height: '634px' }}>
               <iframe
                 src="https://link.leadprospectrr.com/widget/form/TCFXwIdc88eaKtFPjO5p"
