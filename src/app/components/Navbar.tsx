@@ -1,11 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, Phone, Search } from "lucide-react";
+import { Menu, X, Phone, Search, User, LogOut, LayoutDashboard } from "lucide-react";
+import { supabase } from "../../lib/supabase";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
+
+  useEffect(() => {
+    checkUser();
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function checkUser() {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  }
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    setUser(null);
+    window.location.href = "/";
+  }
 
   const navLinks = [
     { name: "Home", href: "/" },
@@ -63,12 +88,56 @@ export default function Navbar() {
               <Phone className="w-4 h-4" />
               <span className="font-medium">314-886-8084</span>
             </a>
-            <Link
-              href="/submit-listing"
-              className="bg-gradient-to-r from-[#54afe6] to-[#bb7ce4] px-6 py-2.5 rounded-full text-white font-semibold shadow-lg hover:shadow-xl transition"
-            >
-              List Your Business
-            </Link>
+            
+            {user ? (
+              /* Account Menu */
+              <div className="relative">
+                <button
+                  onClick={() => setShowAccountMenu(!showAccountMenu)}
+                  className="flex items-center space-x-2 bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-4 py-2 rounded-full font-medium hover:opacity-90 transition"
+                >
+                  <User className="w-4 h-4" />
+                  <span>My Account</span>
+                </button>
+                
+                {showAccountMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                    <Link
+                      href="/dashboard"
+                      className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
+                      onClick={() => setShowAccountMenu(false)}
+                    >
+                      <LayoutDashboard className="w-4 h-4 mr-2" />
+                      Dashboard
+                    </Link>
+                    <Link
+                      href="/dashboard/settings"
+                      className="flex items-center px-4 py-2 text-gray-700 hover:bg-gray-50"
+                      onClick={() => setShowAccountMenu(false)}
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      Settings
+                    </Link>
+                    <hr className="my-2" />
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center w-full px-4 py-2 text-red-600 hover:bg-red-50"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Login Button */
+              <Link
+                href="/auth/login"
+                className="bg-gradient-to-r from-[#54afe6] to-[#bb7ce4] px-6 py-2.5 rounded-full text-white font-semibold shadow-lg hover:shadow-xl transition"
+              >
+                List Your Business
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -111,13 +180,37 @@ export default function Navbar() {
                 <Phone className="w-4 h-4" />
                 <span>314-886-8084</span>
               </a>
-              <Link
-                href="/submit-listing"
-                onClick={() => setIsOpen(false)}
-                className="block w-full text-center bg-gradient-to-r from-[#54afe6] to-[#bb7ce4] px-6 py-3 rounded-full text-white font-semibold"
-              >
-                List Your Business
-              </Link>
+              
+              {user ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center space-x-2 px-3 py-2 text-[#371a5b] font-medium"
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    <span>Dashboard</span>
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsOpen(false);
+                    }}
+                    className="flex items-center space-x-2 w-full px-3 py-2 text-red-600"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out</span>
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  onClick={() => setIsOpen(false)}
+                  className="block w-full text-center bg-gradient-to-r from-[#54afe6] to-[#bb7ce4] px-6 py-3 rounded-full text-white font-semibold"
+                >
+                  List Your Business
+                </Link>
+              )}
             </div>
           </div>
         </div>
