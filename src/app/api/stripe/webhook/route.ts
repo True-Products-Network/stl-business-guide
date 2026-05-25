@@ -17,6 +17,13 @@ export async function POST(request: NextRequest) {
 
     const event = verification.event;
 
+    if (!event) {
+      return NextResponse.json(
+        { error: 'Event not found' },
+        { status: 400 }
+      );
+    }
+
     // Handle different event types
     switch (event.type) {
       case 'checkout.session.completed':
