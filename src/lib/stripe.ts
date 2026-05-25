@@ -34,7 +34,8 @@ export async function createCheckoutSession(
   priceId: string,
   businessId: string,
   businessName: string,
-  customerEmail?: string
+  customerEmail?: string,
+  planName?: string
 ) {
   try {
     const stripe = getStripe();
@@ -50,6 +51,7 @@ export async function createCheckoutSession(
       metadata: {
         businessId,
         businessName,
+        planName: planName || 'Unknown',
       },
       customer_email: customerEmail,
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,

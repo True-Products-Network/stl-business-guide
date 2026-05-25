@@ -4,7 +4,7 @@ import { createCheckoutSession, STRIPE_PRICE_IDS } from '@/lib/stripe';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { plan, businessId, businessName, customerEmail } = body;
+    const { plan, planName, businessId, businessName, customerEmail } = body;
 
     if (!plan || !businessId || !businessName) {
       return NextResponse.json(
@@ -26,7 +26,8 @@ export async function POST(request: NextRequest) {
       priceId,
       businessId,
       businessName,
-      customerEmail
+      customerEmail,
+      planName
     );
 
     if (!result.success) {

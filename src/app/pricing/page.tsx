@@ -73,14 +73,15 @@ const plans = [
 export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null);
 
-  const handleCheckout = async (plan: string) => {
-    setLoading(plan);
+  const handleCheckout = async (planKey: string, planName: string) => {
+    setLoading(planKey);
     try {
       const response = await fetch('/api/stripe/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          plan,
+          plan: planKey,
+          planName: planName,
           businessId: 'temp-business-id', // You'll replace this with actual business ID
           businessName: 'Business Listing',
         }),
@@ -205,7 +206,7 @@ export default function PricingPage() {
                     </Link>
                   ) : (
                     <button
-                      onClick={() => handleCheckout(plan.name.toLowerCase())}
+                      onClick={() => handleCheckout(plan.name.toLowerCase(), plan.name)}
                       disabled={loading === plan.name.toLowerCase()}
                       className={`block w-full text-center py-3 rounded-xl font-semibold mt-6 transition ${
                         plan.popular
