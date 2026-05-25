@@ -19,7 +19,7 @@ export default function Newsletter() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
-          <div className="text-white">
+          <div className="text-white flex flex-col justify-center h-full">
             <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6 border border-white/20">
               <Mail className="w-4 h-4" />
               <span className="text-sm font-medium">Join 5,000+ Subscribers</span>
