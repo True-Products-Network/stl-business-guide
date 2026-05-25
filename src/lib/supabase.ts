@@ -209,19 +209,12 @@ export async function getFeaturedBusinesses(limit: number = 6) {
   return data as Business[];
 }
 
-// Get business by slug
+// Get business by slug from public view
 export async function getBusinessBySlug(slug: string) {
   const { data, error } = await supabase
-    .from('businesses')
-    .select(`
-      *,
-      location:business_locations(*),
-      listing:business_listings(*, plan:listing_plans(*)),
-      categories:business_categories(category:categories(*)),
-      images:business_images(*)
-    `)
+    .from('public_approved_listings')
+    .select('*')
     .eq('slug', slug)
-    .eq('status', 'approved')
     .single();
 
   if (error) {
@@ -229,7 +222,7 @@ export async function getBusinessBySlug(slug: string) {
     return null;
   }
 
-  return data as Business;
+  return data;
 }
 
 // Get all categories
