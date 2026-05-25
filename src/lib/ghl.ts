@@ -1,11 +1,11 @@
 /**
  * GoHighLevel (GHL) API Integration
- * Sends buyer data to GHL for follow-up and nurture campaigns
+ * Sends buyer and lead data to GHL for follow-up and nurture campaigns
  */
 
 // GHL API Configuration
 const GHL_API_KEY = process.env.GHL_API_KEY || '';
-const GHL_LOCATION_ID = process.env.GHL_LOCATION_ID || ''; // Your GHL location ID
+const GHL_LOCATION_ID = process.env.GHL_LOCATION_ID || '';
 const GHL_API_BASE = 'https://rest.gohighlevel.com/v1';
 
 interface GHLContact {
@@ -14,7 +14,7 @@ interface GHLContact {
   email: string;
   phone?: string;
   tags?: string[];
-  customFields?: Array<{ id: string; value: string }>;
+  customFields?: Array<{ key: string; value: string }>;
   source?: string;
 }
 
@@ -118,7 +118,7 @@ export async function addTagToGHLContact(email: string, tag: string) {
 }
 
 /**
- * Handle Stripe checkout completion - send to GHL
+ * Handle Stripe checkout completion - send PAID buyer to GHL
  */
 export async function handleStripeCheckoutForGHL(
   customerEmail: string,
@@ -131,23 +131,61 @@ export async function handleStripeCheckoutForGHL(
   const firstName = nameParts[0] || '';
   const lastName = nameParts.slice(1).join(' ') || '';
 
-  // Create contact in GHL
+  // Create contact in GHL with buyer tags
   const result = await createOrUpdateGHLContact({
     firstName,
     lastName,
     email: customerEmail,
-    tags: ['Buyer', `Plan: ${planName}`, 'STL Business Guide', 'Paid Subscriber'],
+    tags: ['Buyer', `Plan: ${planName}`, 'STL Business Guide', 'Paid Subscriber', 'Hot Lead'],
     source: 'STL Business Guide - Stripe Checkout',
     customFields: [
-      { id: 'plan_name', value: planName },
-      { id: 'monthly_amount', value: `$${amount}` },
+      { key: 'plan_name', value: planName },
+      { key: 'monthly_amount', value: `$${amount}` },
+      { key: 'lead_source', value: 'STL Business Guide' },
     ],
   });
 
   if (result.success) {
-    console.log(`✅ Buyer added to GHL: ${customerEmail} - ${planName}`);
+    console.log(`✅ BUYER added to GHL: ${customerEmail} - ${planName} ($${amount}/mo)`);
   } else {
     console.error(`❌ Failed to add buyer to GHL: ${result.error}`);
+  }
+
+  return result;
+}
+
+/**
+ * Handle Free Plan signup - send FREE LEAD to GHL for nurturing
+ */
+export async function handleFreePlanSignupForGHL(
+  email: string,
+  businessName: string,
+  contactName?: string
+) {
+  // Parse name into first/last (if provided)
+  const nameParts = contactName ? contactName.split(' ') : [businessName, ''];
+  const firstName = nameParts[0] || businessName;
+  const lastName = nameParts.slice(1).join(' ') || '';
+
+  // Create contact in GHL with free lead tags
+  const result = await createOrUpdateGHLContact({
+    firstName,
+    lastName,
+    email,
+    tags: ['Free Lead', 'STL Business Guide', 'Nurture', 'Prospect'],
+    source: 'STL Business Guide - Free Listing',
+    customFields: [
+      { key: 'business_name', value: businessName },
+      { key: 'plan_name', value: 'Free' },
+      { key: 'lead_source', value: 'STL Business Guide' },
+      { key: 'lead_temperature', value: 'Warm' },
+    ],
+  });
+
+  if (result.success) {
+    console.log(`✅ FREE LEAD added to GHL: ${email} - ${businessName}`);
+  } else {
+    console.error(`❌ Failed to add free lead to GHL: ${result.error}`);
   }
 
   return result;

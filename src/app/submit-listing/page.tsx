@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { getListingPlans, getCategories, submitListing, signUp, signIn } from '@/lib/supabase';
+import { handleFreePlanSignupForGHL } from '@/lib/ghl';
 import type { ListingPlan, Category } from '@/lib/supabase';
 
 function SubmitListingForm() {
@@ -128,6 +129,15 @@ function SubmitListingForm() {
 
       if (!submitSuccess) {
         throw submitError;
+      }
+
+      // Send Free Plan signups to GHL for nurturing
+      if (selectedPlan === 'free' || selectedPlan === '00000000-0000-0000-0000-000000000001') {
+        await handleFreePlanSignupForGHL(
+          formData.email,
+          formData.business_name,
+          formData.full_name
+        );
       }
 
       setSuccess(true);
