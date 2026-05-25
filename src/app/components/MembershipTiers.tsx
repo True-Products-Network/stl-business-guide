@@ -30,7 +30,7 @@ const tiers = [
   },
   {
     name: "Premium",
-    price: "$49",
+    price: "$97",
     period: "per month",
     description: "Great for growing businesses seeking more visibility",
     icon: Zap,
@@ -55,7 +55,7 @@ const tiers = [
   },
   {
     name: "VIP",
-    price: "$149",
+    price: "$497",
     period: "per month",
     description: "Maximum exposure for serious business growth",
     icon: Crown,

@@ -25,7 +25,7 @@ const plans = [
   {
     name: "Premium",
     icon: Zap,
-    price: "$29",
+    price: "$97",
     period: "/month",
     description: "Enhanced visibility & features",
     features: [
@@ -46,7 +46,7 @@ const plans = [
   {
     name: "VIP",
     icon: Crown,
-    price: "$99",
+    price: "$497",
     period: "/month",
     description: "Maximum exposure & leads",
     features: [
