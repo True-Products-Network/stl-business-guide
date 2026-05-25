@@ -4,216 +4,246 @@ import { useState } from "react";
 import { Copy, Check, Database, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-const sqlSchema = `-- Enable UUID extension
+const sqlSchema = `-- ============================================
+-- BUSINESS LISTING PLATFORM SCHEMA
+-- ============================================
+
+-- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create businesses table
-CREATE TABLE businesses (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name VARCHAR(255) NOT NULL,
-  slug VARCHAR(255) UNIQUE NOT NULL,
-  category VARCHAR(100) NOT NULL,
-  subcategories TEXT[] DEFAULT '{}',
-  
-  -- Location
-  address TEXT,
-  city VARCHAR(100) NOT NULL,
-  state VARCHAR(50) NOT NULL,
-  zip_code VARCHAR(20),
-  country VARCHAR(100) DEFAULT 'USA',
-  
-  -- Contact
-  phone VARCHAR(50),
-  email VARCHAR(255),
-  website VARCHAR(500),
-  
-  -- Content
-  description TEXT,
-  short_description VARCHAR(500),
-  services TEXT[] DEFAULT '{}',
-  
-  -- Media
-  logo_url TEXT,
-  photos TEXT[] DEFAULT '{}',
-  cover_image TEXT,
-  
-  -- Membership
-  tier VARCHAR(20) DEFAULT 'free' CHECK (tier IN ('free', 'premium', 'vip')),
-  is_featured BOOLEAN DEFAULT false,
-  featured_until TIMESTAMP WITH TIME ZONE,
-  
-  -- Ratings
-  rating DECIMAL(2,1) DEFAULT 0.0,
-  review_count INTEGER DEFAULT 0,
-  
-  -- Social
-  facebook_url TEXT,
-  instagram_url TEXT,
-  linkedin_url TEXT,
-  twitter_url TEXT,
-  
-  -- Business hours (stored as JSON)
-  business_hours JSONB,
-  
-  -- Metadata
+-- ============================================
+-- CORE TABLES
+-- ============================================
+
+-- Profiles table (extends Supabase Auth)
+CREATE TABLE profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  full_name TEXT,
+  email TEXT,
+  phone TEXT,
+  role TEXT DEFAULT 'business_owner' CHECK (role IN ('visitor', 'business_owner', 'premium_owner', 'vip_owner', 'admin', 'super_admin')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  claimed_by UUID,
-  is_verified BOOLEAN DEFAULT false,
-  
-  -- Search vector for full-text search
-  search_vector tsvector
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create reviews table
-CREATE TABLE reviews (
+-- Categories table
+CREATE TABLE categories (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE,
-  user_name VARCHAR(255) NOT NULL,
-  rating INTEGER CHECK (rating >= 1 AND rating <= 5),
-  comment TEXT,
+  name TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  parent_category_id UUID REFERENCES categories(id),
+  description TEXT,
+  is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create indexes for faster searches
-CREATE INDEX idx_businesses_category ON businesses(category);
-CREATE INDEX idx_businesses_city ON businesses(city);
-CREATE INDEX idx_businesses_state ON businesses(state);
-CREATE INDEX idx_businesses_tier ON businesses(tier);
-CREATE INDEX idx_businesses_featured ON businesses(is_featured) WHERE is_featured = true;
-CREATE INDEX idx_businesses_verified ON businesses(is_verified);
-CREATE INDEX idx_businesses_search ON businesses USING GIN(search_vector);
-
--- Create function to update search vector
-CREATE OR REPLACE FUNCTION update_business_search_vector()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.search_vector := 
-    setweight(to_tsvector('english', COALESCE(NEW.name, '')), 'A') ||
-    setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'B') ||
-    setweight(to_tsvector('english', COALESCE(NEW.category, '')), 'B') ||
-    setweight(to_tsvector('english', COALESCE(NEW.city, '')), 'C') ||
-    setweight(to_tsvector('english', COALESCE(NEW.services::text, '')), 'C');
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Create trigger to auto-update search vector
-CREATE TRIGGER businesses_search_vector_update
-  BEFORE INSERT OR UPDATE ON businesses
-  FOR EACH ROW
-  EXECUTE FUNCTION update_business_search_vector();
-
--- Create function to update updated_at timestamp
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
--- Create trigger for updated_at
-CREATE TRIGGER businesses_updated_at
-  BEFORE UPDATE ON businesses
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-
--- Insert sample data
-INSERT INTO businesses (
-  name, slug, category, subcategories, city, state, 
-  phone, email, website, description, short_description,
-  tier, is_featured, is_verified, rating, review_count
-) VALUES 
-(
-  'True Products Marketing',
-  'true-products-marketing',
-  'Marketing Agency',
-  ARRAY['SEO', 'Web Design', 'Social Media'],
-  'Chesterfield', 'MO',
-  '(314) 886-8084',
-  'info@trueproductsnetwork.com',
-  'https://trueproductsnetwork.com',
-  'Full-service digital marketing agency helping local businesses grow online presence. We specialize in SEO, web design, and social media marketing.',
-  'Digital marketing agency specializing in SEO and web design',
-  'vip', true, true, 5.0, 47
-),
-(
-  'AIM Training & Consultancy',
-  'aim-training-consultancy',
-  'Business Training',
-  ARRAY['Training', 'Consulting', 'Coaching'],
-  'St. Louis', 'MO',
-  '(314) 555-0123',
-  'info@aimtraining.com',
-  'https://aimtraining.com',
-  'Professional training and consulting services for businesses of all sizes.',
-  'Business training and consulting services',
-  'premium', true, true, 4.9, 32
-),
-(
-  'Missouri SEO Agency',
-  'missouri-seo-agency',
-  'SEO Services',
-  ARRAY['SEO', 'PPC', 'Analytics'],
-  'St. Charles', 'MO',
-  '(636) 555-0456',
-  'info@missouriseo.com',
-  'https://missouriseo.com',
-  'Expert SEO services to get your business ranking on page one of Google.',
-  'Expert SEO services for local businesses',
-  'premium', false, true, 4.8, 28
-),
-(
-  'MJM Lawn & Land',
-  'mjm-lawn-land',
-  'Landscaping',
-  ARRAY['Lawn Care', 'Landscaping', 'Maintenance'],
-  'Chesterfield', 'MO',
-  '(314) 555-0789',
-  'info@mjmlawn.com',
-  'https://mjmlawn.com',
-  'Professional lawn care and landscaping services for residential and commercial properties.',
-  'Professional lawn care and landscaping',
-  'vip', true, true, 4.9, 56
-),
-(
-  'Schneider Roofing',
-  'schneider-roofing',
-  'Roofing Services',
-  ARRAY['Roofing', 'Repairs', 'Inspections'],
-  'St. Louis', 'MO',
-  '(314) 555-0321',
-  'info@schneiderroofing.com',
-  'https://schneiderroofing.com',
-  'Family-owned roofing company serving St. Louis for over 30 years.',
-  'Family-owned roofing company',
-  'free', false, true, 4.7, 89
-),
-(
-  'Elite Dental Care',
-  'elite-dental-care',
-  'Dental Services',
-  ARRAY['Dental', 'Cosmetic', 'Family'],
-  'St. Charles', 'MO',
-  '(636) 555-0654',
-  'info@elitedental.com',
-  'https://elitedental.com',
-  'Comprehensive dental care with state-of-the-art technology.',
-  'Comprehensive dental care',
-  'premium', false, true, 4.9, 124
+-- Listing Plans table (Free, Premium, VIP)
+CREATE TABLE listing_plans (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  plan_key TEXT UNIQUE NOT NULL CHECK (plan_key IN ('free', 'premium', 'vip')),
+  plan_name TEXT NOT NULL,
+  monthly_price DECIMAL(10,2) DEFAULT 0,
+  yearly_price DECIMAL(10,2),
+  max_images INTEGER DEFAULT 1,
+  allows_coupon BOOLEAN DEFAULT false,
+  allows_video BOOLEAN DEFAULT false,
+  allows_banner_ads BOOLEAN DEFAULT false,
+  featured_priority INTEGER DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Enable Row Level Security
-ALTER TABLE businesses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+-- Businesses table
+CREATE TABLE businesses (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  owner_profile_id UUID REFERENCES profiles(id),
+  business_name TEXT NOT NULL,
+  slug TEXT UNIQUE NOT NULL,
+  description_short TEXT,
+  description_long TEXT,
+  phone TEXT,
+  email TEXT,
+  website_url TEXT,
+  logo_url TEXT,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('draft', 'pending', 'active', 'paused', 'archived')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
--- Create policies for public read access
-CREATE POLICY "Allow public read access" ON businesses
+-- Business Locations table
+CREATE TABLE business_locations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE,
+  address_line_1 TEXT,
+  address_line_2 TEXT,
+  city TEXT NOT NULL,
+  state TEXT NOT NULL,
+  zip_code TEXT,
+  service_area TEXT,
+  latitude DECIMAL(10,8),
+  longitude DECIMAL(11,8),
+  is_primary BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Business Listings table (links business to plan)
+CREATE TABLE business_listings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE,
+  plan_id UUID REFERENCES listing_plans(id),
+  listing_status TEXT DEFAULT 'pending' CHECK (listing_status IN ('draft', 'pending', 'active', 'paused', 'expired', 'archived')),
+  start_date TIMESTAMP WITH TIME ZONE,
+  end_date TIMESTAMP WITH TIME ZONE,
+  is_featured BOOLEAN DEFAULT false,
+  sort_priority INTEGER DEFAULT 0,
+  cta_label TEXT,
+  cta_url TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Business Categories join table
+CREATE TABLE business_categories (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE,
+  category_id UUID REFERENCES categories(id) ON DELETE CASCADE,
+  UNIQUE(business_id, category_id)
+);
+
+-- Listing Submissions table (approval workflow)
+CREATE TABLE listing_submissions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  business_id UUID REFERENCES businesses(id),
+  submitted_by_user_id UUID REFERENCES profiles(id),
+  requested_plan_id UUID REFERENCES listing_plans(id),
+  submission_status TEXT DEFAULT 'started' CHECK (submission_status IN ('started', 'submitted', 'under_review', 'needs_edits', 'approved', 'rejected', 'abandoned')),
+  admin_notes TEXT,
+  submitted_at TIMESTAMP WITH TIME ZONE,
+  reviewed_at TIMESTAMP WITH TIME ZONE,
+  reviewed_by_user_id UUID REFERENCES profiles(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ============================================
+-- VIEWS FOR PUBLIC ACCESS
+-- ============================================
+
+-- Public approved listings view
+CREATE VIEW public_approved_listings AS
+SELECT 
+  b.id,
+  b.business_name,
+  b.slug,
+  b.description_short,
+  b.description_long,
+  b.phone,
+  b.email,
+  b.website_url,
+  b.logo_url,
+  bl.city,
+  bl.state,
+  lp.plan_name,
+  lp.plan_key,
+  bls.is_featured,
+  bls.sort_priority,
+  COALESCE(
+    jsonb_agg(
+      jsonb_build_object('name', c.name, 'slug', c.slug)
+      ORDER BY c.name
+    ) FILTER (WHERE c.id IS NOT NULL),
+    '[]'::jsonb
+  ) as categories
+FROM businesses b
+JOIN business_listings bls ON b.id = bls.business_id
+JOIN listing_plans lp ON bls.plan_id = lp.id
+LEFT JOIN business_locations bl ON b.id = bl.business_id AND bl.is_primary = true
+LEFT JOIN business_categories bc ON b.id = bc.business_id
+LEFT JOIN categories c ON bc.category_id = c.id
+WHERE b.status = 'approved' 
+  AND bls.listing_status = 'active'
+GROUP BY b.id, b.business_name, b.slug, b.description_short, b.description_long,
+         b.phone, b.email, b.website_url, b.logo_url, bl.city, bl.state,
+         lp.plan_name, lp.plan_key, bls.is_featured, bls.sort_priority;
+
+-- ============================================
+-- INDEXES
+-- ============================================
+
+CREATE INDEX idx_businesses_slug ON businesses(slug);
+CREATE INDEX idx_businesses_status ON businesses(status);
+CREATE INDEX idx_business_listings_status ON business_listings(listing_status);
+CREATE INDEX idx_business_listings_featured ON business_listings(is_featured) WHERE is_featured = true;
+CREATE INDEX idx_categories_slug ON categories(slug);
+CREATE INDEX idx_categories_active ON categories(is_active);
+
+-- ============================================
+-- SEED DATA
+-- ============================================
+
+-- Insert listing plans
+INSERT INTO listing_plans (plan_key, plan_name, monthly_price, max_images, allows_coupon, allows_video, allows_banner_ads, featured_priority) VALUES
+('free', 'Free', 0, 1, false, false, false, 0),
+('premium', 'Premium', 29.99, 5, true, false, false, 1),
+('vip', 'VIP', 99.99, 10, true, true, true, 2);
+
+-- Insert sample categories
+INSERT INTO categories (name, slug, description) VALUES
+('Marketing & Advertising', 'marketing-advertising', 'Marketing agencies and advertising services'),
+('Business Services', 'business-services', 'Business consulting and professional services'),
+('Home Services', 'home-services', 'Home improvement and maintenance services'),
+('Health & Wellness', 'health-wellness', 'Healthcare and wellness providers'),
+('Restaurants & Food', 'restaurants-food', 'Restaurants, cafes, and food services'),
+('Retail & Shopping', 'retail-shopping', 'Retail stores and shopping destinations'),
+('Automotive', 'automotive', 'Auto repair and automotive services'),
+('Education & Training', 'education-training', 'Schools, tutors, and training centers'),
+('Technology', 'technology', 'IT services and technology companies'),
+('Real Estate', 'real-estate', 'Real estate agents and property services');
+
+-- ============================================
+-- ROW LEVEL SECURITY
+-- ============================================
+
+ALTER TABLE businesses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE business_listings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE business_locations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE business_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE listing_submissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- Public can read approved businesses
+CREATE POLICY "Public can view approved businesses" ON businesses
+  FOR SELECT USING (status = 'approved');
+
+-- Public can read active listings
+CREATE POLICY "Public can view active listings" ON business_listings
+  FOR SELECT USING (listing_status = 'active');
+
+-- Public can read locations
+CREATE POLICY "Public can view locations" ON business_locations
   FOR SELECT USING (true);
 
-CREATE POLICY "Allow public read access" ON reviews
-  FOR SELECT USING (true);`;
+-- Public can read categories
+CREATE POLICY "Public can view categories" ON categories
+  FOR SELECT USING (is_active = true);
+
+-- Public can read business categories
+CREATE POLICY "Public can view business categories" ON business_categories
+  FOR SELECT USING (true);
+
+-- Users can manage their own profile
+CREATE POLICY "Users can manage own profile" ON profiles
+  FOR ALL USING (auth.uid() = id);
+
+-- Admin policies (for admin dashboard)
+CREATE POLICY "Admins can manage all businesses" ON businesses
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
+  );
+
+CREATE POLICY "Admins can manage all listings" ON business_listings
+  FOR ALL USING (
+    EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
+  );`;
 
 export default function SchemaPage() {
   const [copied, setCopied] = useState(false);
@@ -240,10 +270,10 @@ export default function SchemaPage() {
             <Database className="w-8 h-8 text-[#54afe6]" />
             <div>
               <h1 className="text-2xl font-bold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                Supabase Database Schema
+                Database Schema
               </h1>
               <p className="text-white/70 text-sm">
-                Copy this SQL and run it in your Supabase SQL Editor
+                Current database structure for the Business Listing Platform
               </p>
             </div>
           </div>
@@ -253,29 +283,32 @@ export default function SchemaPage() {
       {/* Instructions */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold text-[#371a5b] mb-4">How to Apply This Schema</h2>
-          <ol className="space-y-3 text-gray-700">
-            <li className="flex items-start">
-              <span className="bg-[#54afe6] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-3 mt-0.5">1</span>
-              <span>Go to <a href="https://supabase.com/dashboard/project/catwmqztvgmdwiusroar" target="_blank" rel="noopener noreferrer" className="text-[#54afe6] hover:underline">your Supabase Dashboard</a></span>
-            </li>
-            <li className="flex items-start">
-              <span className="bg-[#54afe6] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-3 mt-0.5">2</span>
-              <span>Click &quot;SQL Editor&quot; in the left sidebar</span>
-            </li>
-            <li className="flex items-start">
-              <span className="bg-[#54afe6] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-3 mt-0.5">3</span>
-              <span>Click &quot;New Query&quot;</span>
-            </li>
-            <li className="flex items-start">
-              <span className="bg-[#54afe6] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-3 mt-0.5">4</span>
-              <span>Copy the SQL below (click the copy button)</span>
-            </li>
-            <li className="flex items-start">
-              <span className="bg-[#54afe6] text-white rounded-full w-6 h-6 flex items-center justify-center text-sm mr-3 mt-0.5">5</span>
-              <span>Paste into the SQL Editor and click &quot;Run&quot;</span>
-            </li>
-          </ol>
+          <h2 className="text-lg font-semibold text-[#371a5b] mb-4">Schema Overview</h2>
+          <p className="text-gray-600 mb-4">
+            This is the current database schema used by both the STL Business Guide (frontend) 
+            and Business Listing Admin (backend). Both applications share the same Supabase database.
+          </p>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-[#54afe6]/10 rounded-lg p-4">
+              <h3 className="font-semibold text-[#371a5b] mb-2">Core Tables</h3>
+              <ul className="text-sm text-gray-700 space-y-1">
+                <li>• profiles - User accounts</li>
+                <li>• businesses - Business info</li>
+                <li>• business_listings - Plan/status</li>
+                <li>• business_locations - Addresses</li>
+                <li>• categories - Business categories</li>
+                <li>• listing_plans - Free/Premium/VIP</li>
+              </ul>
+            </div>
+            <div className="bg-[#bb7ce4]/10 rounded-lg p-4">
+              <h3 className="font-semibold text-[#371a5b] mb-2">Key Views</h3>
+              <ul className="text-sm text-gray-700 space-y-1">
+                <li>• public_approved_listings - Public display</li>
+                <li>• Used by homepage & directory</li>
+                <li>• Filters for active/approved only</li>
+              </ul>
+            </div>
+          </div>
         </div>
 
         {/* SQL Code Block */}
@@ -299,59 +332,20 @@ export default function SchemaPage() {
               )}
             </button>
           </div>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
             <pre className="p-6 text-sm font-mono text-gray-300 leading-relaxed">
               <code>{sqlSchema}</code>
             </pre>
           </div>
         </div>
 
-        {/* Schema Overview */}
-        <div className="mt-8 grid md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Tables Created</h3>
-            <ul className="space-y-2 text-gray-700">
-              <li className="flex items-center">
-                <span className="w-2 h-2 bg-[#54afe6] rounded-full mr-3"></span>
-                <code className="bg-gray-100 px-2 py-1 rounded text-sm">businesses</code>
-                <span className="ml-2 text-gray-500">- Main business listings</span>
-              </li>
-              <li className="flex items-center">
-                <span className="w-2 h-2 bg-[#54afe6] rounded-full mr-3"></span>
-                <code className="bg-gray-100 px-2 py-1 rounded text-sm">reviews</code>
-                <span className="ml-2 text-gray-500">- Customer reviews</span>
-              </li>
-            </ul>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Sample Data Included</h3>
-            <ul className="space-y-2 text-gray-700">
-              <li className="flex items-center">
-                <span className="w-2 h-2 bg-[#ffc107] rounded-full mr-3"></span>
-                True Products Marketing (VIP)
-              </li>
-              <li className="flex items-center">
-                <span className="w-2 h-2 bg-[#bb7ce4] rounded-full mr-3"></span>
-                AIM Training & Consultancy (Premium)
-              </li>
-              <li className="flex items-center">
-                <span className="w-2 h-2 bg-[#bb7ce4] rounded-full mr-3"></span>
-                Missouri SEO Agency (Premium)
-              </li>
-              <li className="flex items-center">
-                <span className="w-2 h-2 bg-[#ffc107] rounded-full mr-3"></span>
-                MJM Lawn & Land (VIP)
-              </li>
-              <li className="flex items-center">
-                <span className="w-2 h-2 bg-gray-400 rounded-full mr-3"></span>
-                Schneider Roofing (Free)
-              </li>
-              <li className="flex items-center">
-                <span className="w-2 h-2 bg-[#bb7ce4] rounded-full mr-3"></span>
-                Elite Dental Care (Premium)
-              </li>
-            </ul>
+        {/* Database Connection Info */}
+        <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
+          <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Shared Database Connection</h3>
+          <div className="space-y-2 text-gray-700">
+            <p><strong>Supabase URL:</strong> https://eceuqewlneufisussofc.supabase.co</p>
+            <p><strong>Project:</strong> STL Business Guide + Business Listing Admin</p>
+            <p><strong>Shared Tables:</strong> All tables above are shared between both applications</p>
           </div>
         </div>
       </div>

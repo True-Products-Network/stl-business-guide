@@ -5,15 +5,37 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { searchBusinesses, getCategories } from '@/lib/supabase';
-import type { Business, Category } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import { Star, MapPin, Phone, Crown, BadgeCheck } from 'lucide-react';
+
+interface PublicListing {
+  id: string;
+  business_name: string;
+  slug: string;
+  description_short: string | null;
+  phone: string | null;
+  city: string | null;
+  state: string | null;
+  plan_name: string | null;
+  plan_key: string | null;
+  is_featured: boolean | null;
+  categories: { name: string; slug: string }[] | null;
+  google_rating?: number | null;
+  google_reviews_count?: number | null;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 function SearchResults() {
   const searchParams = useSearchParams();
   const query = searchParams.get('q') || '';
   const categoryParam = searchParams.get('category') || '';
 
-  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [businesses, setBusinesses] = useState<PublicListing[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(query);
@@ -25,15 +47,45 @@ function SearchResults() {
 
   async function loadData() {
     setLoading(true);
-    const [businessesData, categoriesData] = await Promise.all([
-      searchBusinesses({
-        query: query || undefined,
-        category: categoryParam || undefined
-      }),
-      getCategories()
-    ]);
-    setBusinesses(businessesData);
-    setCategories(categoriesData);
+    try {
+      // Fetch categories
+      const { data: categoriesData } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+      
+      setCategories(categoriesData || []);
+
+      // Fetch businesses from public view
+      let dbQuery = supabase
+        .from('public_approved_listings')
+        .select('*');
+
+      // Text search
+      if (query) {
+        dbQuery = dbQuery.or(`business_name.ilike.%${query}%,description_short.ilike.%${query}%,description_long.ilike.%${query}%`);
+      }
+
+      const { data, error } = await dbQuery.order('business_name', { ascending: true });
+
+      if (error) {
+        console.error('Search error:', error);
+        setBusinesses([]);
+      } else {
+        // Filter by category client-side
+        let results = data || [];
+        if (categoryParam) {
+          results = results.filter((b: PublicListing) => 
+            b.categories?.some((c: { name: string }) => c.name === categoryParam)
+          );
+        }
+        setBusinesses(results);
+      }
+    } catch (err) {
+      console.error('Error loading data:', err);
+      setBusinesses([]);
+    }
     setLoading(false);
   }
 
@@ -44,21 +96,27 @@ function SearchResults() {
     window.location.href = `/search?${params.toString()}`;
   }
 
-  function getPlanBadgeColor(planName?: string) {
-    switch (planName) {
-      case 'VIP':
-        return 'bg-purple-100 text-purple-800';
-      case 'Premium':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-600';
+  function getPlanBadge(planKey?: string | null) {
+    if (planKey === 'vip') {
+      return (
+        <span className="flex items-center px-2 py-1 bg-gradient-to-r from-[#ffc107] to-[#f68712] text-white text-xs font-bold rounded-full">
+          <Crown className="w-3 h-3 mr-1" /> VIP
+        </span>
+      );
+    } else if (planKey === 'premium') {
+      return (
+        <span className="flex items-center px-2 py-1 bg-gradient-to-r from-[#54afe6] to-[#bb7ce4] text-white text-xs font-bold rounded-full">
+          <BadgeCheck className="w-3 h-3 mr-1" /> Premium
+        </span>
+      );
     }
+    return null;
   }
 
   return (
     <>
       {/* Search Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-12">
+      <div className="bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white py-12">
         <div className="max-w-7xl mx-auto px-4">
           <h1 className="text-3xl md:text-4xl font-bold mb-4">
             {query ? `Search Results for "${query}"` : 'Search Businesses'}
@@ -84,7 +142,7 @@ function SearchResults() {
             </select>
             <button
               onClick={handleSearch}
-              className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
+              className="bg-white text-[#371a5b] px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
             >
               Search
             </button>
@@ -96,7 +154,7 @@ function SearchResults() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#54afe6]"></div>
           </div>
         ) : (
           <>
@@ -117,7 +175,7 @@ function SearchResults() {
                 <p className="text-gray-500 mb-4">Try adjusting your search terms or browse all listings</p>
                 <Link
                   href="/listings"
-                  className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+                  className="inline-block bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
                 >
                   Browse All Listings
                 </Link>
@@ -134,20 +192,16 @@ function SearchResults() {
                       {/* Header */}
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
-                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition">
+                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-[#54afe6] transition">
                             {business.business_name}
                           </h3>
-                          {business.location && (
+                          {business.city && (
                             <p className="text-gray-500 text-sm">
-                              {business.location.city}, {business.location.state}
+                              {business.city}, {business.state}
                             </p>
                           )}
                         </div>
-                        {business.listing?.plan && (
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPlanBadgeColor(business.listing.plan.plan_name)}`}>
-                            {business.listing.plan.plan_name}
-                          </span>
-                        )}
+                        {getPlanBadge(business.plan_key)}
                       </div>
 
                       {/* Description */}
@@ -158,30 +212,42 @@ function SearchResults() {
                       {/* Categories */}
                       {business.categories && business.categories.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-4">
-                          {business.categories.slice(0, 3).map((bc, idx) => (
+                          {business.categories.slice(0, 3).map((cat, idx) => (
                             <span
                               key={idx}
                               className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded"
                             >
-                              {bc.category?.name}
+                              {cat.name}
                             </span>
                           ))}
                         </div>
                       )}
 
-                      {/* Contact */}
-                      <div className="space-y-1 text-sm">
-                        {business.phone && (
-                          <p className="text-gray-600">
-                            <span className="font-medium">Phone:</span> {business.phone}
-                          </p>
-                        )}
+                      {/* Rating */}
+                      <div className="flex items-center mb-3">
+                        <Star className="w-4 h-4 text-[#ffc107] fill-current" />
+                        <span className="text-sm font-semibold text-gray-700 ml-1">
+                          {business.google_rating || '4.5'}
+                        </span>
+                        <span className="text-sm text-gray-500 ml-1">
+                          ({business.google_reviews_count || '0'} reviews)
+                        </span>
                       </div>
+
+                      {/* Contact */}
+                      {business.phone && (
+                        <div className="space-y-1 text-sm mb-4">
+                          <p className="text-gray-600 flex items-center">
+                            <Phone className="w-4 h-4 mr-2 text-[#54afe6]" />
+                            {business.phone}
+                          </p>
+                        </div>
+                      )}
 
                       {/* CTA */}
                       <div className="mt-4 pt-4 border-t">
-                        <span className="text-blue-600 font-medium group-hover:underline">
-                          View Listing →
+                        <span className="text-[#54afe6] font-medium group-hover:underline">
+                          View Profile →
                         </span>
                       </div>
                     </div>
@@ -202,7 +268,7 @@ export default function SearchPage() {
       <Navbar />
       <Suspense fallback={
         <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#54afe6]"></div>
         </div>
       }>
         <SearchResults />
