@@ -4,51 +4,122 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { searchBusinesses, getCategories, getCities } from '@/lib/supabase';
-import type { Business, Category } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
+import type { Category } from '@/lib/supabase';
+
+interface PublicListing {
+  id: string;
+  business_name: string;
+  slug: string;
+  description_short: string | null;
+  description_long: string | null;
+  phone: string | null;
+  email: string | null;
+  website_url: string | null;
+  logo_url: string | null;
+  city: string | null;
+  state: string | null;
+  plan_name: string | null;
+  plan_key: string | null;
+  is_featured: boolean | null;
+  categories: { name: string; slug: string }[] | null;
+}
 
 export default function ListingsPage() {
-  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [businesses, setBusinesses] = useState<PublicListing[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [cities, setCities] = useState<{ city: string; state: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
+  // Using shared supabase client from lib/supabase.ts
 
   useEffect(() => {
     loadInitialData();
   }, []);
 
   async function loadInitialData() {
-    const [businessesData, categoriesData, citiesData] = await Promise.all([
-      searchBusinesses({}),
-      getCategories(),
-      getCities()
-    ]);
-    setBusinesses(businessesData);
-    setCategories(categoriesData);
-    setCities(citiesData);
+    try {
+      // Fetch from public_approved_listings view
+      const { data: listingsData, error: listingsError } = await supabase
+        .from('public_approved_listings')
+        .select('*')
+        .order('business_name', { ascending: true });
+
+      if (listingsError) {
+        console.error('Error fetching listings:', listingsError);
+      } else {
+        setBusinesses(listingsData || []);
+      }
+
+      // Fetch categories
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+
+      if (categoriesError) {
+        console.error('Error fetching categories:', categoriesError);
+      } else {
+        setCategories(categoriesData || []);
+      }
+
+      // Extract unique cities from listings
+      const uniqueCities = [...new Map((listingsData || [])
+        .filter((l: PublicListing) => l.city)
+        .map((l: PublicListing) => [`${l.city}, ${l.state}`, { city: l.city, state: l.state }]))
+        .values()];
+      setCities(uniqueCities as { city: string; state: string }[]);
+    } catch (err) {
+      console.error('Error loading data:', err);
+    }
     setLoading(false);
   }
 
   async function handleSearch() {
     setLoading(true);
-    const filters = {
-      query: searchQuery || undefined,
-      category: selectedCategory || undefined,
-      city: selectedCity || undefined
-    };
-    const results = await searchBusinesses(filters);
-    setBusinesses(results);
+    try {
+      let query = supabase
+        .from('public_approved_listings')
+        .select('*');
+
+      // Text search
+      if (searchQuery) {
+        query = query.or(`business_name.ilike.%${searchQuery}%,description_short.ilike.%${searchQuery}%,description_long.ilike.%${searchQuery}%`);
+      }
+
+      // Filter by city
+      if (selectedCity) {
+        query = query.eq('city', selectedCity);
+      }
+
+      const { data, error } = await query.order('business_name', { ascending: true });
+
+      if (error) {
+        console.error('Search error:', error);
+      } else {
+        // Filter by category client-side since it's in a JSON array
+        let results = data || [];
+        if (selectedCategory) {
+          results = results.filter((b: PublicListing) => 
+            b.categories?.some((c: { name: string }) => c.name === selectedCategory)
+          );
+        }
+        setBusinesses(results);
+      }
+    } catch (err) {
+      console.error('Search error:', err);
+    }
     setLoading(false);
   }
 
-  function getPlanBadgeColor(planName?: string) {
-    switch (planName) {
-      case 'VIP':
+  function getPlanBadgeColor(planKey?: string | null) {
+    switch (planKey) {
+      case 'vip':
         return 'bg-purple-100 text-purple-800';
-      case 'Premium':
+      case 'premium':
         return 'bg-blue-100 text-blue-800';
       default:
         return 'bg-gray-100 text-gray-600';
@@ -153,15 +224,15 @@ export default function ListingsPage() {
                           <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition">
                             {business.business_name}
                           </h3>
-                          {business.location && (
+                          {business.city && (
                             <p className="text-gray-500 text-sm">
-                              {business.location.city}, {business.location.state}
+                              {business.city}, {business.state}
                             </p>
                           )}
                         </div>
-                        {business.listing?.plan && (
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPlanBadgeColor(business.listing.plan.plan_name)}`}>
-                            {business.listing.plan.plan_name}
+                        {business.plan_name && (
+                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPlanBadgeColor(business.plan_key)}`}>
+                            {business.plan_name}
                           </span>
                         )}
                       </div>
@@ -174,12 +245,12 @@ export default function ListingsPage() {
                       {/* Categories */}
                       {business.categories && business.categories.length > 0 && (
                         <div className="flex flex-wrap gap-2 mb-4">
-                          {business.categories.slice(0, 3).map((bc, idx) => (
+                          {business.categories.slice(0, 3).map((cat, idx) => (
                             <span
                               key={idx}
                               className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded"
                             >
-                              {bc.category?.name}
+                              {cat.name}
                             </span>
                           ))}
                         </div>
