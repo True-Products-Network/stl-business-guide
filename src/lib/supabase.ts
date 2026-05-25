@@ -278,6 +278,22 @@ export async function getListingPlans() {
 // LISTING SUBMISSION FUNCTIONS
 // ============================================
 
+// Check if business name already exists
+export async function checkBusinessNameExists(businessName: string) {
+  const { data, error } = await supabase
+    .from('businesses')
+    .select('id, business_name')
+    .ilike('business_name', businessName.trim())
+    .limit(1);
+
+  if (error) {
+    console.error('Error checking business name:', error);
+    return { exists: false, error };
+  }
+
+  return { exists: data && data.length > 0, business: data?.[0] || null };
+}
+
 // Submit a new listing (Free, Premium, or VIP)
 export async function submitListing(formData: {
   business_name: string;
@@ -297,6 +313,19 @@ export async function submitListing(formData: {
   plan_id: string;
   user_id?: string | null;
 }) {
+  // Check if business name already exists
+  const { exists, business: existingBusiness } = await checkBusinessNameExists(formData.business_name);
+  
+  if (exists) {
+    return { 
+      success: false, 
+      error: { 
+        message: `A business listing for "${formData.business_name}" already exists. Please use a different business name or contact us if this is your business.`,
+        code: 'BUSINESS_NAME_EXISTS'
+      } 
+    };
+  }
+
   // Start a transaction by using RPC or multiple inserts
   
   // 1. Create the business (without owner_profile_id for public submissions)
