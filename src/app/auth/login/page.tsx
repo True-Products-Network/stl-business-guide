@@ -31,7 +31,9 @@ export default function LoginPage() {
     if (error) {
       // Check if the error is about email not confirmed
       if (error.message.includes("Email not confirmed") || error.message.includes("not confirmed")) {
-        setError("Please verify your email before logging in. Check your inbox for the verification link.");
+        setError("Your email is not verified. Click 'Resend verification email' below or check your spam folder.");
+      } else if (error.message.includes("Invalid login credentials")) {
+        setError("Invalid email or password. Please try again.");
       } else {
         setError(error.message);
       }

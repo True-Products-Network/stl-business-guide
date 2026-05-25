@@ -59,6 +59,21 @@ export default function SignupPage() {
       },
     });
 
+    // Manually create profile if user was created
+    if (data?.user) {
+      try {
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          email: formData.email,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email_verified: false,
+        });
+      } catch (profileError) {
+        console.error('Error creating profile:', profileError);
+      }
+    }
+
     if (error) {
       setError(error.message);
       setLoading(false);
