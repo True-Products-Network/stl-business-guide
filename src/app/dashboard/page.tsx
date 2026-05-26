@@ -547,22 +547,25 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  {/* Upgrade CTA for Free listings */}
-                  {canEditListing(business.status || business.plan_status) &&
-                    (!business.plan_tier ||
-                      business.plan_tier.toLowerCase() === "free") && (
+                  {/* Upgrade CTA for Free and Premium listings */}
+                  {canEditListing(business.status) &&
+                    business.plan_tier?.toLowerCase() !== "vip" && (
                     <div className="mt-4 p-4 bg-gradient-to-r from-[#54afe6]/10 to-[#bb7ce4]/10 rounded-lg">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-medium text-[#371a5b]">
-                            Upgrade to Premium
+                            {business.plan_tier?.toLowerCase() === "premium" 
+                              ? "Upgrade to VIP" 
+                              : "Upgrade to Premium"}
                           </p>
                           <p className="text-sm text-gray-600">
-                            Get priority placement, more categories, and photos
+                            {business.plan_tier?.toLowerCase() === "premium"
+                              ? "Get top placement, unlimited categories, and video"
+                              : "Get priority placement, more categories, and photos"}
                           </p>
                         </div>
                         <a
-                          href={`/pricing?upgrade=${business.id}`}
+                          href={`/pricing?upgrade=${business.id}&current=${business.plan_tier || 'free'}`}
                           className="inline-flex items-center bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-4 py-2 rounded-lg font-medium hover:opacity-90 transition text-sm"
                         >
                           <Crown className="w-4 h-4 mr-2" />
