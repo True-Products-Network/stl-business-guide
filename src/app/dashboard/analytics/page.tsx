@@ -72,35 +72,59 @@ export default function AnalyticsDashboardPage() {
 
   async function loadBusinesses(userId: string) {
     try {
-      // Get businesses linked to this user through businesses table
-      const { data, error } = await supabase
+      // First get businesses owned by this user
+      const { data: businessesData, error: businessesError } = await supabase
+        .from("businesses")
+        .select("id, business_name, slug")
+        .eq("owner_profile_id", userId);
+
+      if (businessesError) {
+        console.error("Error loading businesses:", businessesError);
+        setError("Failed to load your businesses");
+        setLoading(false);
+        return;
+      }
+
+      if (!businessesData || businessesData.length === 0) {
+        setBusinesses([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get business IDs
+      const businessIds = businessesData.map((b: any) => b.id);
+
+      // Now get the listings for these businesses
+      const { data: listingsData, error: listingsError } = await supabase
         .from("business_listings")
-        .select(`
-          id,
-          listing_status,
-          businesses:business_id (
-            business_name,
-            slug
-          )
-        `)
-        .eq("businesses.owner_profile_id", userId)
+        .select("id, business_id, listing_status")
+        .in("business_id", businessIds)
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error loading businesses:", error);
-        setError("Failed to load your businesses");
-      } else {
-        // Transform data to match expected format
-        const transformedData = (data || []).map((item: any) => ({
+      if (listingsError) {
+        console.error("Error loading listings:", listingsError);
+        setError("Failed to load your listings");
+        setLoading(false);
+        return;
+      }
+
+      // Create a map of business data
+      const businessMap = new Map(businessesData.map((b: any) => [b.id, b]));
+
+      // Transform data to match expected format
+      const transformedData = (listingsData || []).map((item: any) => {
+        const business = businessMap.get(item.business_id);
+        return {
           id: item.id,
-          business_name: item.businesses?.business_name || "Unnamed Business",
-          slug: item.businesses?.slug || "",
+          business_name: business?.business_name || "Unnamed Business",
+          slug: business?.slug || "",
           plan_tier: item.listing_status || "free",
-        }));
-        setBusinesses(transformedData);
-        if (transformedData.length > 0) {
-          setSelectedBusiness(transformedData[0].id);
-        }
+        };
+      });
+
+      setBusinesses(transformedData);
+      if (transformedData.length > 0) {
+        setSelectedBusiness(transformedData[0].id);
       }
     } catch (err) {
       console.error("Error:", err);
