@@ -146,15 +146,25 @@ export default function ImagesPage() {
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files;
-    if (!files || files.length === 0) return;
+    console.log("Files selected:", files);
+    if (!files || files.length === 0) {
+      console.log("No files selected");
+      return;
+    }
 
     const business = businesses.find(b => b.id === selectedBusiness);
-    if (!business) return;
+    console.log("Selected business:", business);
+    if (!business) {
+      setError("No business selected");
+      return;
+    }
 
     // Check image limit
     const currentImageCount = images.filter(img => img.image_type === 'gallery').length;
     const featuredCount = images.filter(img => img.image_type === 'featured').length;
     const totalCount = currentImageCount + featuredCount;
+
+    console.log("Image counts:", { currentImageCount, featuredCount, totalCount, max: business.max_images });
 
     if (business.plan_key === 'free') {
       setError("Free plans cannot upload images. Please upgrade to Premium or VIP.");
@@ -171,9 +181,13 @@ export default function ImagesPage() {
 
     try {
       for (const file of Array.from(files)) {
+        console.log("Uploading file:", file.name, file.size);
+        
         // Upload to storage
         const fileExt = file.name.split('.').pop();
         const fileName = `${selectedBusiness}/${Date.now()}.${fileExt}`;
+        
+        console.log("Uploading to:", fileName);
         
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('business-gallery')
@@ -181,32 +195,41 @@ export default function ImagesPage() {
 
         if (uploadError) {
           console.error("Upload error:", uploadError);
-          setError("Failed to upload image");
+          setError("Failed to upload image: " + uploadError.message);
           continue;
         }
+
+        console.log("Upload successful:", uploadData);
 
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from('business-gallery')
           .getPublicUrl(fileName);
 
+        console.log("Public URL:", publicUrl);
+
         // Determine if this should be featured (first image or no featured yet)
         const hasFeatured = images.some(img => img.image_type === 'featured');
         const imageType = !hasFeatured ? 'featured' : 'gallery';
 
+        console.log("Image type:", imageType, "hasFeatured:", hasFeatured);
+
         // Save to database
-        const { error: dbError } = await supabase
+        const { data: insertData, error: dbError } = await supabase
           .from("business_images")
           .insert({
             business_id: selectedBusiness,
             image_url: publicUrl,
             image_type: imageType,
             sort_order: images.length,
-          });
+          })
+          .select();
 
         if (dbError) {
           console.error("Database error:", dbError);
-          setError("Failed to save image");
+          setError("Failed to save image: " + dbError.message);
+        } else {
+          console.log("Image saved to database:", insertData);
         }
       }
 
@@ -214,7 +237,7 @@ export default function ImagesPage() {
       await loadImages(selectedBusiness);
     } catch (err) {
       console.error("Error:", err);
-      setError("An error occurred during upload");
+      setError("An error occurred during upload: " + (err as Error).message);
     } finally {
       setUploading(false);
     }
@@ -440,7 +463,7 @@ export default function ImagesPage() {
                           <label className="block text-sm font-medium text-gray-700 mb-2">
                             Upload Images
                           </label>
-                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#54afe6] transition">
+                          <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#54afe6] transition">
                             <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                             <p className="text-gray-600 mb-2">Click to upload or drag and drop</p>
                             <p className="text-sm text-gray-400">
