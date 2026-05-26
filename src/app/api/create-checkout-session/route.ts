@@ -17,6 +17,13 @@ export async function POST(request: Request) {
   try {
     const { plan_key, business_id, user_id, success_url, cancel_url } = await request.json();
 
+    console.log('Checkout session request:', { plan_key, business_id, user_id });
+    console.log('Environment variables:', {
+      hasStripeKey: !!process.env.STRIPE_SECRET_KEY,
+      hasPremiumPrice: !!process.env.STRIPE_PREMIUM_PRICE_ID,
+      hasVIPPrice: !!process.env.STRIPE_VIP_PRICE_ID,
+    });
+
     // Get plan details from database or environment
     let price_id: string;
     let plan_name: string;
@@ -28,9 +35,18 @@ export async function POST(request: Request) {
       price_id = process.env.STRIPE_VIP_PRICE_ID!;
       plan_name = 'VIP Listing';
     } else {
+      console.error('Invalid plan_key:', plan_key);
       return NextResponse.json(
         { error: 'Invalid plan' },
         { status: 400 }
+      );
+    }
+
+    if (!price_id) {
+      console.error('Missing price ID for plan:', plan_key);
+      return NextResponse.json(
+        { error: 'Price not configured' },
+        { status: 500 }
       );
     }
 
