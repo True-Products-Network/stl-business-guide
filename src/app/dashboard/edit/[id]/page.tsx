@@ -52,7 +52,7 @@ export default function EditBusinessPage() {
       return;
     }
     
-    await loadBusiness(businessId, user.email);
+    await loadBusiness(businessId, user.email || '');
   }
 
   async function loadBusiness(id: string, userEmail: string) {
