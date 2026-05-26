@@ -67,15 +67,20 @@ export default function DashboardPage() {
     }
 
     setUser(user);
-    await loadBusinesses(user.id);
+    await loadBusinesses(user.email);
   }
 
-  async function loadBusinesses(userId: string) {
+  async function loadBusinesses(userEmail: string) {
     try {
-      console.log("Loading businesses for user email:", user?.email);
+      console.log("Loading businesses for user email:", userEmail);
+      
+      if (!userEmail) {
+        setError("No email found for user");
+        setLoading(false);
+        return;
+      }
       
       // Query businesses that were submitted with this user's email
-      // Join with business_listings, business_locations, and categories
       const { data, error } = await supabase
         .from("businesses")
         .select(`
@@ -100,14 +105,18 @@ export default function DashboardPage() {
             category:categories!left(name)
           )
         `)
-        .eq("email", user?.email)
+        .eq("email", userEmail)
         .order("created_at", { ascending: false });
 
-      console.log("Query result:", { data, error });
+      console.log("Query result:", { data, error, count: data?.length });
 
       if (error) {
         console.error("Error loading businesses:", error);
-        setError("Failed to load your businesses");
+        setError("Failed to load your businesses: " + error.message);
+      } else if (!data || data.length === 0) {
+        console.log("No businesses found for email:", userEmail);
+        setBusinesses([]);
+        setFilteredBusinesses([]);
       } else {
         // Transform data to match Business interface
         const transformed = data?.map((item: any) => {
@@ -135,9 +144,9 @@ export default function DashboardPage() {
         setBusinesses(transformed || []);
         setFilteredBusinesses(transformed || []);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error:", err);
-      setError("An error occurred");
+      setError("An error occurred: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -322,6 +331,14 @@ export default function DashboardPage() {
             Account Settings
           </a>
         </div>
+
+        {/* Debug Info */}
+        {user?.email && (
+          <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg mb-8">
+            <p className="text-sm">Logged in as: {user.email}</p>
+            <p className="text-sm">Total listings found: {businesses.length}</p>
+          </div>
+        )}
 
         {/* Error Message */}
         {error && (
