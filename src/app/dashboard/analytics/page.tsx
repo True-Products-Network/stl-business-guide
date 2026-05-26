@@ -18,6 +18,10 @@ import {
   Loader2,
   AlertCircle,
   ChevronDown,
+  Facebook,
+  Instagram,
+  Linkedin,
+  Youtube,
 } from "lucide-react";
 
 interface AnalyticsData {
@@ -27,6 +31,10 @@ interface AnalyticsData {
   phone_clicks: number;
   email_clicks: number;
   direction_clicks: number;
+  facebook_clicks?: number;
+  instagram_clicks?: number;
+  linkedin_clicks?: number;
+  youtube_clicks?: number;
 }
 
 interface Business {
@@ -187,6 +195,10 @@ export default function AnalyticsDashboardPage() {
       phone_clicks: acc.phone_clicks + (day.phone_clicks || 0),
       email_clicks: acc.email_clicks + (day.email_clicks || 0),
       direction_clicks: acc.direction_clicks + (day.direction_clicks || 0),
+      facebook_clicks: acc.facebook_clicks + (day.facebook_clicks || 0),
+      instagram_clicks: acc.instagram_clicks + (day.instagram_clicks || 0),
+      linkedin_clicks: acc.linkedin_clicks + (day.linkedin_clicks || 0),
+      youtube_clicks: acc.youtube_clicks + (day.youtube_clicks || 0),
     }),
     {
       profile_views: 0,
@@ -194,6 +206,10 @@ export default function AnalyticsDashboardPage() {
       phone_clicks: 0,
       email_clicks: 0,
       direction_clicks: 0,
+      facebook_clicks: 0,
+      instagram_clicks: 0,
+      linkedin_clicks: 0,
+      youtube_clicks: 0,
     }
   );
 
@@ -201,7 +217,11 @@ export default function AnalyticsDashboardPage() {
     totals.website_clicks +
     totals.phone_clicks +
     totals.email_clicks +
-    totals.direction_clicks;
+    totals.direction_clicks +
+    totals.facebook_clicks +
+    totals.instagram_clicks +
+    totals.linkedin_clicks +
+    totals.youtube_clicks;
 
   if (loading) {
     return (
@@ -449,6 +469,82 @@ export default function AnalyticsDashboardPage() {
                     </div>
                     <p className="text-2xl font-bold text-[#371a5b]">
                       {totals.direction_clicks}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Media Breakdown */}
+              <div className="bg-white rounded-xl shadow-md p-6">
+                <h2 className="text-xl font-bold text-[#371a5b] mb-6">
+                  Social Media Clicks
+                </h2>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="p-2 bg-blue-100 rounded-lg mr-3">
+                        <Facebook className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Facebook</p>
+                        <p className="text-sm text-gray-500">
+                          Profile visits
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-2xl font-bold text-[#371a5b]">
+                      {totals.facebook_clicks}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="p-2 bg-pink-100 rounded-lg mr-3">
+                        <Instagram className="w-5 h-5 text-pink-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">Instagram</p>
+                        <p className="text-sm text-gray-500">
+                          Profile visits
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-2xl font-bold text-[#371a5b]">
+                      {totals.instagram_clicks}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="p-2 bg-blue-100 rounded-lg mr-3">
+                        <Linkedin className="w-5 h-5 text-blue-700" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">LinkedIn</p>
+                        <p className="text-sm text-gray-500">
+                          Profile visits
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-2xl font-bold text-[#371a5b]">
+                      {totals.linkedin_clicks}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center">
+                      <div className="p-2 bg-red-100 rounded-lg mr-3">
+                        <Youtube className="w-5 h-5 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">YouTube</p>
+                        <p className="text-sm text-gray-500">
+                          Channel visits
+                        </p>
+                      </div>
+                    </div>
+                    <p className="text-2xl font-bold text-[#371a5b]">
+                      {totals.youtube_clicks}
                     </p>
                   </div>
                 </div>
