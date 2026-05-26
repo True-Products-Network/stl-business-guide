@@ -283,7 +283,7 @@ function SearchResults() {
                       </p>
 
                       {/* Categories */}
-                      {(business.categories?.length > 0 || business.category) && (
+                      {((business.categories && business.categories.length > 0) || business.category) && (
                         <div className="flex flex-wrap gap-2 mb-4">
                           {business.category && (
                             <span className="px-2 py-1 bg-[#54afe6]/10 text-[#54afe6] text-xs rounded-full font-medium">
