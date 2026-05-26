@@ -72,20 +72,34 @@ export default function AnalyticsDashboardPage() {
 
   async function loadBusinesses(userId: string) {
     try {
-      // Get businesses linked to this user
+      // Get businesses linked to this user through businesses table
       const { data, error } = await supabase
         .from("business_listings")
-        .select("id, business_name, slug, plan_tier")
-        .eq("email", user?.email)
+        .select(`
+          id,
+          listing_status,
+          businesses:business_id (
+            business_name,
+            slug
+          )
+        `)
+        .eq("businesses.owner_profile_id", userId)
         .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Error loading businesses:", error);
         setError("Failed to load your businesses");
       } else {
-        setBusinesses(data || []);
-        if (data && data.length > 0) {
-          setSelectedBusiness(data[0].id);
+        // Transform data to match expected format
+        const transformedData = (data || []).map((item: any) => ({
+          id: item.id,
+          business_name: item.businesses?.business_name || "Unnamed Business",
+          slug: item.businesses?.slug || "",
+          plan_tier: item.listing_status || "free",
+        }));
+        setBusinesses(transformedData);
+        if (transformedData.length > 0) {
+          setSelectedBusiness(transformedData[0].id);
         }
       }
     } catch (err) {
