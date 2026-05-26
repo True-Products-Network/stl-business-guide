@@ -286,19 +286,24 @@ function SearchResults() {
                       {/* Categories */}
                       {((business.categories && business.categories.length > 0) || business.category) && (
                         <div className="flex flex-wrap gap-2 mb-4">
-                          {business.category && (
-                            <span className="px-2 py-1 bg-[#54afe6]/10 text-[#54afe6] text-xs rounded-full font-medium">
-                              {business.category}
-                            </span>
+                          {business.categories && business.categories.length > 0 ? (
+                            // Use categories array if available
+                            business.categories.slice(0, 3).map((cat: any, idx: number) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-1 bg-[#54afe6]/10 text-[#54afe6] text-xs rounded-full font-medium"
+                              >
+                                {typeof cat === 'string' ? cat : cat.name}
+                              </span>
+                            ))
+                          ) : (
+                            // Fallback to single category field
+                            business.category && (
+                              <span className="px-2 py-1 bg-[#54afe6]/10 text-[#54afe6] text-xs rounded-full font-medium">
+                                {business.category}
+                              </span>
+                            )
                           )}
-                          {business.categories?.slice(0, 2).map((cat: any, idx: number) => (
-                            <span
-                              key={idx}
-                              className="px-2 py-1 bg-[#54afe6]/10 text-[#54afe6] text-xs rounded-full font-medium"
-                            >
-                              {typeof cat === 'string' ? cat : cat.name}
-                            </span>
-                          ))}
                         </div>
                       )}
 
