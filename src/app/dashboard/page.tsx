@@ -17,6 +17,10 @@ import {
   Loader2,
   AlertCircle,
   BarChart3,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Eye,
 } from "lucide-react";
 
 interface Business {
@@ -26,6 +30,7 @@ interface Business {
   description_short: string | null;
   plan_tier: string;
   plan_status: string;
+  status: string;
   is_featured: boolean;
   logo_url: string | null;
   created_at: string;
@@ -38,12 +43,18 @@ export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending" | "rejected">("all");
 
   useEffect(() => {
     checkUser();
   }, []);
+
+  useEffect(() => {
+    filterBusinesses();
+  }, [statusFilter, businesses]);
 
   async function checkUser() {
     const {
@@ -61,8 +72,7 @@ export default function DashboardPage() {
 
   async function loadBusinesses(userId: string) {
     try {
-      // For now, query business_listings directly
-      // In future, use the owner_businesses view when profiles table exists
+      // Query all business_listings for this user (approved, pending, rejected)
       const { data, error } = await supabase
         .from("business_listings")
         .select(
@@ -73,6 +83,7 @@ export default function DashboardPage() {
           description_short,
           plan_tier,
           plan_status,
+          status,
           is_featured,
           logo_url,
           created_at,
@@ -95,6 +106,7 @@ export default function DashboardPage() {
           category_name: item.category?.name || null,
         }));
         setBusinesses(transformed || []);
+        setFilteredBusinesses(transformed || []);
       }
     } catch (err) {
       console.error("Error:", err);
@@ -102,6 +114,53 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function filterBusinesses() {
+    if (statusFilter === "all") {
+      setFilteredBusinesses(businesses);
+    } else {
+      setFilteredBusinesses(
+        businesses.filter((b) => b.status === statusFilter || b.plan_status === statusFilter)
+      );
+    }
+  }
+
+  function getStatusBadge(status: string) {
+    switch (status) {
+      case "active":
+      case "approved":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Active
+          </span>
+        );
+      case "pending":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+            <Clock className="w-3 h-3 mr-1" />
+            Pending Approval
+          </span>
+        );
+      case "rejected":
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            <XCircle className="w-3 h-3 mr-1" />
+            Rejected
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            {status}
+          </span>
+        );
+    }
+  }
+
+  function canEditListing(status: string) {
+    return status === "active" || status === "approved";
   }
 
   async function handleLogout() {
@@ -120,6 +179,13 @@ export default function DashboardPage() {
       </main>
     );
   }
+
+  const statusCounts = {
+    all: businesses.length,
+    active: businesses.filter((b) => b.status === "active" || b.status === "approved").length,
+    pending: businesses.filter((b) => b.status === "pending").length,
+    rejected: businesses.filter((b) => b.status === "rejected").length,
+  };
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -153,13 +219,13 @@ export default function DashboardPage() {
       {/* Dashboard Content */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Quick Stats */}
-        <div className="grid md:grid-cols-3 gap-6 mb-12">
+        <div className="grid md:grid-cols-4 gap-6 mb-12">
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Your Listings</p>
+                <p className="text-gray-500 text-sm">Total Listings</p>
                 <p className="text-3xl font-bold text-[#371a5b]">
-                  {businesses.length}
+                  {statusCounts.all}
                 </p>
               </div>
               <Building2 className="w-10 h-10 text-[#54afe6]" />
@@ -169,12 +235,24 @@ export default function DashboardPage() {
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">Active Plans</p>
-                <p className="text-3xl font-bold text-[#371a5b]">
-                  {businesses.filter((b) => b.plan_status === "active").length}
+                <p className="text-gray-500 text-sm">Active</p>
+                <p className="text-3xl font-bold text-green-600">
+                  {statusCounts.active}
                 </p>
               </div>
-              <Crown className="w-10 h-10 text-[#bb7ce4]" />
+              <CheckCircle className="w-10 h-10 text-green-500" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-gray-500 text-sm">Pending</p>
+                <p className="text-3xl font-bold text-yellow-600">
+                  {statusCounts.pending}
+                </p>
+              </div>
+              <Clock className="w-10 h-10 text-yellow-500" />
             </div>
           </div>
 
@@ -226,12 +304,37 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Businesses List */}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-2xl font-bold text-[#371a5b]">Your Businesses</h2>
+        {/* Status Filter Tabs */}
+        {businesses.length > 0 && (
+          <div className="bg-white rounded-t-xl shadow-md border-b border-gray-200">
+            <div className="flex flex-wrap">
+              {[
+                { key: "all", label: "All Listings", count: statusCounts.all },
+                { key: "active", label: "Active", count: statusCounts.active },
+                { key: "pending", label: "Pending", count: statusCounts.pending },
+                { key: "rejected", label: "Rejected", count: statusCounts.rejected },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setStatusFilter(tab.key as any)}
+                  className={`px-6 py-4 font-medium text-sm transition border-b-2 ${
+                    statusFilter === tab.key
+                      ? "border-[#371a5b] text-[#371a5b] bg-[#371a5b]/5"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                  }`}
+                >
+                  {tab.label}
+                  <span className="ml-2 bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
+        )}
 
+        {/* Businesses List */}
+        <div className="bg-white rounded-b-xl shadow-lg overflow-hidden">
           {businesses.length === 0 ? (
             <div className="p-12 text-center">
               <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -249,9 +352,15 @@ export default function DashboardPage() {
                 Submit Your First Listing
               </a>
             </div>
+          ) : filteredBusinesses.length === 0 ? (
+            <div className="p-12 text-center">
+              <p className="text-gray-500">
+                No {statusFilter} listings found.
+              </p>
+            </div>
           ) : (
             <div className="divide-y divide-gray-200">
-              {businesses.map((business) => (
+              {filteredBusinesses.map((business) => (
                 <div
                   key={business.id}
                   className="p-6 hover:bg-gray-50 transition"
@@ -280,21 +389,7 @@ export default function DashboardPage() {
                           {business.location_name} • {business.category_name}
                         </p>
                         <div className="flex items-center space-x-3 mt-2">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              business.plan_status === "active"
-                                ? "bg-green-100 text-green-800"
-                                : business.plan_status === "pending"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {business.plan_status === "active"
-                              ? "Active"
-                              : business.plan_status === "pending"
-                              ? "Pending Approval"
-                              : business.plan_status}
-                          </span>
+                          {getStatusBadge(business.status || business.plan_status)}
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             {business.plan_tier || "Free"}
                           </span>
@@ -305,6 +400,18 @@ export default function DashboardPage() {
                             </span>
                           )}
                         </div>
+                        
+                        {/* Status Message */}
+                        {business.status === "pending" && (
+                          <p className="text-yellow-600 text-sm mt-2">
+                            Your listing is under review. You&apos;ll be notified once it&apos;s approved.
+                          </p>
+                        )}
+                        {business.status === "rejected" && (
+                          <p className="text-red-600 text-sm mt-2">
+                            This listing was not approved. Contact support for more information.
+                          </p>
+                        )}
                       </div>
                     </div>
 
@@ -317,21 +424,31 @@ export default function DashboardPage() {
                         className="p-2 text-gray-400 hover:text-[#54afe6] transition"
                         title="View Listing"
                       >
-                        <ExternalLink className="w-5 h-5" />
+                        <Eye className="w-5 h-5" />
                       </a>
-                      <a
-                        href={`/dashboard/edit/${business.id}`}
-                        className="p-2 text-gray-400 hover:text-[#371a5b] transition"
-                        title="Edit Listing"
-                      >
-                        <Edit className="w-5 h-5" />
-                      </a>
+                      {canEditListing(business.status || business.plan_status) ? (
+                        <a
+                          href={`/dashboard/edit/${business.id}`}
+                          className="p-2 text-gray-400 hover:text-[#371a5b] transition"
+                          title="Edit Listing"
+                        >
+                          <Edit className="w-5 h-5" />
+                        </a>
+                      ) : (
+                        <span
+                          className="p-2 text-gray-300 cursor-not-allowed"
+                          title="Editing disabled - listing not approved"
+                        >
+                          <Edit className="w-5 h-5" />
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   {/* Upgrade CTA for Free listings */}
-                  {(!business.plan_tier ||
-                    business.plan_tier.toLowerCase() === "free") && (
+                  {canEditListing(business.status || business.plan_status) &&
+                    (!business.plan_tier ||
+                      business.plan_tier.toLowerCase() === "free") && (
                     <div className="mt-4 p-4 bg-gradient-to-r from-[#54afe6]/10 to-[#bb7ce4]/10 rounded-lg">
                       <div className="flex items-center justify-between">
                         <div>
