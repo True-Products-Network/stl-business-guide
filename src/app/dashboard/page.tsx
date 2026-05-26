@@ -204,8 +204,9 @@ export default function DashboardPage() {
     if (statusFilter === "all") {
       setFilteredBusinesses(businesses);
     } else {
+      // Only filter by the main status column, not plan_status
       setFilteredBusinesses(
-        businesses.filter((b) => b.status === statusFilter || b.plan_status === statusFilter)
+        businesses.filter((b) => b.status === statusFilter)
       );
     }
   }
@@ -481,7 +482,7 @@ export default function DashboardPage() {
                           {business.location_name} • {business.category_name}
                         </p>
                         <div className="flex items-center space-x-3 mt-2">
-                          {getStatusBadge(business.status || business.plan_status)}
+                          {getStatusBadge(business.status)}
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             {business.plan_tier || "Free"}
                           </span>
@@ -509,16 +510,25 @@ export default function DashboardPage() {
 
                     {/* Actions */}
                     <div className="flex items-center space-x-2">
-                      <a
-                        href={`/listing/${business.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 text-gray-400 hover:text-[#54afe6] transition"
-                        title="View Listing"
-                      >
-                        <Eye className="w-5 h-5" />
-                      </a>
-                      {canEditListing(business.status || business.plan_status) ? (
+                      {canEditListing(business.status) ? (
+                        <a
+                          href={`/listing/${business.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 text-gray-400 hover:text-[#54afe6] transition"
+                          title="View Listing"
+                        >
+                          <Eye className="w-5 h-5" />
+                        </a>
+                      ) : (
+                        <span
+                          className="p-2 text-gray-300 cursor-not-allowed"
+                          title="View disabled - listing not approved"
+                        >
+                          <Eye className="w-5 h-5" />
+                        </span>
+                      )}
+                      {canEditListing(business.status) ? (
                         <a
                           href={`/dashboard/edit/${business.id}`}
                           className="p-2 text-gray-400 hover:text-[#371a5b] transition"
