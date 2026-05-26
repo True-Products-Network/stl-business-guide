@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { supabase } from '@/lib/supabase';
+import { Star, MapPin, Phone, Mail, Globe, Crown, BadgeCheck, ExternalLink } from 'lucide-react';
 import type { Category } from '@/lib/supabase';
 
 interface PublicListing {
@@ -23,17 +25,22 @@ interface PublicListing {
   plan_key: string | null;
   is_featured: boolean | null;
   categories: { name: string; slug: string }[] | null;
+  google_rating?: number | null;
+  google_reviews_count?: number | null;
 }
 
-export default function ListingsPage() {
+function ListingsContent() {
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get('q') || '';
+  const initialCategory = searchParams.get('category') || '';
+
   const [businesses, setBusinesses] = useState<PublicListing[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [cities, setCities] = useState<{ city: string; state: string }[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedCity, setSelectedCity] = useState('');
-  // Using shared supabase client from lib/supabase.ts
 
   useEffect(() => {
     loadInitialData();
@@ -50,7 +57,29 @@ export default function ListingsPage() {
       if (listingsError) {
         console.error('Error fetching listings:', listingsError);
       } else {
-        setBusinesses(listingsData || []);
+        let results = listingsData || [];
+        
+        // Apply initial query filter
+        if (initialQuery) {
+          results = results.filter((b: PublicListing) =>
+            b.business_name?.toLowerCase().includes(initialQuery.toLowerCase()) ||
+            b.description_short?.toLowerCase().includes(initialQuery.toLowerCase()) ||
+            b.categories?.some((c: { name: string }) => 
+              c.name.toLowerCase().includes(initialQuery.toLowerCase())
+            )
+          );
+        }
+
+        // Apply initial category filter
+        if (initialCategory) {
+          results = results.filter((b: PublicListing) =>
+            b.categories?.some((c: { name: string; slug: string }) => 
+              c.name === initialCategory || c.slug === initialCategory
+            )
+          );
+        }
+
+        setBusinesses(results);
       }
 
       // Fetch categories
@@ -103,7 +132,7 @@ export default function ListingsPage() {
         // Filter by category client-side since it's in a JSON array
         let results = data || [];
         if (selectedCategory) {
-          results = results.filter((b: PublicListing) => 
+          results = results.filter((b: PublicListing) =>
             b.categories?.some((c: { name: string }) => c.name === selectedCategory)
           );
         }
@@ -115,15 +144,51 @@ export default function ListingsPage() {
     setLoading(false);
   }
 
-  function getPlanBadgeColor(planKey?: string | null) {
-    switch (planKey) {
-      case 'vip':
-        return 'bg-purple-100 text-purple-800';
-      case 'premium':
-        return 'bg-blue-100 text-blue-800';
-      default:
-        return 'bg-gray-100 text-gray-600';
+  function handleCategoryClick(categoryName: string) {
+    setSelectedCategory(categoryName);
+    setLoading(true);
+    
+    // Filter immediately
+    supabase
+      .from('public_approved_listings')
+      .select('*')
+      .order('business_name', { ascending: true })
+      .then(({ data }) => {
+        let results = data || [];
+        results = results.filter((b: PublicListing) =>
+          b.categories?.some((c: { name: string }) => c.name === categoryName)
+        );
+        setBusinesses(results);
+        setLoading(false);
+      });
+  }
+
+  function clearFilters() {
+    setSearchQuery('');
+    setSelectedCategory('');
+    setSelectedCity('');
+    loadInitialData();
+  }
+
+  function getPlanBadge(planKey?: string | null) {
+    if (planKey === 'vip') {
+      return (
+        <span className="flex items-center px-2 py-1 bg-gradient-to-r from-[#ffc107] to-[#f68712] text-white text-xs font-bold rounded-full">
+          <Crown className="w-3 h-3 mr-1" /> VIP
+        </span>
+      );
+    } else if (planKey === 'premium') {
+      return (
+        <span className="flex items-center px-2 py-1 bg-gradient-to-r from-[#54afe6] to-[#bb7ce4] text-white text-xs font-bold rounded-full">
+          <BadgeCheck className="w-3 h-3 mr-1" /> Premium
+        </span>
+      );
     }
+    return (
+      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+        Free
+      </span>
+    );
   }
 
   return (
@@ -136,10 +201,37 @@ export default function ListingsPage() {
           <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
             Business Directory
           </h1>
-          <p className="text-xl text-white/80 max-w-2xl mx-auto">
+          <p className="text-xl text-white/80 max-w-2xl mx-auto mb-8">
             Discover the best local businesses in the St. Louis area. 
             From restaurants to home services, find exactly what you need.
           </p>
+
+          {/* Category Buttons */}
+          <div className="flex flex-wrap gap-2 justify-center">
+            <button
+              onClick={clearFilters}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                selectedCategory === '' 
+                  ? 'bg-white text-[#371a5b]' 
+                  : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
+            >
+              All
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => handleCategoryClick(cat.name)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                  selectedCategory === cat.name 
+                    ? 'bg-white text-[#371a5b]' 
+                    : 'bg-white/20 text-white hover:bg-white/30'
+                }`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -195,20 +287,27 @@ export default function ListingsPage() {
           </div>
         ) : (
           <>
-            <div className="mb-4 text-gray-600">
-              Showing {businesses.length} business{businesses.length !== 1 ? 'es' : ''}
+            <div className="mb-6 flex items-center justify-between">
+              <p className="text-gray-600">
+                Found <span className="font-semibold">{businesses.length}</span> business{businesses.length !== 1 ? 'es' : ''}
+                {searchQuery && ` matching "${searchQuery}"`}
+                {selectedCategory && ` in ${selectedCategory}`}
+              </p>
+              {(searchQuery || selectedCategory || selectedCity) && (
+                <button
+                  onClick={clearFilters}
+                  className="text-[#54afe6] hover:text-[#371a5b] font-medium text-sm underline"
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
 
             {businesses.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 text-lg">No businesses found matching your criteria.</p>
                 <button
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedCategory('');
-                    setSelectedCity('');
-                    handleSearch();
-                  }}
+                  onClick={clearFilters}
                   className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
                 >
                   Clear filters
@@ -217,30 +316,57 @@ export default function ListingsPage() {
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {businesses.map((business) => (
-                  <Link
+                  <div
                     key={business.id}
-                    href={`/listing/${business.slug}`}
                     className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden group"
                   >
+                    {/* Featured Image */}
+                    <div className="h-48 bg-gradient-to-br from-[#371a5b] to-[#bb7ce4] relative">
+                      {business.logo_url ? (
+                        <img
+                          src={business.logo_url}
+                          alt={business.business_name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-white/30 text-6xl font-bold">
+                            {business.business_name?.[0]?.toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      {/* Plan Badge */}
+                      <div className="absolute top-4 right-4">
+                        {getPlanBadge(business.plan_key)}
+                      </div>
+                    </div>
+
                     <div className="p-6">
                       {/* Header */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition">
+                      <div className="mb-4">
+                        <Link href={`/listing/${business.slug}`}>
+                          <h3 className="text-xl font-bold text-[#371a5b] group-hover:text-[#54afe6] transition">
                             {business.business_name}
                           </h3>
-                          {business.city && (
-                            <p className="text-gray-500 text-sm">
-                              {business.city}, {business.state}
-                            </p>
-                          )}
-                        </div>
-                        {business.plan_name && (
-                          <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getPlanBadgeColor(business.plan_key)}`}>
-                            {business.plan_name}
-                          </span>
+                        </Link>
+                        {(business.city || business.state) && (
+                          <div className="flex items-center text-gray-500 text-sm mt-1">
+                            <MapPin className="w-4 h-4 mr-1" />
+                            {business.city}, {business.state}
+                          </div>
                         )}
                       </div>
+
+                      {/* Google Reviews */}
+                      {(business.google_rating || business.google_reviews_count) && (
+                        <div className="flex items-center mb-3">
+                          <Star className="w-4 h-4 text-[#ffc107] fill-current" />
+                          <span className="font-semibold ml-1">{business.google_rating || '4.5'}</span>
+                          <span className="text-gray-500 text-sm ml-1">
+                            ({business.google_reviews_count || '0'} reviews)
+                          </span>
+                        </div>
+                      )}
 
                       {/* Description */}
                       <p className="text-gray-600 text-sm mb-4 line-clamp-2">
@@ -253,7 +379,7 @@ export default function ListingsPage() {
                           {business.categories.slice(0, 3).map((cat, idx) => (
                             <span
                               key={idx}
-                              className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded"
+                              className="px-2 py-1 bg-[#54afe6]/10 text-[#54afe6] text-xs rounded-full font-medium"
                             >
                               {cat.name}
                             </span>
@@ -261,28 +387,51 @@ export default function ListingsPage() {
                         </div>
                       )}
 
-                      {/* Contact */}
-                      <div className="space-y-1 text-sm">
+                      {/* Contact Info */}
+                      <div className="space-y-2 text-sm">
                         {business.phone && (
-                          <p className="text-gray-600">
-                            <span className="font-medium">Phone:</span> {business.phone}
-                          </p>
+                          <div className="flex items-center text-gray-600">
+                            <Phone className="w-4 h-4 mr-2 text-[#54afe6]" />
+                            <a href={`tel:${business.phone}`} className="hover:text-[#371a5b]">
+                              {business.phone}
+                            </a>
+                          </div>
+                        )}
+                        {business.email && (
+                          <div className="flex items-center text-gray-600">
+                            <Mail className="w-4 h-4 mr-2 text-[#54afe6]" />
+                            <a href={`mailto:${business.email}`} className="hover:text-[#371a5b] truncate">
+                              {business.email}
+                            </a>
+                          </div>
                         )}
                         {business.website_url && (
-                          <p className="text-blue-600 truncate">
-                            {business.website_url}
-                          </p>
+                          <div className="flex items-center text-gray-600">
+                            <Globe className="w-4 h-4 mr-2 text-[#54afe6]" />
+                            <a 
+                              href={business.website_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-[#54afe6] hover:text-[#371a5b] truncate flex items-center"
+                            >
+                              Visit Website
+                              <ExternalLink className="w-3 h-3 ml-1" />
+                            </a>
+                          </div>
                         )}
                       </div>
 
                       {/* CTA */}
                       <div className="mt-4 pt-4 border-t">
-                        <span className="text-blue-600 font-medium group-hover:underline">
-                          View Listing →
-                        </span>
+                        <Link
+                          href={`/listing/${business.slug}`}
+                          className="block text-center bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white py-2 rounded-lg font-medium hover:opacity-90 transition"
+                        >
+                          View Listing
+                        </Link>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}
@@ -292,5 +441,21 @@ export default function ListingsPage() {
 
       <Footer />
     </main>
+  );
+}
+
+export default function ListingsPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+        <Footer />
+      </main>
+    }>
+      <ListingsContent />
+    </Suspense>
   );
 }

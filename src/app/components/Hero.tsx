@@ -29,9 +29,8 @@ export default function Hero() {
       if (location.trim()) {
         const [city, state] = location.split(",").map(s => s.trim());
         if (city) params.set("city", city);
-        if (state) params.set("state", state);
       }
-      router.push(`/search?${params.toString()}`);
+      router.push(`/listings?${params.toString()}`);
     }
   };
 
@@ -108,7 +107,7 @@ export default function Hero() {
                   key={category}
                   onClick={() => {
                     setSearchQuery(category);
-                    router.push(`/search?q=${encodeURIComponent(category)}`);
+                    router.push(`/listings?q=${encodeURIComponent(category)}`);
                   }}
                   className="px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-full text-sm font-medium hover:bg-white/20 transition-colors border border-white/20"
                 >

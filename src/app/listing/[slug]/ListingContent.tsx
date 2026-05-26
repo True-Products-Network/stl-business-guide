@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import {
@@ -11,6 +11,9 @@ import {
   Mail,
   Crown,
   BadgeCheck,
+  ExternalLink,
+  ArrowLeft,
+  Image as ImageIcon,
 } from "lucide-react";
 
 interface ListingContentProps {
@@ -18,11 +21,12 @@ interface ListingContentProps {
 }
 
 export default function ListingContent({ business }: ListingContentProps) {
-  const planKey = business.plan_key || "premium";
+  const planKey = business.plan_key || "free";
   const isVip = planKey === "vip";
   const isPremium = planKey === "premium";
   const mainCategory = business.categories?.[0]?.name || "Business";
   const otherCategories = business.categories?.slice(1) || [];
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   // Track page view on mount
   useEffect(() => {
@@ -44,10 +48,14 @@ export default function ListingContent({ business }: ListingContentProps) {
   }
 
   // Handle click tracking
-  function handleClick(metric: string, href: string) {
+  function handleClick(metric: string) {
     trackAnalytics(metric);
-    // Allow default navigation
   }
+
+  // Mock gallery images - in production, these would come from business_images table
+  const galleryImages = business.logo_url 
+    ? [business.logo_url, business.logo_url, business.logo_url] 
+    : [];
 
   return (
     <>
@@ -56,25 +64,27 @@ export default function ListingContent({ business }: ListingContentProps) {
         className={`${
           isVip
             ? "bg-gradient-to-r from-[#ffc107] to-[#f68712]"
-            : "bg-gradient-to-r from-[#54afe6] to-[#bb7ce4]"
+            : isPremium
+            ? "bg-gradient-to-r from-[#54afe6] to-[#bb7ce4]"
+            : "bg-gradient-to-r from-gray-500 to-gray-600"
         } text-white py-3`}
       >
         <div className="max-w-7xl mx-auto px-4 text-center">
           <div className="flex items-center justify-center space-x-2">
             {isVip ? (
               <Crown className="w-5 h-5" />
-            ) : (
+            ) : isPremium ? (
               <BadgeCheck className="w-5 h-5" />
-            )}
+            ) : null}
             <span className="font-bold">
-              {isVip ? "VIP" : "Premium"} Business Listing
+              {isVip ? "VIP" : isPremium ? "Premium" : "Free"} Business Listing
             </span>
           </div>
         </div>
       </div>
 
-      {/* Hero Section with Image */}
-      <div className="relative h-64 md:h-80 bg-gradient-to-br from-[#371a5b] to-[#bb7ce4]">
+      {/* Hero Section with Featured Image */}
+      <div className="relative h-80 md:h-96 bg-gradient-to-br from-[#371a5b] to-[#bb7ce4]">
         {business.logo_url ? (
           <img
             src={business.logo_url}
@@ -83,30 +93,41 @@ export default function ListingContent({ business }: ListingContentProps) {
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-white/30 text-8xl font-bold">
+            <span className="text-white/30 text-9xl font-bold">
               {business.business_name[0]}
             </span>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+
+        {/* Back Link */}
+        <div className="absolute top-4 left-4 z-10">
+          <Link
+            href="/listings"
+            className="inline-flex items-center text-white/80 hover:text-white bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full transition"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Directory
+          </Link>
+        </div>
 
         {/* Business Name Overlay */}
         <div className="absolute bottom-0 left-0 right-0">
-          <div className="max-w-7xl mx-auto px-4 py-6">
-            <span className="text-white/80 text-sm font-medium mb-2 block">
+          <div className="max-w-7xl mx-auto px-4 py-8">
+            <span className="inline-block bg-white/20 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium mb-3">
               {mainCategory}
             </span>
-            <h1 className="text-3xl md:text-5xl font-bold text-white mb-2">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-3">
               {business.business_name}
             </h1>
 
             {/* Google Rating */}
             <div className="flex items-center">
-              <Star className="w-5 h-5 text-[#ffc107] fill-current" />
-              <span className="text-white font-semibold ml-1">
+              <Star className="w-6 h-6 text-[#ffc107] fill-current" />
+              <span className="text-white font-semibold ml-2 text-xl">
                 {business.google_rating || "4.5"}
               </span>
-              <span className="text-white/70 ml-1">
+              <span className="text-white/70 ml-2">
                 ({business.google_reviews_count || "0"} reviews)
               </span>
             </div>
@@ -118,10 +139,14 @@ export default function ListingContent({ business }: ListingContentProps) {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Short Description */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-xl font-bold text-[#371a5b] mb-4">About</h2>
-              {business.description_short ? (
+            {/* Full Description */}
+            <div className="bg-white rounded-xl shadow-md p-8">
+              <h2 className="text-2xl font-bold text-[#371a5b] mb-4">About</h2>
+              {business.description_long ? (
+                <div className="text-gray-600 leading-relaxed whitespace-pre-line">
+                  {business.description_long}
+                </div>
+              ) : business.description_short ? (
                 <p className="text-gray-600 leading-relaxed">
                   {business.description_short}
                 </p>
@@ -130,25 +155,35 @@ export default function ListingContent({ business }: ListingContentProps) {
               )}
             </div>
 
-            {/* Long Description if available */}
-            {business.description_long && (
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-xl font-bold text-[#371a5b] mb-4">
-                  Details
-                </h2>
-                <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-                  {business.description_long}
-                </p>
+            {/* Photo Gallery */}
+            {galleryImages.length > 0 && (
+              <div className="bg-white rounded-xl shadow-md p-8">
+                <h2 className="text-2xl font-bold text-[#371a5b] mb-4">Photos</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  {galleryImages.map((img: string, idx: number) => (
+                    <div
+                      key={idx}
+                      className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition"
+                      onClick={() => setSelectedImage(img)}
+                    >
+                      <img
+                        src={img}
+                        alt={`${business.business_name} photo ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
             {/* Categories */}
             {business.categories && business.categories.length > 0 && (
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-xl font-bold text-[#371a5b] mb-4">
+              <div className="bg-white rounded-xl shadow-md p-8">
+                <h2 className="text-2xl font-bold text-[#371a5b] mb-4">
                   Categories
                 </h2>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-3">
                   {business.categories.map(
                     (cat: { name: string }, idx: number) => (
                       <span
@@ -164,8 +199,8 @@ export default function ListingContent({ business }: ListingContentProps) {
             )}
 
             {/* Contact Form */}
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-xl font-bold text-[#371a5b] mb-4">
+            <div className="bg-white rounded-xl shadow-md p-8">
+              <h2 className="text-2xl font-bold text-[#371a5b] mb-4">
                 Contact This Business
               </h2>
               <form className="space-y-4">
@@ -227,7 +262,7 @@ export default function ListingContent({ business }: ListingContentProps) {
                       <p className="text-xs text-gray-500">Phone</p>
                       <a
                         href={`tel:${business.phone}`}
-                        onClick={() => handleClick("phone_clicks", "")}
+                        onClick={() => handleClick("phone_clicks")}
                         className="text-gray-800 font-medium hover:text-[#54afe6]"
                       >
                         {business.phone}
@@ -244,7 +279,7 @@ export default function ListingContent({ business }: ListingContentProps) {
                       <p className="text-xs text-gray-500">Email</p>
                       <a
                         href={`mailto:${business.email}`}
-                        onClick={() => handleClick("email_clicks", "")}
+                        onClick={() => handleClick("email_clicks")}
                         className="text-gray-800 font-medium hover:text-[#54afe6] truncate block max-w-[200px]"
                       >
                         {business.email}
@@ -263,10 +298,11 @@ export default function ListingContent({ business }: ListingContentProps) {
                         href={business.website_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={() => handleClick("website_clicks", "")}
-                        className="text-[#54afe6] font-medium hover:underline truncate block max-w-[200px]"
+                        onClick={() => handleClick("website_clicks")}
+                        className="text-[#54afe6] font-medium hover:underline truncate block max-w-[200px] flex items-center"
                       >
                         Visit Website
+                        <ExternalLink className="w-3 h-3 ml-1" />
                       </a>
                     </div>
                   </div>
@@ -298,7 +334,7 @@ export default function ListingContent({ business }: ListingContentProps) {
                 {business.phone && (
                   <a
                     href={`tel:${business.phone}`}
-                    onClick={() => handleClick("phone_clicks", "")}
+                    onClick={() => handleClick("phone_clicks")}
                     className="flex items-center justify-center w-full py-3 bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white rounded-lg font-semibold hover:opacity-90 transition"
                   >
                     <Phone className="w-4 h-4 mr-2" />
@@ -310,7 +346,7 @@ export default function ListingContent({ business }: ListingContentProps) {
                     href={business.website_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => handleClick("website_clicks", "")}
+                    onClick={() => handleClick("website_clicks")}
                     className="flex items-center justify-center w-full py-3 border-2 border-[#371a5b] text-[#371a5b] rounded-lg font-semibold hover:bg-[#371a5b] hover:text-white transition"
                   >
                     <Globe className="w-4 h-4 mr-2" />
@@ -319,27 +355,6 @@ export default function ListingContent({ business }: ListingContentProps) {
                 )}
               </div>
             </div>
-
-            {/* Other Categories */}
-            {otherCategories.length > 0 && (
-              <div className="bg-white rounded-xl shadow-md p-6">
-                <h2 className="text-xl font-bold text-[#371a5b] mb-4">
-                  Also Listed In
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {otherCategories.map(
-                    (cat: { name: string }, idx: number) => (
-                      <span
-                        key={idx}
-                        className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm"
-                      >
-                        {cat.name}
-                      </span>
-                    )
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Claim Listing */}
             <div className="bg-gradient-to-r from-[#54afe6]/10 to-[#bb7ce4]/10 rounded-xl p-6 border border-[#54afe6]/20">
@@ -360,6 +375,20 @@ export default function ListingContent({ business }: ListingContentProps) {
           </div>
         </div>
       </div>
+
+      {/* Image Lightbox */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <img
+            src={selectedImage}
+            alt="Gallery image"
+            className="max-w-full max-h-full rounded-lg"
+          />
+        </div>
+      )}
     </>
   );
 }
