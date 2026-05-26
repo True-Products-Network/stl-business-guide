@@ -127,7 +127,7 @@ export default function DashboardPage() {
             plan_id,
             listing_status,
             is_featured,
-            plan:listing_plans!left(plan_key, name)
+            plan:listing_plans!left(plan_key)
           ),
           business_locations!left(
             city,
