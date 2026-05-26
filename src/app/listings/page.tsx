@@ -19,6 +19,7 @@ interface PublicListing {
   email: string | null;
   website_url: string | null;
   logo_url: string | null;
+  featured_image_url: string | null;
   city: string | null;
   state: string | null;
   plan_name: string | null;
