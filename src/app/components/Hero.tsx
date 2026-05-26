@@ -19,6 +19,7 @@ export default function Hero() {
     "Fitness & Gyms",
     "Retail",
     "Automotive",
+    "Professional Services",
   ];
 
   const handleSearch = (e: React.FormEvent) => {
