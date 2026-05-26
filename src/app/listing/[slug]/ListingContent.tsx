@@ -30,17 +30,19 @@ export default function ListingContent({ business }: ListingContentProps) {
 
   // Track page view on mount
   useEffect(() => {
-    if (business?.id) {
+    if (business?.listing_id) {
       trackAnalytics("profile_views");
     }
-  }, [business?.id]);
+  }, [business?.listing_id]);
 
   // Analytics tracking function
   async function trackAnalytics(metric: string) {
     try {
-      console.log("Tracking:", metric, "for business:", business.id);
+      // Use listing_id (business_listings.id) not id (businesses.id)
+      const listingId = business.listing_id || business.id;
+      console.log("Tracking:", metric, "for listing:", listingId);
       const { data, error } = await supabase.rpc("increment_analytics", {
-        p_business_id: business.id,
+        p_business_id: listingId,
         p_metric: metric,
       });
       if (error) {
