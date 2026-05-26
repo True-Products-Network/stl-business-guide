@@ -268,7 +268,7 @@ export default function ListingContent({ business }: ListingContentProps) {
                       <p className="text-xs text-gray-500">Phone</p>
                       <a
                         href={`tel:${business.phone}`}
-                        onClick={() => handleClick("phone_clicks")}
+                        onMouseDown={() => handleClick("phone_clicks")}
                         className="text-gray-800 font-medium hover:text-[#54afe6]"
                       >
                         {business.phone}
@@ -285,7 +285,7 @@ export default function ListingContent({ business }: ListingContentProps) {
                       <p className="text-xs text-gray-500">Email</p>
                       <a
                         href={`mailto:${business.email}`}
-                        onClick={() => handleClick("email_clicks")}
+                        onMouseDown={() => handleClick("email_clicks")}
                         className="text-gray-800 font-medium hover:text-[#54afe6] truncate block max-w-[200px]"
                       >
                         {business.email}
@@ -304,7 +304,7 @@ export default function ListingContent({ business }: ListingContentProps) {
                         href={business.website_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={() => handleClick("website_clicks")}
+                        onMouseDown={() => handleClick("website_clicks")}
                         className="text-[#54afe6] font-medium hover:underline truncate block max-w-[200px] flex items-center"
                       >
                         Visit Website
@@ -340,7 +340,7 @@ export default function ListingContent({ business }: ListingContentProps) {
                 {business.phone && (
                   <a
                     href={`tel:${business.phone}`}
-                    onClick={() => handleClick("phone_clicks")}
+                    onMouseDown={() => handleClick("phone_clicks")}
                     className="flex items-center justify-center w-full py-3 bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white rounded-lg font-semibold hover:opacity-90 transition"
                   >
                     <Phone className="w-4 h-4 mr-2" />
@@ -352,7 +352,7 @@ export default function ListingContent({ business }: ListingContentProps) {
                     href={business.website_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={() => handleClick("website_clicks")}
+                    onMouseDown={() => handleClick("website_clicks")}
                     className="flex items-center justify-center w-full py-3 border-2 border-[#371a5b] text-[#371a5b] rounded-lg font-semibold hover:bg-[#371a5b] hover:text-white transition"
                   >
                     <Globe className="w-4 h-4 mr-2" />
