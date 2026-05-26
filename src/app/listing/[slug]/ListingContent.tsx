@@ -38,10 +38,16 @@ export default function ListingContent({ business }: ListingContentProps) {
   // Analytics tracking function
   async function trackAnalytics(metric: string) {
     try {
-      await supabase.rpc("increment_analytics", {
+      console.log("Tracking:", metric, "for business:", business.id);
+      const { data, error } = await supabase.rpc("increment_analytics", {
         p_business_id: business.id,
         p_metric: metric,
       });
+      if (error) {
+        console.error("Analytics RPC error:", error);
+      } else {
+        console.log("Analytics tracked successfully:", metric);
+      }
     } catch (err) {
       console.error("Analytics error:", err);
     }
