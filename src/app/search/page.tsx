@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { supabase } from '@/lib/supabase';
-import { Star, MapPin, Phone, Crown, BadgeCheck } from 'lucide-react';
+import { Star, MapPin, Phone, Crown, BadgeCheck, Mail, Globe, ExternalLink } from 'lucide-react';
 
 interface PublicListing {
   id: string;
@@ -14,11 +14,15 @@ interface PublicListing {
   slug: string;
   description_short: string | null;
   phone: string | null;
+  email: string | null;
+  website_url: string | null;
+  logo_url: string | null;
   city: string | null;
   state: string | null;
   plan_name: string | null;
   plan_key: string | null;
   is_featured: boolean | null;
+  category: string | null;
   categories: { name: string; slug: string }[] | null;
   google_rating?: number | null;
   google_reviews_count?: number | null;
@@ -36,6 +40,7 @@ function SearchResults() {
   const categoryParam = searchParams.get('category') || '';
 
   const [businesses, setBusinesses] = useState<PublicListing[]>([]);
+  const [allBusinesses, setAllBusinesses] = useState<PublicListing[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(query);
@@ -58,30 +63,49 @@ function SearchResults() {
       setCategories(categoriesData || []);
 
       // Fetch businesses from public view
-      let dbQuery = supabase
+      const { data, error } = await supabase
         .from('public_approved_listings')
-        .select('*');
-
-      // Text search
-      if (query) {
-        dbQuery = dbQuery.or(`business_name.ilike.%${query}%,description_short.ilike.%${query}%,description_long.ilike.%${query}%`);
-      }
-
-      const { data, error } = await dbQuery.order('business_name', { ascending: true });
+        .select('*')
+        .order('business_name', { ascending: true });
 
       if (error) {
         console.error('Search error:', error);
         setBusinesses([]);
+        setAllBusinesses([]);
       } else {
-        // Filter by category client-side
+        setAllBusinesses(data || []);
+        
+        // Filter results
         let results = data || [];
-        if (categoryParam && categoryParam !== '') {
-          results = results.filter((b: PublicListing) => 
-            b.categories?.some((c: { name: string; slug: string }) => 
-              c.name === categoryParam || c.slug === categoryParam
-            )
+        
+        // Text search
+        if (query) {
+          const lowerQuery = query.toLowerCase();
+          results = results.filter((b: PublicListing) =>
+            b.business_name?.toLowerCase().includes(lowerQuery) ||
+            b.description_short?.toLowerCase().includes(lowerQuery) ||
+            b.description_long?.toLowerCase().includes(lowerQuery) ||
+            b.category?.toLowerCase().includes(lowerQuery)
           );
         }
+        
+        // Category filter
+        if (categoryParam && categoryParam !== '') {
+          results = results.filter((b: PublicListing) => {
+            // Check simple category field
+            if (b.category === categoryParam) return true;
+            
+            // Check categories array
+            if (b.categories && Array.isArray(b.categories)) {
+              return b.categories.some((c: any) => {
+                if (typeof c === 'string') return c === categoryParam;
+                return c.name === categoryParam || c.slug === categoryParam;
+              });
+            }
+            return false;
+          });
+        }
+        
         setBusinesses(results);
       }
     } catch (err) {
@@ -118,7 +142,11 @@ function SearchResults() {
         </span>
       );
     }
-    return null;
+    return (
+      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">
+        Free
+      </span>
+    );
   }
 
   return (
@@ -199,25 +227,54 @@ function SearchResults() {
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {businesses.map((business) => (
-                  <Link
+                  <div
                     key={business.id}
-                    href={`/listing/${business.slug}`}
                     className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden group"
                   >
+                    {/* Featured Image */}
+                    <div className="h-48 bg-gradient-to-br from-[#371a5b] to-[#bb7ce4] relative">
+                      {business.logo_url ? (
+                        <img
+                          src={business.logo_url}
+                          alt={business.business_name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <span className="text-white/30 text-6xl font-bold">
+                            {business.business_name?.[0]?.toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      {/* Plan Badge */}
+                      <div className="absolute top-4 right-4">
+                        {getPlanBadge(business.plan_key)}
+                      </div>
+                    </div>
+
                     <div className="p-6">
                       {/* Header */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-[#54afe6] transition">
+                      <div className="mb-4">
+                        <Link href={`/listing/${business.slug}`}>
+                          <h3 className="text-xl font-bold text-[#371a5b] group-hover:text-[#54afe6] transition">
                             {business.business_name}
                           </h3>
-                          {business.city && (
-                            <p className="text-gray-500 text-sm">
-                              {business.city}, {business.state}
-                            </p>
-                          )}
-                        </div>
-                        {getPlanBadge(business.plan_key)}
+                        </Link>
+                        {business.city && (
+                          <div className="flex items-center text-gray-500 text-sm mt-1">
+                            <MapPin className="w-4 h-4 mr-1" />
+                            {business.city}, {business.state}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Google Rating */}
+                      <div className="flex items-center mb-3">
+                        <Star className="w-4 h-4 text-[#ffc107] fill-current" />
+                        <span className="font-semibold ml-1">{business.google_rating || '4.5'}</span>
+                        <span className="text-gray-500 text-sm ml-1">
+                          ({business.google_reviews_count || '0'} reviews)
+                        </span>
                       </div>
 
                       {/* Description */}
@@ -226,48 +283,69 @@ function SearchResults() {
                       </p>
 
                       {/* Categories */}
-                      {business.categories && business.categories.length > 0 && (
+                      {(business.categories?.length > 0 || business.category) && (
                         <div className="flex flex-wrap gap-2 mb-4">
-                          {business.categories.slice(0, 3).map((cat, idx) => (
+                          {business.category && (
+                            <span className="px-2 py-1 bg-[#54afe6]/10 text-[#54afe6] text-xs rounded-full font-medium">
+                              {business.category}
+                            </span>
+                          )}
+                          {business.categories?.slice(0, 2).map((cat: any, idx: number) => (
                             <span
                               key={idx}
-                              className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded"
+                              className="px-2 py-1 bg-[#54afe6]/10 text-[#54afe6] text-xs rounded-full font-medium"
                             >
-                              {cat.name}
+                              {typeof cat === 'string' ? cat : cat.name}
                             </span>
                           ))}
                         </div>
                       )}
 
-                      {/* Rating */}
-                      <div className="flex items-center mb-3">
-                        <Star className="w-4 h-4 text-[#ffc107] fill-current" />
-                        <span className="text-sm font-semibold text-gray-700 ml-1">
-                          {business.google_rating || '4.5'}
-                        </span>
-                        <span className="text-sm text-gray-500 ml-1">
-                          ({business.google_reviews_count || '0'} reviews)
-                        </span>
-                      </div>
-
-                      {/* Contact */}
-                      {business.phone && (
-                        <div className="space-y-1 text-sm mb-4">
-                          <p className="text-gray-600 flex items-center">
+                      {/* Contact Info */}
+                      <div className="space-y-2 text-sm">
+                        {business.phone && (
+                          <div className="flex items-center text-gray-600">
                             <Phone className="w-4 h-4 mr-2 text-[#54afe6]" />
-                            {business.phone}
-                          </p>
-                        </div>
-                      )}
+                            <a href={`tel:${business.phone}`} className="hover:text-[#371a5b]">
+                              {business.phone}
+                            </a>
+                          </div>
+                        )}
+                        {business.email && (
+                          <div className="flex items-center text-gray-600">
+                            <Mail className="w-4 h-4 mr-2 text-[#54afe6]" />
+                            <a href={`mailto:${business.email}`} className="hover:text-[#371a5b] truncate">
+                              {business.email}
+                            </a>
+                          </div>
+                        )}
+                        {business.website_url && (
+                          <div className="flex items-center text-gray-600">
+                            <Globe className="w-4 h-4 mr-2 text-[#54afe6]" />
+                            <a 
+                              href={business.website_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-[#54afe6] hover:text-[#371a5b] truncate flex items-center"
+                            >
+                              Visit Website
+                              <ExternalLink className="w-3 h-3 ml-1" />
+                            </a>
+                          </div>
+                        )}
+                      </div>
 
                       {/* CTA */}
                       <div className="mt-4 pt-4 border-t">
-                        <span className="text-[#54afe6] font-medium group-hover:underline">
-                          View Profile →
-                        </span>
+                        <Link
+                          href={`/listing/${business.slug}`}
+                          className="block text-center bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white py-2 rounded-lg font-medium hover:opacity-90 transition"
+                        >
+                          View Listing
+                        </Link>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}

@@ -24,6 +24,8 @@ interface PublicListing {
   plan_name: string | null;
   plan_key: string | null;
   is_featured: boolean | null;
+  category: string | null;
+  location: string | null;
   categories: { name: string; slug: string }[] | null;
   google_rating?: number | null;
   google_reviews_count?: number | null;
@@ -35,6 +37,7 @@ function ListingsContent() {
   const initialCategory = searchParams.get('category') || '';
 
   const [businesses, setBusinesses] = useState<PublicListing[]>([]);
+  const [allBusinesses, setAllBusinesses] = useState<PublicListing[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [cities, setCities] = useState<{ city: string; state: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,26 +60,21 @@ function ListingsContent() {
       if (listingsError) {
         console.error('Error fetching listings:', listingsError);
       } else {
+        console.log('Raw listings data:', listingsData);
+        console.log('First listing categories:', listingsData?.[0]?.categories);
+        console.log('First listing category:', listingsData?.[0]?.category);
+        
+        setAllBusinesses(listingsData || []);
         let results = listingsData || [];
         
         // Apply initial query filter
         if (initialQuery) {
-          results = results.filter((b: PublicListing) =>
-            b.business_name?.toLowerCase().includes(initialQuery.toLowerCase()) ||
-            b.description_short?.toLowerCase().includes(initialQuery.toLowerCase()) ||
-            b.categories?.some((c: { name: string }) => 
-              c.name.toLowerCase().includes(initialQuery.toLowerCase())
-            )
-          );
+          results = filterByQuery(results, initialQuery);
         }
 
         // Apply initial category filter
         if (initialCategory) {
-          results = results.filter((b: PublicListing) =>
-            b.categories?.some((c: { name: string; slug: string }) => 
-              c.name === initialCategory || c.slug === initialCategory
-            )
-          );
+          results = filterByCategory(results, initialCategory);
         }
 
         setBusinesses(results);
@@ -107,67 +105,87 @@ function ListingsContent() {
     setLoading(false);
   }
 
+  function filterByQuery(data: PublicListing[], query: string) {
+    const lowerQuery = query.toLowerCase();
+    return data.filter((b: PublicListing) =>
+      b.business_name?.toLowerCase().includes(lowerQuery) ||
+      b.description_short?.toLowerCase().includes(lowerQuery) ||
+      b.description_long?.toLowerCase().includes(lowerQuery) ||
+      b.category?.toLowerCase().includes(lowerQuery)
+    );
+  }
+
+  function filterByCategory(data: PublicListing[], categoryName: string) {
+    console.log('Filtering by category:', categoryName);
+    console.log('Total businesses:', data.length);
+    
+    const filtered = data.filter((b: PublicListing) => {
+      // Check if category matches the simple category field
+      if (b.category === categoryName) {
+        console.log('Matched by category field:', b.business_name);
+        return true;
+      }
+      
+      // Check if category matches in categories array
+      if (b.categories && Array.isArray(b.categories)) {
+        const match = b.categories.some((c: any) => {
+          if (typeof c === 'string') {
+            return c === categoryName;
+          }
+          return c.name === categoryName || c.slug === categoryName;
+        });
+        if (match) {
+          console.log('Matched by categories array:', b.business_name);
+        }
+        return match;
+      }
+      
+      return false;
+    });
+    
+    console.log('Filtered results:', filtered.length);
+    return filtered;
+  }
+
   async function handleSearch() {
     setLoading(true);
-    try {
-      let query = supabase
-        .from('public_approved_listings')
-        .select('*');
-
-      // Text search
-      if (searchQuery) {
-        query = query.or(`business_name.ilike.%${searchQuery}%,description_short.ilike.%${searchQuery}%,description_long.ilike.%${searchQuery}%`);
-      }
-
-      // Filter by city
-      if (selectedCity) {
-        query = query.eq('city', selectedCity);
-      }
-
-      const { data, error } = await query.order('business_name', { ascending: true });
-
-      if (error) {
-        console.error('Search error:', error);
-      } else {
-        // Filter by category client-side since it's in a JSON array
-        let results = data || [];
-        if (selectedCategory) {
-          results = results.filter((b: PublicListing) =>
-            b.categories?.some((c: { name: string }) => c.name === selectedCategory)
-          );
-        }
-        setBusinesses(results);
-      }
-    } catch (err) {
-      console.error('Search error:', err);
+    
+    let results = [...allBusinesses];
+    
+    // Text search
+    if (searchQuery) {
+      results = filterByQuery(results, searchQuery);
     }
+    
+    // Filter by category
+    if (selectedCategory) {
+      results = filterByCategory(results, selectedCategory);
+    }
+    
+    // Filter by city
+    if (selectedCity) {
+      results = results.filter((b: PublicListing) => b.city === selectedCity);
+    }
+    
+    setBusinesses(results);
     setLoading(false);
   }
 
   function handleCategoryClick(categoryName: string) {
+    console.log('Category clicked:', categoryName);
     setSelectedCategory(categoryName);
     setLoading(true);
     
-    // Filter immediately
-    supabase
-      .from('public_approved_listings')
-      .select('*')
-      .order('business_name', { ascending: true })
-      .then(({ data }) => {
-        let results = data || [];
-        results = results.filter((b: PublicListing) =>
-          b.categories?.some((c: { name: string }) => c.name === categoryName)
-        );
-        setBusinesses(results);
-        setLoading(false);
-      });
+    const results = filterByCategory(allBusinesses, categoryName);
+    setBusinesses(results);
+    setLoading(false);
   }
 
   function clearFilters() {
     setSearchQuery('');
     setSelectedCategory('');
     setSelectedCity('');
-    loadInitialData();
+    setBusinesses(allBusinesses);
   }
 
   function getPlanBadge(planKey?: string | null) {
@@ -374,14 +392,19 @@ function ListingsContent() {
                       </p>
 
                       {/* Categories */}
-                      {business.categories && business.categories.length > 0 && (
+                      {(business.categories?.length > 0 || business.category) && (
                         <div className="flex flex-wrap gap-2 mb-4">
-                          {business.categories.slice(0, 3).map((cat, idx) => (
+                          {business.category && (
+                            <span className="px-2 py-1 bg-[#54afe6]/10 text-[#54afe6] text-xs rounded-full font-medium">
+                              {business.category}
+                            </span>
+                          )}
+                          {business.categories?.slice(0, 2).map((cat: any, idx: number) => (
                             <span
                               key={idx}
                               className="px-2 py-1 bg-[#54afe6]/10 text-[#54afe6] text-xs rounded-full font-medium"
                             >
-                              {cat.name}
+                              {typeof cat === 'string' ? cat : cat.name}
                             </span>
                           ))}
                         </div>
