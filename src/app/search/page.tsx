@@ -234,9 +234,9 @@ function SearchResults() {
                   >
                     {/* Featured Image */}
                     <div className="h-48 bg-gradient-to-br from-[#371a5b] to-[#bb7ce4] relative">
-                      {business.logo_url ? (
+                      {business.featured_image_url || business.logo_url ? (
                         <img
-                          src={business.logo_url}
+                          src={business.featured_image_url || business.logo_url}
                           alt={business.business_name}
                           className="w-full h-full object-cover"
                         />
