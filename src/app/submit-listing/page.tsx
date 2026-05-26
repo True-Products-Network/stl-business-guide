@@ -168,7 +168,7 @@ function SubmitListingForm() {
               business_id: submitResult.listing?.id, // Use listing ID
               user_id: userId,
               success_url: `${window.location.origin}/payment/success`,
-              cancel_url: `${window.location.origin}/submit-listing?plan=${planKey}`,
+              cancel_url: `${window.location.origin}/payment/cancel?business_id=${submitResult.listing?.id}`,
             }),
           });
 
