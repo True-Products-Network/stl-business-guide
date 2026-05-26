@@ -147,18 +147,22 @@ function SubmitListingForm() {
       }
 
       // Send Free Plan signups to GHL for nurturing
-      if (selectedPlan === 'free' || selectedPlan === '00000000-0000-0000-0000-000000000001') {
+      console.log('Checking plan:', { selectedPlan, plans });
+      const selectedPlanObj = plans.find(p => p.id === selectedPlan);
+      console.log('Selected plan object:', selectedPlanObj);
+      const planKey = selectedPlanObj?.plan_key;
+      console.log('Plan key:', planKey);
+      
+      if (planKey === 'free') {
         await handleFreePlanSignupForGHL(
           formData.email,
           formData.business_name,
           formData.full_name
         );
         setSuccess(true);
-      } else {
+      } else if (planKey === 'premium' || planKey === 'vip') {
         // For paid plans, redirect to Stripe checkout
-        const selectedPlanObj = plans.find(p => p.id === selectedPlan);
-        const planKey = selectedPlanObj?.plan_key;
-        if (selectedPlanObj && planKey && planKey !== 'free') {
+        console.log('Redirecting to payment for plan:', planKey);
           // Create checkout session
           const response = await fetch('/api/create-checkout-session', {
             method: 'POST',
@@ -186,10 +190,14 @@ function SubmitListingForm() {
           if (data.url) {
             window.location.href = data.url;
             return;
+          } else {
+            console.error('No URL in response:', data);
+            throw new Error('Payment URL not received');
           }
+        } else {
+          console.log('Unknown plan or no plan key, showing success:', planKey);
+          setSuccess(true);
         }
-        setSuccess(true);
-      }
     } catch (err: any) {
       setError(err.message || 'An error occurred. Please try again.');
     } finally {
