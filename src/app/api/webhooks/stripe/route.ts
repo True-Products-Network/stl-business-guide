@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Lazy initialization - only create clients when needed
 let stripe: Stripe | null = null;
-let supabase: ReturnType<typeof createClient> | null = null;
+let supabase: SupabaseClient | null = null;
 
-function getStripe() {
+function getStripe(): Stripe {
   if (!stripe) {
     stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
       apiVersion: '2026-04-22.dahlia',
@@ -15,7 +15,7 @@ function getStripe() {
   return stripe;
 }
 
-function getSupabase() {
+function getSupabase(): SupabaseClient {
   if (!supabase) {
     supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
