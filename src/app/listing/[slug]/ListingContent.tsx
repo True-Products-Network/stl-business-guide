@@ -60,10 +60,9 @@ export default function ListingContent({ business }: ListingContentProps) {
     trackAnalytics(metric);
   }
 
-  // Mock gallery images - in production, these would come from business_images table
-  const galleryImages = business.logo_url 
-    ? [business.logo_url, business.logo_url, business.logo_url] 
-    : [];
+  // Get gallery images from business data
+  const galleryImages = business.gallery_images || [];
+  const videoUrl = business.video_url;
 
   return (
     <>
@@ -143,6 +142,32 @@ export default function ListingContent({ business }: ListingContentProps) {
         </div>
       </div>
 
+      {/* Video Section (VIP only) */}
+      {isVip && videoUrl && (
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <h2 className="text-2xl font-bold text-[#371a5b] mb-4">Business Video</h2>
+            <div className="aspect-video rounded-lg overflow-hidden">
+              {videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be') ? (
+                <iframe
+                  src={videoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                  title="Business Video"
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <video
+                  src={videoUrl}
+                  controls
+                  className="w-full h-full"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
@@ -166,7 +191,7 @@ export default function ListingContent({ business }: ListingContentProps) {
             {/* Photo Gallery */}
             {galleryImages.length > 0 && (
               <div className="bg-white rounded-xl shadow-md p-8">
-                <h2 className="text-2xl font-bold text-[#371a5b] mb-4">Photos</h2>
+                <h2 className="text-2xl font-bold text-[#371a5b] mb-4">Photo Gallery</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {galleryImages.map((img: string, idx: number) => (
                     <div
