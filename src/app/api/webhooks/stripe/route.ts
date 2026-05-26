@@ -108,7 +108,7 @@ export async function POST(request: Request) {
             .single();
 
           if (freePlan) {
-            await supabase
+            await getSupabase()
               .from('business_listings')
               .update({
                 plan_id: freePlan.id,
