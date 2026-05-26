@@ -72,11 +72,23 @@ export default function AnalyticsDashboardPage() {
 
   async function loadBusinesses(userId: string) {
     try {
-      // First get businesses owned by this user
-      const { data: businessesData, error: businessesError } = await supabase
+      // Get current user's email
+      const { data: userData } = await supabase.auth.getUser();
+      const userEmail = userData?.user?.email;
+
+      // First get businesses owned by this user (by profile_id or email)
+      let businessesQuery = supabase
         .from("businesses")
-        .select("id, business_name, slug")
-        .eq("owner_profile_id", userId);
+        .select("id, business_name, slug, email, owner_profile_id");
+      
+      // Try to match by owner_profile_id OR email
+      if (userEmail) {
+        businessesQuery = businessesQuery.or(`owner_profile_id.eq.${userId},email.eq.${userEmail}`);
+      } else {
+        businessesQuery = businessesQuery.eq("owner_profile_id", userId);
+      }
+      
+      const { data: businessesData, error: businessesError } = await businessesQuery;
 
       if (businessesError) {
         console.error("Error loading businesses:", businessesError);
@@ -89,6 +101,16 @@ export default function AnalyticsDashboardPage() {
         setBusinesses([]);
         setLoading(false);
         return;
+      }
+
+      // Update owner_profile_id for businesses that matched by email but don't have it set
+      for (const biz of businessesData) {
+        if (!biz.owner_profile_id && userId) {
+          await supabase
+            .from("businesses")
+            .update({ owner_profile_id: userId })
+            .eq("id", biz.id);
+        }
       }
 
       // Get business IDs
