@@ -13,9 +13,10 @@ export default function Hero() {
 
   const categories = [
     "Restaurants",
-    "Home Services",
+    "Home Repair Services",
     "Health & Wellness",
-    "Professional Services",
+    "Beauty & Spas",
+    "Fitness & Gyms",
     "Retail",
     "Automotive",
   ];
