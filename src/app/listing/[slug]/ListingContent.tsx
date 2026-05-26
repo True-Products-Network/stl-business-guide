@@ -93,9 +93,9 @@ export default function ListingContent({ business }: ListingContentProps) {
 
       {/* Hero Section with Featured Image */}
       <div className="relative h-80 md:h-96 bg-gradient-to-br from-[#371a5b] to-[#bb7ce4]">
-        {business.featured_image_url || business.logo_url ? (
+        {(business.featured_image_url || business.logo_url) ? (
           <img
-            src={business.featured_image_url || business.logo_url}
+            src={business.featured_image_url || business.logo_url || ''}
             alt={business.business_name}
             className="absolute inset-0 w-full h-full object-cover"
           />
