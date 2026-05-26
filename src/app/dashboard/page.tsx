@@ -22,6 +22,7 @@ import {
   XCircle,
   Eye,
   Image as ImageIcon,
+  FileText,
 } from "lucide-react";
 
 interface Business {
@@ -47,6 +48,7 @@ export default function DashboardPage() {
   const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending" | "rejected">("all");
 
   useEffect(() => {
@@ -68,6 +70,18 @@ export default function DashboardPage() {
     }
 
     setUser(user);
+    
+    // Check if user is admin
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    
+    if (profile?.role === "admin" || profile?.role === "super_admin") {
+      setIsAdmin(true);
+    }
+    
     await loadBusinesses(user.email || '');
   }
 
@@ -388,6 +402,16 @@ export default function DashboardPage() {
             <Settings className="w-5 h-5 mr-2" />
             Account Settings
           </a>
+
+          {isAdmin && (
+            <a
+              href="/admin/blog"
+              className="inline-flex items-center bg-gradient-to-r from-[#54afe6] to-[#371a5b] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
+            >
+              <FileText className="w-5 h-5 mr-2" />
+              Blog Management
+            </a>
+          )}
         </div>
 
         {/* Debug Info */}
