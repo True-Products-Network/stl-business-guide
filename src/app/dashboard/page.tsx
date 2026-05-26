@@ -404,13 +404,22 @@ export default function DashboardPage() {
           </a>
 
           {isAdmin && (
-            <a
-              href="/admin/blog"
-              className="inline-flex items-center bg-gradient-to-r from-[#54afe6] to-[#371a5b] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
-            >
-              <FileText className="w-5 h-5 mr-2" />
-              Blog Management
-            </a>
+            <>
+              <a
+                href="/admin/blog"
+                className="inline-flex items-center bg-gradient-to-r from-[#54afe6] to-[#371a5b] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
+              >
+                <FileText className="w-5 h-5 mr-2" />
+                Blog Management
+              </a>
+              <a
+                href="/admin/analytics"
+                className="inline-flex items-center bg-gradient-to-r from-[#bb7ce4] to-[#371a5b] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
+              >
+                <BarChart3 className="w-5 h-5 mr-2" />
+                Admin Analytics
+              </a>
+            </>
           )}
         </div>
 
