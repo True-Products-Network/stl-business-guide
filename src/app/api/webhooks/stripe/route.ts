@@ -2,25 +2,38 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2026-04-22.dahlia',
-});
+// Lazy initialization - only create clients when needed
+let stripe: Stripe | null = null;
+let supabase: ReturnType<typeof createClient> | null = null;
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
-);
+function getStripe() {
+  if (!stripe) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: '2026-04-22.dahlia',
+    });
+  }
+  return stripe;
+}
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+function getSupabase() {
+  if (!supabase) {
+    supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+  }
+  return supabase;
+}
 
 export async function POST(request: Request) {
   const payload = await request.text();
   const signature = request.headers.get('stripe-signature')!;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+    event = getStripe().webhooks.constructEvent(payload, signature, webhookSecret);
   } catch (err: any) {
     console.error('Webhook signature verification failed:', err.message);
     return NextResponse.json({ error: err.message }, { status: 400 });
@@ -43,7 +56,7 @@ export async function POST(request: Request) {
         }
 
         // Update business listing as paid
-        const { error } = await supabase
+        const { error } = await getSupabase()
           .from('business_listings')
           .update({
             payment_status: 'paid',
@@ -66,12 +79,12 @@ export async function POST(request: Request) {
         const invoice = event.data.object as any;
         const subscriptionId = invoice.subscription as string | null;
         if (!subscriptionId) break;
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
         const business_id = subscription.metadata?.business_id;
 
         if (business_id) {
           // Mark listing as payment failed
-          await supabase
+          await getSupabase()
             .from('business_listings')
             .update({
               payment_status: 'failed',
@@ -88,7 +101,7 @@ export async function POST(request: Request) {
 
         if (business_id) {
           // Downgrade to free plan or mark as expired
-          const { data: freePlan } = await supabase
+          const { data: freePlan } = await getSupabase()
             .from('listing_plans')
             .select('id')
             .eq('plan_key', 'free')

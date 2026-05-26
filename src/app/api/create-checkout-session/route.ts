@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2026-04-22.dahlia',
-});
+// Lazy initialization
+let stripe: Stripe | null = null;
+
+function getStripe() {
+  if (!stripe) {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+      apiVersion: '2026-04-22.dahlia',
+    });
+  }
+  return stripe;
+}
 
 export async function POST(request: Request) {
   try {
@@ -27,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
         {
