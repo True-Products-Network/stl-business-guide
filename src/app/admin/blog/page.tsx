@@ -59,17 +59,20 @@ export default function AdminBlogPage() {
     setUser(user);
 
     // Check if user is admin
-    const { data: profile } = await supabase
+    console.log("Checking admin for user ID:", user.id);
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, email")
       .eq("id", user.id)
       .single();
+
+    console.log("Profile result:", { profile, profileError });
 
     if (profile?.role === "admin" || profile?.role === "super_admin") {
       setIsAdmin(true);
       await loadPosts();
     } else {
-      setError("You don't have permission to access this page");
+      setError(`You don't have permission to access this page. Your role: ${profile?.role || 'none'}`);
     }
     setLoading(false);
   }
