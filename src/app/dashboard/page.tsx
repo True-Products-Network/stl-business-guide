@@ -124,8 +124,8 @@ export default function DashboardPage() {
           created_at,
           updated_at,
           business_listings!left(
-            plan_tier,
-            plan_status,
+            plan_id,
+            listing_status,
             is_featured
           ),
           business_locations!left(
@@ -172,8 +172,8 @@ export default function DashboardPage() {
             business_name: item.business_name,
             slug: item.slug,
             description_short: item.description_short,
-            plan_tier: listing?.plan_tier || "free",
-            plan_status: listing?.plan_status || "pending",
+            plan_tier: "free", // TODO: Lookup from listing_plans using plan_id
+            plan_status: listing?.listing_status || "pending",
             status: item.status,
             is_featured: listing?.is_featured || false,
             logo_url: item.logo_url,
