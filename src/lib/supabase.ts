@@ -42,6 +42,7 @@ export interface Location {
 export interface ListingPlan {
   id: string;
   plan_name: 'Free' | 'Premium' | 'VIP';
+  plan_key: 'free' | 'premium' | 'vip';
   monthly_price: number;
   yearly_price: number | null;
   max_images: number;

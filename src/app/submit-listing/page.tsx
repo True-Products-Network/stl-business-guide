@@ -157,10 +157,8 @@ function SubmitListingForm() {
       } else {
         // For paid plans, redirect to Stripe checkout
         const selectedPlanObj = plans.find(p => p.id === selectedPlan);
-        console.log('Selected plan object:', selectedPlanObj);
-        const planKey = selectedPlanObj?.plan_name?.toLowerCase();
-        console.log('Plan key:', planKey);
-        if (selectedPlanObj && planKey !== 'free') {
+        const planKey = selectedPlanObj?.plan_key;
+        if (selectedPlanObj && planKey && planKey !== 'free') {
           // Create checkout session
           const response = await fetch('/api/create-checkout-session', {
             method: 'POST',
