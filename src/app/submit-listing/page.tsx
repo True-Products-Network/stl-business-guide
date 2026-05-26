@@ -117,7 +117,7 @@ function SubmitListingForm() {
       }
 
       // Step 2: Submit listing - use user's account email for linking
-      const { success: submitSuccess, error: submitError } = await submitListing({
+      const { success: submitSuccess, error: submitError, data: submitData } = await submitListing({
         business_name: formData.business_name,
         slug: generateSlug(formData.business_name),
         description_short: formData.description_short,
@@ -153,9 +153,37 @@ function SubmitListingForm() {
           formData.business_name,
           formData.full_name
         );
-      }
+        setSuccess(true);
+      } else {
+        // For paid plans, redirect to Stripe checkout
+        const selectedPlanObj = plans.find(p => p.id === selectedPlan);
+        if (selectedPlanObj && selectedPlanObj.plan_key !== 'free') {
+          // Create checkout session
+          const response = await fetch('/api/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              plan_key: selectedPlanObj.plan_key,
+              business_id: submitData?.listing?.id, // Use listing ID
+              user_id: userId,
+              success_url: `${window.location.origin}/payment/success`,
+              cancel_url: `${window.location.origin}/submit-listing?plan=${selectedPlanObj.plan_key}`,
+            }),
+          });
 
-      setSuccess(true);
+          const { url, error: checkoutError } = await response.json();
+          
+          if (checkoutError) {
+            throw new Error(checkoutError);
+          }
+          
+          if (url) {
+            window.location.href = url;
+            return;
+          }
+        }
+        setSuccess(true);
+      }
     } catch (err: any) {
       setError(err.message || 'An error occurred. Please try again.');
     } finally {
