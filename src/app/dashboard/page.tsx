@@ -80,7 +80,38 @@ export default function DashboardPage() {
         return;
       }
       
-      // Query businesses that were submitted with this user's email
+      // First try a simple query without joins to see if email matching works
+      console.log("Trying simple query first...");
+      const { data: simpleData, error: simpleError } = await supabase
+        .from("businesses")
+        .select("id, business_name, email, status")
+        .eq("email", userEmail);
+      
+      console.log("Simple query result:", { simpleData, simpleError, count: simpleData?.length });
+      
+      if (simpleError) {
+        console.error("Simple query error:", simpleError);
+        setError("Database error: " + simpleError.message);
+        setLoading(false);
+        return;
+      }
+      
+      if (!simpleData || simpleData.length === 0) {
+        console.log("No businesses found for email:", userEmail);
+        // Try case-insensitive search
+        const { data: caseData } = await supabase
+          .from("businesses")
+          .select("id, business_name, email, status")
+          .ilike("email", userEmail);
+        console.log("Case-insensitive search:", caseData);
+        setBusinesses([]);
+        setFilteredBusinesses([]);
+        setLoading(false);
+        return;
+      }
+      
+      // Now get full data with joins
+      console.log("Fetching full data with joins...");
       const { data, error } = await supabase
         .from("businesses")
         .select(`
@@ -108,15 +139,31 @@ export default function DashboardPage() {
         .eq("email", userEmail)
         .order("created_at", { ascending: false });
 
-      console.log("Query result:", { data, error, count: data?.length });
+      console.log("Full query result:", { data, error, count: data?.length });
 
       if (error) {
         console.error("Error loading businesses:", error);
         setError("Failed to load your businesses: " + error.message);
       } else if (!data || data.length === 0) {
-        console.log("No businesses found for email:", userEmail);
-        setBusinesses([]);
-        setFilteredBusinesses([]);
+        console.log("No full data found, using simple data");
+        // Fallback to simple data
+        const transformed = simpleData?.map((item: any) => ({
+          id: item.id,
+          business_name: item.business_name,
+          slug: item.slug || '',
+          description_short: item.description_short || null,
+          plan_tier: "free",
+          plan_status: "pending",
+          status: item.status,
+          is_featured: false,
+          logo_url: null,
+          created_at: item.created_at || new Date().toISOString(),
+          updated_at: item.updated_at || new Date().toISOString(),
+          location_name: null,
+          category_name: null,
+        }));
+        setBusinesses(transformed || []);
+        setFilteredBusinesses(transformed || []);
       } else {
         // Transform data to match Business interface
         const transformed = data?.map((item: any) => {
