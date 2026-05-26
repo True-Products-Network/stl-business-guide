@@ -64,8 +64,9 @@ export async function POST(request: Request) {
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice;
-        if (!invoice.subscription) break;
-        const subscription = await stripe.subscriptions.retrieve(invoice.subscription);
+        const subscriptionId = invoice.subscription as string | null;
+        if (!subscriptionId) break;
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const business_id = subscription.metadata?.business_id;
 
         if (business_id) {
