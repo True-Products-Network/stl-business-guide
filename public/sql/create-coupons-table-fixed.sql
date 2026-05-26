@@ -1,12 +1,10 @@
 -- Create coupon system tables - FIXED VERSION
 -- Run this in Supabase SQL Editor
 
--- First, drop existing tables if they exist (clean slate)
-DROP TABLE IF EXISTS coupon_redemptions CASCADE;
-DROP TABLE IF EXISTS coupons CASCADE;
-
--- Coupons table
-CREATE TABLE coupons (
+-- ============================================
+-- STEP 1: Create coupons table
+-- ============================================
+CREATE TABLE IF NOT EXISTS coupons (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
     listing_id UUID REFERENCES business_listings(id) ON DELETE CASCADE,
@@ -51,8 +49,10 @@ CREATE TABLE coupons (
     created_by UUID REFERENCES auth.users(id)
 );
 
--- Redemptions table
-CREATE TABLE coupon_redemptions (
+-- ============================================
+-- STEP 2: Create coupon_redemptions table
+-- ============================================
+CREATE TABLE IF NOT EXISTS coupon_redemptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     coupon_id UUID NOT NULL REFERENCES coupons(id) ON DELETE CASCADE,
     business_id UUID NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
@@ -85,23 +85,32 @@ CREATE TABLE coupon_redemptions (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Create indexes AFTER tables are created
-CREATE INDEX idx_coupons_business ON coupons(business_id);
-CREATE INDEX idx_coupons_status ON coupons(status);
-CREATE INDEX idx_coupons_code ON coupons(code);
-CREATE INDEX idx_coupon_redemptions_coupon ON coupon_redemptions(coupon_id);
-CREATE INDEX idx_coupon_redemptions_code ON coupon_redemptions(redemption_code);
+-- ============================================
+-- STEP 3: Create indexes (AFTER tables exist)
+-- ============================================
+CREATE INDEX IF NOT EXISTS idx_coupons_business ON coupons(business_id);
+CREATE INDEX IF NOT EXISTS idx_coupons_status ON coupons(status);
+CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code);
+CREATE INDEX IF NOT EXISTS idx_coupon_redemptions_coupon ON coupon_redemptions(coupon_id);
+CREATE INDEX IF NOT EXISTS idx_coupon_redemptions_code ON coupon_redemptions(redemption_code);
 
--- Enable RLS
+-- ============================================
+-- STEP 4: Enable RLS
+-- ============================================
 ALTER TABLE coupons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE coupon_redemptions ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for coupons
+-- ============================================
+-- STEP 5: Create RLS Policies
+-- ============================================
+
+-- Public can view active coupons
 CREATE POLICY "Public can view active coupons"
     ON coupons FOR SELECT
     TO anon, authenticated
     USING (status = 'active' AND (end_date IS NULL OR end_date >= CURRENT_DATE));
 
+-- Business owners can manage their coupons
 CREATE POLICY "Business owners can manage their coupons"
     ON coupons FOR ALL
     TO authenticated
@@ -113,6 +122,7 @@ CREATE POLICY "Business owners can manage their coupons"
         )
     );
 
+-- Admins can manage all coupons
 CREATE POLICY "Admins can manage all coupons"
     ON coupons FOR ALL
     TO authenticated
@@ -124,7 +134,7 @@ CREATE POLICY "Admins can manage all coupons"
         )
     );
 
--- RLS Policies for redemptions
+-- Business owners can view their redemptions
 CREATE POLICY "Business owners can view their redemptions"
     ON coupon_redemptions FOR SELECT
     TO authenticated
@@ -136,11 +146,13 @@ CREATE POLICY "Business owners can view their redemptions"
         )
     );
 
+-- Public can create redemptions
 CREATE POLICY "Public can create redemptions"
     ON coupon_redemptions FOR INSERT
     TO anon, authenticated
     WITH CHECK (true);
 
+-- Admins can manage all redemptions
 CREATE POLICY "Admins can manage all redemptions"
     ON coupon_redemptions FOR ALL
     TO authenticated
@@ -152,12 +164,16 @@ CREATE POLICY "Admins can manage all redemptions"
         )
     );
 
--- Storage bucket for coupon images
+-- ============================================
+-- STEP 6: Create storage bucket
+-- ============================================
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('coupon-images', 'coupon-images', true)
 ON CONFLICT (id) DO NOTHING;
 
--- Storage policies
+-- ============================================
+-- STEP 7: Storage policies
+-- ============================================
 CREATE POLICY "Public can view coupon images"
     ON storage.objects FOR SELECT
     TO anon, authenticated
@@ -175,5 +191,37 @@ CREATE POLICY "Business owners can upload coupon images"
         )
     );
 
--- Verify creation
-SELECT 'Coupons table created successfully' as status;
+-- ============================================
+-- STEP 8: Create trigger function
+-- ============================================
+CREATE OR REPLACE FUNCTION update_coupon_redemption_count()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE coupons
+    SET total_redemptions = total_redemptions + 1,
+        stl_fee_earned = stl_fee_earned + NEW.stl_fee_amount,
+        status = CASE 
+            WHEN max_redemptions IS NOT NULL AND total_redemptions + 1 >= max_redemptions 
+            THEN 'redeemed_out'
+            ELSE status
+        END,
+        updated_at = NOW()
+    WHERE id = NEW.coupon_id;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ============================================
+-- STEP 9: Create trigger
+-- ============================================
+DROP TRIGGER IF EXISTS tr_update_coupon_count ON coupon_redemptions;
+CREATE TRIGGER tr_update_coupon_count
+    AFTER INSERT ON coupon_redemptions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_coupon_redemption_count();
+
+-- ============================================
+-- STEP 10: Verify creation
+-- ============================================
+SELECT 'Coupons table created' as status;
+SELECT COUNT(*) as total_coupons FROM coupons;
