@@ -18,10 +18,8 @@ import {
   Loader2,
   AlertCircle,
   ChevronDown,
-  Facebook,
-  Instagram,
-  Linkedin,
-  YoutubeIcon,
+  Share2,
+  Globe,
 } from "lucide-react";
 
 interface AnalyticsData {
@@ -483,7 +481,7 @@ export default function AnalyticsDashboardPage() {
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center">
                       <div className="p-2 bg-blue-100 rounded-lg mr-3">
-                        <Facebook className="w-5 h-5 text-blue-600" />
+                        <Share2 className="w-5 h-5 text-blue-600" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">Facebook</p>
@@ -500,7 +498,7 @@ export default function AnalyticsDashboardPage() {
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center">
                       <div className="p-2 bg-pink-100 rounded-lg mr-3">
-                        <Instagram className="w-5 h-5 text-pink-600" />
+                        <Globe className="w-5 h-5 text-pink-600" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">Instagram</p>
@@ -517,7 +515,7 @@ export default function AnalyticsDashboardPage() {
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center">
                       <div className="p-2 bg-blue-100 rounded-lg mr-3">
-                        <Linkedin className="w-5 h-5 text-blue-700" />
+                        <Globe className="w-5 h-5 text-blue-700" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">LinkedIn</p>
@@ -534,7 +532,7 @@ export default function AnalyticsDashboardPage() {
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center">
                       <div className="p-2 bg-red-100 rounded-lg mr-3">
-                        <YoutubeIcon className="w-5 h-5 text-red-600" />
+                        <Globe className="w-5 h-5 text-red-600" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">YouTube</p>
