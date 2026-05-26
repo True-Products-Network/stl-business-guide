@@ -119,25 +119,35 @@ function ListingsContent() {
     console.log('Filtering by category:', categoryName);
     console.log('Total businesses:', data.length);
     
+    const lowerCategoryName = categoryName.toLowerCase();
+    
     const filtered = data.filter((b: PublicListing) => {
-      // Check if category matches the simple category field
-      if (b.category === categoryName) {
-        console.log('Matched by category field:', b.business_name);
+      // Check if category matches the simple category field (case insensitive)
+      if (b.category && b.category.toLowerCase() === lowerCategoryName) {
+        console.log('Matched by category field:', b.business_name, b.category);
         return true;
       }
       
       // Check if category matches in categories array
-      if (b.categories && Array.isArray(b.categories)) {
+      if (b.categories && Array.isArray(b.categories) && b.categories.length > 0) {
         const match = b.categories.some((c: any) => {
           if (typeof c === 'string') {
-            return c === categoryName;
+            return c.toLowerCase() === lowerCategoryName;
           }
-          return c.name === categoryName || c.slug === categoryName;
+          return c.name?.toLowerCase() === lowerCategoryName || c.slug?.toLowerCase() === lowerCategoryName;
         });
         if (match) {
           console.log('Matched by categories array:', b.business_name);
         }
         return match;
+      }
+      
+      // Also check if the category is in the description or business name
+      const inDescription = b.description_short?.toLowerCase().includes(lowerCategoryName);
+      const inName = b.business_name?.toLowerCase().includes(lowerCategoryName);
+      
+      if (inDescription || inName) {
+        console.log('Matched by text content:', b.business_name);
       }
       
       return false;
