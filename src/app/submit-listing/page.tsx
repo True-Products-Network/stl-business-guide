@@ -117,7 +117,7 @@ function SubmitListingForm() {
       }
 
       // Step 2: Submit listing - use user's account email for linking
-      const { success: submitSuccess, error: submitError, data: submitData } = await submitListing({
+      const submitResult = await submitListing({
         business_name: formData.business_name,
         slug: generateSlug(formData.business_name),
         description_short: formData.description_short,
@@ -136,14 +136,14 @@ function SubmitListingForm() {
         user_id: userId || null
       });
 
-      if (!submitSuccess) {
+      if (!submitResult.success) {
         // Handle specific error for duplicate business name
-        if (submitError?.code === 'BUSINESS_NAME_EXISTS') {
-          setError(submitError.message);
+        if (submitResult.error?.code === 'BUSINESS_NAME_EXISTS') {
+          setError(submitResult.error.message);
           setLoading(false);
           return;
         }
-        throw submitError;
+        throw submitResult.error;
       }
 
       // Send Free Plan signups to GHL for nurturing
@@ -157,17 +157,18 @@ function SubmitListingForm() {
       } else {
         // For paid plans, redirect to Stripe checkout
         const selectedPlanObj = plans.find(p => p.id === selectedPlan);
-        if (selectedPlanObj && selectedPlanObj.plan_key !== 'free') {
+        const planKey = selectedPlanObj?.plan_name?.toLowerCase();
+        if (selectedPlanObj && planKey !== 'free') {
           // Create checkout session
           const response = await fetch('/api/create-checkout-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              plan_key: selectedPlanObj.plan_key,
-              business_id: submitData?.listing?.id, // Use listing ID
+              plan_key: planKey,
+              business_id: submitResult.listing?.id, // Use listing ID
               user_id: userId,
               success_url: `${window.location.origin}/payment/success`,
-              cancel_url: `${window.location.origin}/submit-listing?plan=${selectedPlanObj.plan_key}`,
+              cancel_url: `${window.location.origin}/submit-listing?plan=${planKey}`,
             }),
           });
 
