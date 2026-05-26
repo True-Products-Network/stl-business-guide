@@ -45,9 +45,11 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="col-span-2">
             <Link href="/" className="flex items-center space-x-2 mb-6">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#54afe6] to-[#bb7ce4] flex items-center justify-center">
-                <span className="text-white font-bold text-xl">S</span>
-              </div>
+              <img 
+                src="https://assets.cdn.filesafe.space/Y75D8z0j5aPHXtDyWr3y/media/6a15d683ecd67a415b8e9625.png"
+                alt="STL Business Guide"
+                className="h-10 w-auto"
+              />
               <div>
                 <span className="text-xl font-bold">STL Business</span>
                 <span className="text-xl font-bold text-[#54afe6]"> Guide</span>
