@@ -172,14 +172,19 @@ function SubmitListingForm() {
             }),
           });
 
-          const { url, error: checkoutError } = await response.json();
+          const data = await response.json();
           
-          if (checkoutError) {
-            throw new Error(checkoutError);
+          if (!response.ok) {
+            console.error('Checkout API error:', data);
+            throw new Error(data.error || 'Payment setup failed');
           }
           
-          if (url) {
-            window.location.href = url;
+          if (data.error) {
+            throw new Error(data.error);
+          }
+          
+          if (data.url) {
+            window.location.href = data.url;
             return;
           }
         }
