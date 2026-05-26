@@ -76,18 +76,28 @@ export default function SettingsPage() {
     setSaving(true);
     setMessage(null);
 
-    const { error } = await supabase
+    console.log("Updating profile for user:", user?.id);
+    console.log("Form data:", formData);
+
+    const { data, error } = await supabase
       .from("profiles")
-      .update({
+      .upsert({
+        id: user.id,
+        email: user.email,
         first_name: formData.firstName,
         last_name: formData.lastName,
         phone: formData.phone,
         updated_at: new Date().toISOString(),
+      }, {
+        onConflict: 'id'
       })
-      .eq("id", user.id);
+      .select();
+
+    console.log("Update result:", { data, error });
 
     if (error) {
-      setMessage({ type: "error", text: "Failed to update profile" });
+      console.error("Profile update error:", error);
+      setMessage({ type: "error", text: `Failed to update profile: ${error.message}` });
     } else {
       setMessage({ type: "success", text: "Profile updated successfully" });
     }
