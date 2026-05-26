@@ -1,74 +1,70 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { Calendar, User, ArrowRight } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
-const blogPosts = [
-  {
-    title: "10 Local Marketing Tips for Small Businesses",
-    excerpt: "Learn proven strategies to help your local business thrive and attract more customers.",
-    author: "Nigel Lear",
-    date: "May 20, 2026",
-    category: "Marketing",
-    readTime: "5 min read",
-    slug: "marketing-tips",
-  },
-  {
-    title: "Local SEO Guide for Small Businesses",
-    excerpt: "Complete guide to optimizing your online presence and ranking higher in local search results.",
-    author: "Nigel Lear",
-    date: "May 15, 2026",
-    category: "SEO",
-    readTime: "6 min read",
-    slug: "seo-guide",
-  },
-  {
-    title: "How to Get More Customer Reviews",
-    excerpt: "Customer reviews can make or break your business. Here's how to encourage satisfied customers to leave positive feedback.",
-    author: "Nigel Lear",
-    date: "May 10, 2026",
-    category: "Reviews",
-    readTime: "4 min read",
-    slug: "get-more-reviews",
-  },
-  {
-    title: "The Power of Local Business Directories",
-    excerpt: "Why being listed in local directories like STL Business Guide can drive more customers to your door.",
-    author: "Nigel Lear",
-    date: "May 5, 2026",
-    category: "Directories",
-    readTime: "5 min read",
-    slug: "local-directories",
-  },
-  {
-    title: "Social Media Strategies for Local Businesses",
-    excerpt: "Connect with your community and build brand awareness with these proven social media tactics.",
-    author: "Nigel Lear",
-    date: "April 28, 2026",
-    category: "Social Media",
-    readTime: "5 min read",
-    slug: "social-media-strategies",
-  },
-  {
-    title: "Maximizing Your Business Listing Photos",
-    excerpt: "Great photos can significantly increase engagement. Learn what types of images perform best.",
-    author: "Nigel Lear",
-    date: "April 20, 2026",
-    category: "Marketing",
-    readTime: "4 min read",
-    slug: "listing-photos",
-  },
-  {
-    title: "Understanding Your Analytics Dashboard",
-    excerpt: "Make data-driven decisions by understanding the metrics that matter for your business listing.",
-    author: "Nigel Lear",
-    date: "April 15, 2026",
-    category: "Analytics",
-    readTime: "7 min read",
-    slug: "analytics-dashboard",
-  },
-];
+interface BlogPost {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  author: string;
+  published_at: string;
+  category: string;
+  read_time: string;
+  featured_image_url: string | null;
+}
 
 export default function BlogPage() {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
+
+  async function fetchPosts() {
+    try {
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('id, title, slug, excerpt, author, published_at, category, read_time, featured_image_url')
+        .eq('is_published', true)
+        .order('published_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching blog posts:', error);
+      } else {
+        setPosts(data || []);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+    }
+    setLoading(false);
+  }
+
+  function formatDate(dateString: string) {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#54afe6]"></div>
+        </div>
+        <Footer />
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-gray-50">
       <Navbar />
@@ -87,56 +83,72 @@ export default function BlogPage() {
 
       {/* Blog Grid */}
       <div className="max-w-7xl mx-auto px-4 py-16">
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {blogPosts.map((post, index) => (
-            <article key={index} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-              {/* Placeholder Image */}
-              <div className="h-48 bg-gradient-to-br from-[#54afe6] to-[#bb7ce4] flex items-center justify-center">
-                <span className="text-white text-4xl font-bold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  {post.category}
-                </span>
-              </div>
-
-              <div className="p-6">
-                {/* Category */}
-                <span className="inline-block bg-[#54afe6]/10 text-[#54afe6] px-3 py-1 rounded-full text-sm font-medium mb-3">
-                  {post.category}
-                </span>
-
-                {/* Title */}
-                <h2 className="text-xl font-bold text-[#371a5b] mb-3" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-                  {post.title}
-                </h2>
-
-                {/* Excerpt */}
-                <p className="text-gray-600 mb-4 line-clamp-3">
-                  {post.excerpt}
-                </p>
-
-                {/* Meta */}
-                <div className="flex items-center text-sm text-gray-500 mb-4 space-x-4">
-                  <span className="flex items-center">
-                    <User className="w-4 h-4 mr-1" />
-                    {post.author}
-                  </span>
-                  <span className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-1" />
-                    {post.date}
-                  </span>
+        {posts.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No blog posts yet. Check back soon!</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {posts.map((post) => (
+              <article key={post.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                {/* Featured Image */}
+                <div className="h-48 bg-gradient-to-br from-[#54afe6] to-[#bb7ce4] relative">
+                  {post.featured_image_url ? (
+                    <img
+                      src={post.featured_image_url}
+                      alt={post.title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-white text-4xl font-bold" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                        {post.category}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
-                {/* Read More */}
-                <a
-                  href={`/blog/${post.slug}`}
-                  className="inline-flex items-center text-[#54afe6] font-semibold hover:text-[#371a5b] transition"
-                >
-                  Read More
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </a>
-              </div>
-            </article>
-          ))}
-        </div>
+                <div className="p-6">
+                  {/* Category */}
+                  <span className="inline-block bg-[#54afe6]/10 text-[#54afe6] px-3 py-1 rounded-full text-sm font-medium mb-3">
+                    {post.category}
+                  </span>
+
+                  {/* Title */}
+                  <h2 className="text-xl font-bold text-[#371a5b] mb-3" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                    {post.title}
+                  </h2>
+
+                  {/* Excerpt */}
+                  <p className="text-gray-600 mb-4 line-clamp-3">
+                    {post.excerpt}
+                  </p>
+
+                  {/* Meta */}
+                  <div className="flex items-center text-sm text-gray-500 mb-4 space-x-4">
+                    <span className="flex items-center">
+                      <User className="w-4 h-4 mr-1" />
+                      {post.author}
+                    </span>
+                    <span className="flex items-center">
+                      <Calendar className="w-4 h-4 mr-1" />
+                      {formatDate(post.published_at)}
+                    </span>
+                  </div>
+
+                  {/* Read More */}
+                  <a
+                    href={`/blog/${post.slug}`}
+                    className="inline-flex items-center text-[#54afe6] font-semibold hover:text-[#371a5b] transition"
+                  >
+                    Read More
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </a>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </div>
 
       <Footer />
