@@ -96,7 +96,7 @@ function SubmitListingForm() {
 
       // Step 1: Create account if needed
       if (!hasAccount) {
-        const { success: signupSuccess, error: signupError } = await signUp(
+        const { success: signupSuccess, error: signupError, data: signupData } = await signUp(
           formData.email,
           formData.password,
           formData.full_name
@@ -104,24 +104,26 @@ function SubmitListingForm() {
         if (!signupSuccess) {
           throw signupError;
         }
+        userId = signupData?.user?.id;
       } else {
-        const { success: loginSuccess, error: loginError } = await signIn(
+        const { success: loginSuccess, error: loginError, data: loginData } = await signIn(
           formData.email,
           formData.password
         );
         if (!loginSuccess) {
           throw loginError;
         }
+        userId = loginData?.user?.id;
       }
 
-      // Step 2: Submit listing
+      // Step 2: Submit listing - use user's account email for linking
       const { success: submitSuccess, error: submitError } = await submitListing({
         business_name: formData.business_name,
         slug: generateSlug(formData.business_name),
         description_short: formData.description_short,
         description_long: formData.description_long,
         phone: formData.phone,
-        email: formData.business_email,
+        email: formData.email, // Use user's account email for linking to dashboard
         website_url: formData.website_url,
         address_line_1: formData.address_line_1,
         address_line_2: formData.address_line_2,

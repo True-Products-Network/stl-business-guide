@@ -72,28 +72,34 @@ export default function DashboardPage() {
 
   async function loadBusinesses(userId: string) {
     try {
-      // Query all business_listings for this user (approved, pending, rejected)
+      console.log("Loading businesses for user email:", user?.email);
+      
+      // Query businesses that were submitted with this user's email
+      // The email is stored in the businesses table, we need to join through business_listings
       const { data, error } = await supabase
-        .from("business_listings")
+        .from("businesses")
         .select(
           `
           id,
           business_name,
           slug,
           description_short,
-          plan_tier,
-          plan_status,
+          email,
           status,
-          is_featured,
-          logo_url,
           created_at,
           updated_at,
-          location:location_id(name),
-          category:category_id(name)
+          business_listings!inner(
+            id,
+            plan_tier,
+            plan_status,
+            is_featured
+          )
         `
         )
         .eq("email", user?.email)
         .order("created_at", { ascending: false });
+
+      console.log("Query result:", { data, error });
 
       if (error) {
         console.error("Error loading businesses:", error);
@@ -101,10 +107,21 @@ export default function DashboardPage() {
       } else {
         // Transform data to match Business interface
         const transformed = data?.map((item: any) => ({
-          ...item,
-          location_name: item.location?.name || null,
-          category_name: item.category?.name || null,
+          id: item.id,
+          business_name: item.business_name,
+          slug: item.slug,
+          description_short: item.description_short,
+          plan_tier: item.business_listings?.[0]?.plan_tier || 'Free',
+          plan_status: item.business_listings?.[0]?.plan_status || item.status,
+          status: item.status,
+          is_featured: item.business_listings?.[0]?.is_featured || false,
+          logo_url: null,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          location_name: null,
+          category_name: null,
         }));
+        console.log("Transformed businesses:", transformed);
         setBusinesses(transformed || []);
         setFilteredBusinesses(transformed || []);
       }
