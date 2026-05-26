@@ -126,11 +126,15 @@ export default function DashboardPage() {
           business_listings!left(
             plan_id,
             listing_status,
-            is_featured
+            is_featured,
+            plan:listing_plans!left(plan_key, name)
           ),
           business_locations!left(
             city,
             state
+          ),
+          business_categories!left(
+            category:categories!left(name)
           )
         `)
         .eq("email", userEmail)
@@ -166,13 +170,14 @@ export default function DashboardPage() {
         const transformed = data?.map((item: any) => {
           const listing = item.business_listings?.[0];
           const location = item.business_locations?.[0];
+          const categoryLink = item.business_categories?.[0];
           
           return {
             id: item.id,
             business_name: item.business_name,
             slug: item.slug,
             description_short: item.description_short,
-            plan_tier: "free", // TODO: Lookup from listing_plans using plan_id
+            plan_tier: listing?.plan?.plan_key || "free",
             plan_status: listing?.listing_status || "pending",
             status: item.status,
             is_featured: listing?.is_featured || false,
@@ -180,7 +185,7 @@ export default function DashboardPage() {
             created_at: item.created_at,
             updated_at: item.updated_at,
             location_name: location ? `${location.city}, ${location.state}` : null,
-            category_name: null, // Will fetch separately if needed
+            category_name: categoryLink?.category?.name || null,
           };
         });
         console.log("Transformed businesses:", transformed);
