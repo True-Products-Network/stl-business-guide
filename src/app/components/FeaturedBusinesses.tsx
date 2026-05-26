@@ -14,6 +14,7 @@ interface FeaturedBusiness {
   email: string | null;
   website_url: string | null;
   logo_url: string | null;
+  featured_image_url: string | null;
   city: string | null;
   state: string | null;
   plan_name: string | null;
@@ -129,9 +130,9 @@ export default function FeaturedBusinesses() {
 
                 {/* Image */}
                 <div className="relative h-48 bg-gradient-to-br from-[#371a5b] to-[#bb7ce4]">
-                  {business.logo_url ? (
+                  {business.featured_image_url || business.logo_url ? (
                     <img 
-                      src={business.logo_url} 
+                      src={business.featured_image_url || business.logo_url} 
                       alt={business.business_name}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
