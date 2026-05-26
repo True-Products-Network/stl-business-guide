@@ -13,6 +13,7 @@ interface PublicListing {
   business_name: string;
   slug: string;
   description_short: string | null;
+  description_long: string | null;
   phone: string | null;
   email: string | null;
   website_url: string | null;
