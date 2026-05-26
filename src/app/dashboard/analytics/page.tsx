@@ -21,7 +21,7 @@ import {
   Facebook,
   Instagram,
   Linkedin,
-  Youtube,
+  YoutubeIcon,
 } from "lucide-react";
 
 interface AnalyticsData {
@@ -534,7 +534,7 @@ export default function AnalyticsDashboardPage() {
                   <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center">
                       <div className="p-2 bg-red-100 rounded-lg mr-3">
-                        <Youtube className="w-5 h-5 text-red-600" />
+                        <YoutubeIcon className="w-5 h-5 text-red-600" />
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">YouTube</p>
