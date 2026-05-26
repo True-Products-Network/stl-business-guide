@@ -67,7 +67,7 @@ export default function DashboardPage() {
     }
 
     setUser(user);
-    await loadBusinesses(user.email);
+    await loadBusinesses(user.email || '');
   }
 
   async function loadBusinesses(userEmail: string) {
