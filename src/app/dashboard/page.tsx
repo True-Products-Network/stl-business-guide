@@ -75,27 +75,31 @@ export default function DashboardPage() {
       console.log("Loading businesses for user email:", user?.email);
       
       // Query businesses that were submitted with this user's email
-      // The email is stored in the businesses table, we need to join through business_listings
+      // Join with business_listings, business_locations, and categories
       const { data, error } = await supabase
         .from("businesses")
-        .select(
-          `
+        .select(`
           id,
           business_name,
           slug,
           description_short,
-          email,
+          logo_url,
           status,
           created_at,
           updated_at,
-          business_listings!inner(
-            id,
+          business_listings!left(
             plan_tier,
             plan_status,
             is_featured
+          ),
+          business_locations!left(
+            city,
+            state
+          ),
+          business_categories!left(
+            category:categories!left(name)
           )
-        `
-        )
+        `)
         .eq("email", user?.email)
         .order("created_at", { ascending: false });
 
@@ -106,21 +110,27 @@ export default function DashboardPage() {
         setError("Failed to load your businesses");
       } else {
         // Transform data to match Business interface
-        const transformed = data?.map((item: any) => ({
-          id: item.id,
-          business_name: item.business_name,
-          slug: item.slug,
-          description_short: item.description_short,
-          plan_tier: item.business_listings?.[0]?.plan_tier || 'Free',
-          plan_status: item.business_listings?.[0]?.plan_status || item.status,
-          status: item.status,
-          is_featured: item.business_listings?.[0]?.is_featured || false,
-          logo_url: null,
-          created_at: item.created_at,
-          updated_at: item.updated_at,
-          location_name: null,
-          category_name: null,
-        }));
+        const transformed = data?.map((item: any) => {
+          const listing = item.business_listings?.[0];
+          const location = item.business_locations?.[0];
+          const categoryLink = item.business_categories?.[0];
+          
+          return {
+            id: item.id,
+            business_name: item.business_name,
+            slug: item.slug,
+            description_short: item.description_short,
+            plan_tier: listing?.plan_tier || "free",
+            plan_status: listing?.plan_status || "pending",
+            status: item.status,
+            is_featured: listing?.is_featured || false,
+            logo_url: item.logo_url,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            location_name: location ? `${location.city}, ${location.state}` : null,
+            category_name: categoryLink?.category?.name || null,
+          };
+        });
         console.log("Transformed businesses:", transformed);
         setBusinesses(transformed || []);
         setFilteredBusinesses(transformed || []);
@@ -199,7 +209,7 @@ export default function DashboardPage() {
 
   const statusCounts = {
     all: businesses.length,
-    active: businesses.filter((b) => b.status === "active" || b.status === "approved").length,
+    active: businesses.filter((b) => b.status === "active").length,
     pending: businesses.filter((b) => b.status === "pending").length,
     rejected: businesses.filter((b) => b.status === "rejected").length,
   };
