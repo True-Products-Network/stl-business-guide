@@ -404,6 +404,17 @@ export default function DashboardPage() {
             Account Settings
           </a>
 
+          {/* Business Owner Coupons Button */}
+          {!isAdmin && businesses.length > 0 && (
+            <a
+              href="/dashboard/coupons"
+              className="inline-flex items-center bg-gradient-to-r from-[#ffc107] to-[#f68712] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
+            >
+              <Tag className="w-5 h-5 mr-2" />
+              My Coupons
+            </a>
+          )}
+
           {isAdmin && (
             <>
               <a
