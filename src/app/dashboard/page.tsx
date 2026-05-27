@@ -459,9 +459,9 @@ export default function DashboardPage() {
               </a>
               <a
                 href="/admin/claims"
-                className="inline-flex items-center bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
+                className="inline-flex items-center bg-gradient-to-r from-orange-500 to-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition shadow-lg"
               >
-                <FileText className="w-5 h-5 mr-2" />
+                <Building2 className="w-5 h-5 mr-2" />
                 Claim Requests
               </a>
             </>

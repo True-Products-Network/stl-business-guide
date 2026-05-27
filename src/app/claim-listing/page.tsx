@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { supabase } from '@/lib/supabase';
-import { Building2, CheckCircle, Loader2, AlertCircle, ArrowLeft, User, Mail, Phone } from 'lucide-react';
+import { Building2, CheckCircle, Loader2, AlertCircle, ArrowLeft, User, Mail, Phone, Globe } from 'lucide-react';
 
 function formatPhoneNumber(value: string): string {
   // Remove all non-numeric characters
@@ -32,6 +32,7 @@ function ClaimListingForm() {
     claimant_name: '',
     claimant_email: '',
     claimant_phone: '',
+    website_url: '',
     proof_notes: '',
   });
 
@@ -74,16 +75,23 @@ function ClaimListingForm() {
       console.log('Form data:', formData);
       
       // Create claim request - match actual table columns
+      const insertData: any = {
+        business_id: businessId,
+        claimant_name: formData.claimant_name,
+        claimant_email: formData.claimant_email,
+        claimant_phone: formData.claimant_phone,
+        proof_notes: formData.proof_notes,
+        status: 'pending',
+      };
+      
+      // Add website_url if provided (column may not exist yet)
+      if (formData.website_url) {
+        insertData.website_url = formData.website_url;
+      }
+      
       const { data, error: submitError } = await supabase
         .from('claim_requests')
-        .insert({
-          business_id: businessId,
-          claimant_name: formData.claimant_name,
-          claimant_email: formData.claimant_email,
-          claimant_phone: formData.claimant_phone,
-          proof_notes: formData.proof_notes,
-          status: 'pending',
-        })
+        .insert(insertData)
         .select();
 
       if (submitError) {
@@ -269,6 +277,20 @@ function ClaimListingForm() {
                     maxLength={14}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6]"
                     placeholder="(314) 555-1234"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <Globe className="w-4 h-4 inline mr-1" />
+                    Website URL (optional)
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.website_url}
+                    onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6]"
+                    placeholder="https://www.yourbusiness.com"
                   />
                 </div>
 
