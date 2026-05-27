@@ -110,7 +110,11 @@ export default function AdminFeesPage() {
       });
 
       // Combine data
-      const combined = businesses?.map((b) => {
+      interface BusinessData {
+        id: string;
+        business_name: string;
+      }
+      const combined = (businesses as BusinessData[] | null)?.map((b) => {
         const fee = feeMap.get(b.id);
         return {
           id: fee?.id || "",
