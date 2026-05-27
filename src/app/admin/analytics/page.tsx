@@ -35,6 +35,23 @@ interface BusinessAnalytics {
   total_engagement: number;
 }
 
+interface Business {
+  id: string;
+  business_name: string;
+  slug: string;
+  plan_key: string | null;
+  is_featured: boolean | null;
+}
+
+interface AnalyticsRecord {
+  business_id: string;
+  profile_views: number | null;
+  website_clicks: number | null;
+  phone_clicks: number | null;
+  email_clicks: number | null;
+  direction_clicks: number | null;
+}
+
 export default function AdminAnalyticsPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
@@ -93,13 +110,14 @@ export default function AdminAnalyticsPage() {
       if (analyticsError) throw analyticsError;
 
       // Combine data
-      const combined = businesses?.map((business) => {
-        const businessAnalytics = analyticsData?.filter(
-          (a) => a.business_id === business.id
+      const combined = (businesses as Business[] | null)?.map((business: Business) => {
+        const businessAnalytics = (analyticsData as AnalyticsRecord[] | null)?.filter(
+          (a: AnalyticsRecord) => a.business_id === business.id
         ) || [];
 
         const totals = businessAnalytics.reduce(
-          (acc, curr) => ({
+          (acc: { profile_views: number; website_clicks: number; phone_clicks: number; email_clicks: number; direction_clicks: number }, 
+           curr: AnalyticsRecord) => ({
             profile_views: acc.profile_views + (curr.profile_views || 0),
             website_clicks: acc.website_clicks + (curr.website_clicks || 0),
             phone_clicks: acc.phone_clicks + (curr.phone_clicks || 0),
@@ -131,7 +149,7 @@ export default function AdminAnalyticsPage() {
       }) || [];
 
       // Sort by total engagement
-      combined.sort((a, b) => b.total_engagement - a.total_engagement);
+      combined.sort((a: BusinessAnalytics, b: BusinessAnalytics) => b.total_engagement - a.total_engagement);
 
       setAnalytics(combined);
     } catch (err) {

@@ -74,7 +74,8 @@ export default function EditCouponPage() {
         .select("id")
         .eq("email", userEmail);
 
-      const businessIds = businessesData?.map((b) => b.id) || [];
+      interface Business { id: string; }
+      const businessIds = (businessesData as Business[] | null)?.map((b) => b.id) || [];
 
       const { data, error } = await supabase
         .from("coupons")

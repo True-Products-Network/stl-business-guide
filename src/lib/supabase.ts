@@ -1,9 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Only create client if env vars are available (not during static build)
+export const supabase = (supabaseUrl && supabaseAnonKey) 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null as any; // Will throw at runtime if used without env vars
 
 // ============================================
 // TYPES (based on new schema)
@@ -382,7 +385,8 @@ export async function getCities() {
   }
 
   // Extract unique city/state combinations
-  const uniqueCities = [...new Map(data.map(item => [`${item.city}, ${item.state}`, item])).values()];
+  interface CityData { city: string; state: string; }
+  const uniqueCities = [...new Map((data as CityData[] | null)?.map((item: CityData) => [`${item.city}, ${item.state}`, item]) || []).values()];
   return uniqueCities;
 }
 

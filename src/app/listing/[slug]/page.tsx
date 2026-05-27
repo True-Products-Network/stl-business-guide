@@ -4,6 +4,9 @@ import Footer from '../../components/Footer';
 import ListingContent from './ListingContent';
 import { getBusinessBySlug } from '@/lib/supabase';
 
+// Force dynamic rendering to avoid static generation issues with Supabase
+export const dynamic = 'force-dynamic';
+
 interface ListingPageProps {
   params: Promise<{
     slug: string;
@@ -12,7 +15,14 @@ interface ListingPageProps {
 
 export default async function ListingPage({ params }: ListingPageProps) {
   const { slug } = await params;
-  const business = await getBusinessBySlug(slug);
+  
+  let business;
+  try {
+    business = await getBusinessBySlug(slug);
+  } catch (error) {
+    console.error('Error fetching business:', error);
+    notFound();
+  }
 
   if (!business) {
     notFound();

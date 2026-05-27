@@ -95,9 +95,10 @@ export default function CouponsPage() {
       
       setBusinesses(transformedData);
 
+      interface Business { id: string; }
       if (businessesData && businessesData.length > 0) {
         // Get coupons for all user's businesses
-        const businessIds = businessesData.map((b) => b.id);
+        const businessIds = (businessesData as Business[]).map((b) => b.id);
         const { data: couponsData, error: couponsError } = await supabase
           .from("coupons")
           .select("*")

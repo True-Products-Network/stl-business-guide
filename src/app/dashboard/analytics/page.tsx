@@ -137,10 +137,20 @@ export default function AnalyticsDashboardPage() {
       }
 
       // Create a map of business data
-      const businessMap = new Map(businessesData.map((b: any) => [b.id, b]));
+      interface BusinessData {
+        id: string;
+        business_name: string;
+        slug: string;
+      }
+      const businessMap = new Map<string, BusinessData>((businessesData as BusinessData[] | null)?.map((b) => [b.id, b]) || []);
 
       // Transform data to match expected format
-      const transformedData = (listingsData || []).map((item: any) => {
+      interface ListingData {
+        id: string;
+        business_id: string;
+        listing_status: string;
+      }
+      const transformedData = ((listingsData as ListingData[] | null) || []).map((item) => {
         const business = businessMap.get(item.business_id);
         return {
           id: item.id,
