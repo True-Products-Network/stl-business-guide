@@ -99,14 +99,27 @@ export default function AdminNewCouponPage() {
 
   async function loadBusinesses() {
     try {
+      // Get businesses with their plan info from business_listings
       const { data, error } = await supabase
         .from("businesses")
-        .select("id, business_name, plan_key")
+        .select(`
+          id, 
+          business_name,
+          business_listings!inner(plan_id, listing_plans!inner(plan_key))
+        `)
         .order("business_name");
 
       if (error) throw error;
-      setBusinesses(data || []);
-      setFilteredBusinesses(data || []);
+      
+      // Transform data to include plan_key
+      const transformedData = data?.map((b: any) => ({
+        id: b.id,
+        business_name: b.business_name,
+        plan_key: b.business_listings?.[0]?.listing_plans?.plan_key || 'free'
+      })) || [];
+      
+      setBusinesses(transformedData);
+      setFilteredBusinesses(transformedData);
     } catch (err) {
       console.error("Error loading businesses:", err);
       setError("Failed to load businesses");
