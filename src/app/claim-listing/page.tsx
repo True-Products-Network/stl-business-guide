@@ -18,11 +18,10 @@ function ClaimListingForm() {
   const [error, setError] = useState('');
   
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    position: '',
-    message: '',
+    claimant_name: '',
+    claimant_email: '',
+    claimant_phone: '',
+    proof_notes: '',
   });
 
   useEffect(() => {
@@ -63,20 +62,17 @@ function ClaimListingForm() {
       console.log('Submitting claim for business:', businessId);
       console.log('Form data:', formData);
       
-      // Create claim request - only include fields that exist in the table
-      const insertData: any = {
-        business_id: businessId,
-        full_name: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        position: formData.position,
-        message: formData.message,
-        status: 'pending',
-      };
-      
+      // Create claim request - match actual table columns
       const { data, error: submitError } = await supabase
         .from('claim_requests')
-        .insert(insertData)
+        .insert({
+          business_id: businessId,
+          claimant_name: formData.claimant_name,
+          claimant_email: formData.claimant_email,
+          claimant_phone: formData.claimant_phone,
+          proof_notes: formData.proof_notes,
+          status: 'pending',
+        })
         .select();
 
       if (submitError) {
@@ -226,8 +222,8 @@ function ClaimListingForm() {
                   </label>
                   <input
                     type="text"
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    value={formData.claimant_name}
+                    onChange={(e) => setFormData({ ...formData, claimant_name: e.target.value })}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6]"
                     placeholder="John Smith"
@@ -241,8 +237,8 @@ function ClaimListingForm() {
                   </label>
                   <input
                     type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    value={formData.claimant_email}
+                    onChange={(e) => setFormData({ ...formData, claimant_email: e.target.value })}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6]"
                     placeholder="you@company.com"
@@ -256,8 +252,8 @@ function ClaimListingForm() {
                   </label>
                   <input
                     type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    value={formData.claimant_phone}
+                    onChange={(e) => setFormData({ ...formData, claimant_phone: e.target.value })}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6]"
                     placeholder="(314) 555-1234"
@@ -266,29 +262,14 @@ function ClaimListingForm() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Building2 className="w-4 h-4 inline mr-1" />
-                    Your Position *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.position}
-                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6]"
-                    placeholder="Owner, Manager, etc."
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Additional Message
+                    Proof of Ownership / Additional Notes
                   </label>
                   <textarea
-                    value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    value={formData.proof_notes}
+                    onChange={(e) => setFormData({ ...formData, proof_notes: e.target.value })}
                     rows={4}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6]"
-                    placeholder="Any additional information to help verify your ownership..."
+                    placeholder="Any information to help verify your ownership (business license, website access, etc.)..."
                   />
                 </div>
 
