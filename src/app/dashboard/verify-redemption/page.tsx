@@ -73,7 +73,8 @@ export default function VerifyRedemptionPage() {
 
       if (error) throw error;
 
-      const ids = data?.map((b) => b.id) || [];
+      interface Business { id: string; }
+      const ids = (data as Business[] | null)?.map((b) => b.id) || [];
       setBusinesses(ids);
     } catch (err) {
       console.error("Error loading businesses:", err);
