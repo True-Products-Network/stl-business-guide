@@ -440,26 +440,28 @@ export default function AdminClaimsPage() {
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => updateClaimStatus(selectedClaim.id, "rejected")}
+                  disabled={processing}
+                  className="px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50"
+                >
+                  {processing ? "Processing..." : "Reject"}
+                </button>
+                <button
+                  onClick={() => updateClaimStatus(selectedClaim.id, "approved")}
+                  disabled={processing}
+                  className="px-4 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition disabled:opacity-50"
+                >
+                  {processing ? "Processing..." : "Approve"}
+                </button>
+              </div>
               <button
                 onClick={() => setSelectedClaim(null)}
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
+                className="px-4 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition w-full"
               >
                 Cancel
-              </button>
-              <button
-                onClick={() => updateClaimStatus(selectedClaim.id, "rejected")}
-                disabled={processing}
-                className="flex-1 px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50"
-              >
-                {processing ? "Processing..." : "Reject"}
-              </button>
-              <button
-                onClick={() => updateClaimStatus(selectedClaim.id, "approved")}
-                disabled={processing}
-                className="flex-1 px-4 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition disabled:opacity-50"
-              >
-                {processing ? "Processing..." : "Approve"}
               </button>
             </div>
           </div>
