@@ -70,11 +70,15 @@ export default function CouponsPage() {
 
   async function loadData(userId: string) {
     try {
-      // Get user's businesses
+      // Get user's email
+      const { data: userData } = await supabase.auth.getUser();
+      const userEmail = userData.user?.email;
+      
+      // Get user's businesses (linked by email)
       const { data: businessesData, error: businessesError } = await supabase
         .from("businesses")
         .select("id, business_name, plan_key")
-        .eq("owner_profile_id", userId);
+        .eq("email", userEmail);
 
       if (businessesError) throw businessesError;
       setBusinesses(businessesData || []);
