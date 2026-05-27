@@ -20,7 +20,6 @@ import {
   Clock,
   MessageSquare,
   Navigation,
-  Zap,
 } from "lucide-react";
 
 interface ListingContentProps {
@@ -307,17 +306,13 @@ export default function ListingContent({ business }: ListingContentProps) {
                 </span>
               ) : planKey === 'premium' ? (
                 <span className="inline-flex items-center bg-gradient-to-r from-[#54afe6] to-[#371a5b] text-white px-4 py-2 rounded-full font-bold shadow-lg">
-                  <Star className="w-5 h-5 mr-2" />
+                  <BadgeCheck className="w-5 h-5 mr-2" />
                   Premium Business
                 </span>
               ) : (
-                <Link
-                  href="/pricing"
-                  className="inline-flex items-center bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-full font-semibold transition"
-                >
-                  <Zap className="w-4 h-4 mr-2" />
-                  Upgrade to Premium
-                </Link>
+                <span className="inline-flex items-center bg-gray-400 text-white px-4 py-2 rounded-full font-semibold">
+                  Free Listing
+                </span>
               )}
             </div>
 
