@@ -133,6 +133,16 @@ export default function AdminClaimsPage() {
   async function updateClaimStatus(claimId: string, status: "approved" | "rejected") {
     setProcessing(true);
     try {
+      // Get the claim details first
+      const { data: claim, error: claimError } = await supabase
+        .from("claim_requests")
+        .select("*")
+        .eq("id", claimId)
+        .single();
+
+      if (claimError) throw claimError;
+
+      // Update claim status
       const { error } = await supabase
         .from("claim_requests")
         .update({
@@ -143,6 +153,26 @@ export default function AdminClaimsPage() {
         .eq("id", claimId);
 
       if (error) throw error;
+
+      // If approved, update the business with new owner info
+      if (status === "approved" && claim) {
+        const { error: businessError } = await supabase
+          .from("businesses")
+          .update({
+            email: claim.claimant_email,
+            phone: claim.claimant_phone || null,
+            // Store claimant name in a field or note - depends on your schema
+            // You might need to add an 'owner_name' column to businesses table
+          })
+          .eq("id", claim.business_id);
+
+        if (businessError) {
+          console.error("Error updating business:", businessError);
+          alert("Claim approved but failed to update business details. Please update manually.");
+        } else {
+          console.log("Business updated with new owner info");
+        }
+      }
 
       // Update local state
       setClaims((prev) =>
@@ -155,6 +185,7 @@ export default function AdminClaimsPage() {
 
       setSelectedClaim(null);
       setAdminNotes("");
+      alert(`Claim ${status} successfully!`);
     } catch (err) {
       console.error("Error updating claim:", err);
       alert("Failed to update claim status");
@@ -444,14 +475,16 @@ export default function AdminClaimsPage() {
                 <button
                   onClick={() => updateClaimStatus(selectedClaim.id, "rejected")}
                   disabled={processing}
-                  className="px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-bold text-lg hover:from-red-700 hover:to-red-800 transition disabled:opacity-50 shadow-lg border-2 border-red-800"
+                  className="px-4 py-3 rounded-lg font-bold text-lg transition disabled:opacity-50 shadow-lg border-2"
+                  style={{ background: 'linear-gradient(to right, #dc2626, #b91c1c)', color: 'white', borderColor: '#991b1b' }}
                 >
                   {processing ? "Processing..." : "✗ Reject"}
                 </button>
                 <button
                   onClick={() => updateClaimStatus(selectedClaim.id, "approved")}
                   disabled={processing}
-                  className="px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-bold text-lg hover:from-green-700 hover:to-green-800 transition disabled:opacity-50 shadow-lg border-2 border-green-800"
+                  className="px-4 py-3 rounded-lg font-bold text-lg transition disabled:opacity-50 shadow-lg border-2"
+                  style={{ background: 'linear-gradient(to right, #16a34a, #15803d)', color: 'white', borderColor: '#166534' }}
                 >
                   {processing ? "Processing..." : "✓ Approve"}
                 </button>

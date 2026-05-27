@@ -26,6 +26,15 @@ interface ListingContentProps {
   business: any;
 }
 
+function formatPhoneNumber(phone: string | null): string {
+  if (!phone) return "";
+  const cleaned = phone.replace(/\D/g, "");
+  if (cleaned.length === 10) {
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+  }
+  return phone;
+}
+
 export default function ListingContent({ business }: ListingContentProps) {
   const planKey = business.plan_key || "free";
   const isVip = planKey === "vip";
@@ -485,7 +494,7 @@ export default function ListingContent({ business }: ListingContentProps) {
                         }}
                         className="text-gray-800 font-medium hover:text-[#54afe6]"
                       >
-                        {business.phone}
+                        {formatPhoneNumber(business.phone)}
                       </a>
                     </div>
                   </div>
