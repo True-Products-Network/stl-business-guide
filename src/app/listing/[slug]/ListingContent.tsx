@@ -20,6 +20,7 @@ import {
   Clock,
   MessageSquare,
   Navigation,
+  Zap,
 } from "lucide-react";
 
 interface ListingContentProps {
@@ -297,8 +298,31 @@ export default function ListingContent({ business }: ListingContentProps) {
               {business.business_name}
             </h1>
 
+            {/* Plan Badge */}
+            <div className="mt-4">
+              {planKey === 'vip' ? (
+                <span className="inline-flex items-center bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-900 px-4 py-2 rounded-full font-bold shadow-lg">
+                  <Crown className="w-5 h-5 mr-2" />
+                  VIP Business
+                </span>
+              ) : planKey === 'premium' ? (
+                <span className="inline-flex items-center bg-gradient-to-r from-[#54afe6] to-[#371a5b] text-white px-4 py-2 rounded-full font-bold shadow-lg">
+                  <Star className="w-5 h-5 mr-2" />
+                  Premium Business
+                </span>
+              ) : (
+                <Link
+                  href="/pricing"
+                  className="inline-flex items-center bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-full font-semibold transition"
+                >
+                  <Zap className="w-4 h-4 mr-2" />
+                  Upgrade to Premium
+                </Link>
+              )}
+            </div>
+
             {/* Google Rating */}
-            <div className="flex items-center">
+            <div className="flex items-center mt-4">
               <Star className="w-6 h-6 text-[#ffc107] fill-current" />
               <span className="text-white font-semibold ml-2 text-xl">
                 {business.google_rating || "4.5"}
