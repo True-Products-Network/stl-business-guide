@@ -415,6 +415,17 @@ export default function DashboardPage() {
             </a>
           )}
 
+          {/* Verify Redemption Button */}
+          {!isAdmin && businesses.length > 0 && (
+            <a
+              href="/dashboard/verify-redemption"
+              className="inline-flex items-center bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
+            >
+              <CheckCircle className="w-5 h-5 mr-2" />
+              Verify Redemption
+            </a>
+          )}
+
           {isAdmin && (
             <>
               <a

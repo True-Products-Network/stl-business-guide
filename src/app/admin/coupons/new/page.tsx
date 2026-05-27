@@ -171,6 +171,7 @@ export default function AdminNewCouponPage() {
     try {
       const { error } = await supabase.from("coupons").insert({
         ...formData,
+        end_date: formData.end_date || null,
         discount_value: formData.discount_value
           ? parseFloat(formData.discount_value)
           : null,

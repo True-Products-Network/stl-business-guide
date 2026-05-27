@@ -36,18 +36,20 @@ function ClaimListingForm() {
   async function loadBusiness() {
     try {
       const { data, error } = await supabase
-        .from('business_listings')
-        .select('*')
+        .from('businesses')
+        .select('id, business_name, email')
         .eq('id', businessId)
         .single();
       
       if (error) {
         console.error('Error loading business:', error);
+        setError('Business not found');
       } else {
         setBusiness(data);
       }
     } catch (err) {
       console.error('Error:', err);
+      setError('Failed to load business');
     }
     setLoading(false);
   }
