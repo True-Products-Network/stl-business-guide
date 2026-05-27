@@ -7,6 +7,17 @@ import Footer from '../components/Footer';
 import { supabase } from '@/lib/supabase';
 import { Building2, CheckCircle, Loader2, AlertCircle, ArrowLeft, User, Mail, Phone } from 'lucide-react';
 
+function formatPhoneNumber(value: string): string {
+  // Remove all non-numeric characters
+  const numbers = value.replace(/\D/g, '');
+  
+  // Format as (000) 000-0000
+  if (numbers.length === 0) return '';
+  if (numbers.length <= 3) return `(${numbers}`;
+  if (numbers.length <= 6) return `(${numbers.slice(0, 3)}) ${numbers.slice(3)}`;
+  return `(${numbers.slice(0, 3)}) ${numbers.slice(3, 6)}-${numbers.slice(6, 10)}`;
+}
+
 function ClaimListingForm() {
   const searchParams = useSearchParams();
   const businessId = searchParams.get('business');
@@ -253,8 +264,9 @@ function ClaimListingForm() {
                   <input
                     type="tel"
                     value={formData.claimant_phone}
-                    onChange={(e) => setFormData({ ...formData, claimant_phone: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, claimant_phone: formatPhoneNumber(e.target.value) })}
                     required
+                    maxLength={14}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6]"
                     placeholder="(314) 555-1234"
                   />
