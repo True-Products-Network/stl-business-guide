@@ -97,8 +97,15 @@ export default function AdminFeesPage() {
       if (feesError) throw feesError;
 
       // Create a map of business_id to fee data
-      const feeMap = new Map();
-      feesData?.forEach((fee) => {
+      interface FeeData {
+        id: string;
+        business_id: string;
+        stl_fee_percentage: number;
+        notes: string | null;
+        updated_at: string;
+      }
+      const feeMap = new Map<string, FeeData>();
+      (feesData as FeeData[] | null)?.forEach((fee) => {
         feeMap.set(fee.business_id, fee);
       });
 
