@@ -31,7 +31,7 @@ interface ClaimRequest {
   status: "pending" | "approved" | "rejected";
   admin_notes: string | null;
   created_at: string;
-  reviewed_at: string | null;
+  updated_at: string | null;
 }
 
 export default function AdminClaimsPage() {
@@ -138,8 +138,7 @@ export default function AdminClaimsPage() {
         .update({
           status,
           admin_notes: adminNotes,
-          reviewed_at: new Date().toISOString(),
-          reviewed_by: user.id,
+          updated_at: new Date().toISOString(),
         })
         .eq("id", claimId);
 
@@ -149,7 +148,7 @@ export default function AdminClaimsPage() {
       setClaims((prev) =>
         prev.map((c) =>
           c.id === claimId
-            ? { ...c, status, admin_notes: adminNotes, reviewed_at: new Date().toISOString() }
+            ? { ...c, status, admin_notes: adminNotes, updated_at: new Date().toISOString() }
             : c
         )
       );
@@ -445,16 +444,16 @@ export default function AdminClaimsPage() {
                 <button
                   onClick={() => updateClaimStatus(selectedClaim.id, "rejected")}
                   disabled={processing}
-                  className="px-4 py-3 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition disabled:opacity-50"
+                  className="px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-bold text-lg hover:from-red-700 hover:to-red-800 transition disabled:opacity-50 shadow-lg border-2 border-red-800"
                 >
-                  {processing ? "Processing..." : "Reject"}
+                  {processing ? "Processing..." : "✗ Reject"}
                 </button>
                 <button
                   onClick={() => updateClaimStatus(selectedClaim.id, "approved")}
                   disabled={processing}
-                  className="px-4 py-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition disabled:opacity-50"
+                  className="px-4 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-bold text-lg hover:from-green-700 hover:to-green-800 transition disabled:opacity-50 shadow-lg border-2 border-green-800"
                 >
-                  {processing ? "Processing..." : "Approve"}
+                  {processing ? "Processing..." : "✓ Approve"}
                 </button>
               </div>
               <button
