@@ -58,7 +58,12 @@ export default function EditCouponPage() {
     }
 
     setUser(user);
-    await loadCoupon(user.email);
+    if (user.email) {
+      await loadCoupon(user.email);
+    } else {
+      setError("User email not found");
+      setLoading(false);
+    }
   }
 
   async function loadCoupon(userEmail: string) {
