@@ -60,26 +60,35 @@ function ClaimListingForm() {
     setError('');
 
     try {
-      // Create claim request
-      const { error: submitError } = await supabase
+      console.log('Submitting claim for business:', businessId);
+      console.log('Form data:', formData);
+      
+      // Create claim request - only include fields that exist in the table
+      const insertData: any = {
+        business_id: businessId,
+        full_name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        position: formData.position,
+        message: formData.message,
+        status: 'pending',
+      };
+      
+      const { data, error: submitError } = await supabase
         .from('claim_requests')
-        .insert({
-          business_id: businessId,
-          full_name: formData.fullName,
-          email: formData.email,
-          phone: formData.phone,
-          position: formData.position,
-          message: formData.message,
-          status: 'pending',
-        });
+        .insert(insertData)
+        .select();
 
       if (submitError) {
-        setError('Failed to submit claim request. Please try again.');
+        console.error('Supabase error:', submitError);
+        setError(`Failed to submit: ${submitError.message}`);
       } else {
+        console.log('Claim submitted successfully:', data);
         setSuccess(true);
       }
-    } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+    } catch (err: any) {
+      console.error('Unexpected error:', err);
+      setError(`An unexpected error occurred: ${err.message}`);
     }
 
     setSubmitting(false);
