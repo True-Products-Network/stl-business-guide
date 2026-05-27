@@ -10,6 +10,7 @@ interface GHLRedemptionPayload {
   redemptionCode: string;
   couponCode: string;
   couponTitle: string;
+  couponExpiryDate?: string;
   businessName: string;
   businessId: string;
   tags: string[];
@@ -49,7 +50,7 @@ export function formatRedemptionForGHL(
   customerEmail: string,
   customerPhone: string | null,
   redemptionCode: string,
-  coupon: { code: string; title: string },
+  coupon: { code: string; title: string; end_date?: string | null },
   business: { id: string; business_name: string }
 ): GHLRedemptionPayload {
   return {
@@ -59,6 +60,7 @@ export function formatRedemptionForGHL(
     redemptionCode,
     couponCode: coupon.code,
     couponTitle: coupon.title,
+    couponExpiryDate: coupon.end_date || undefined,
     businessName: business.business_name,
     businessId: business.id,
     tags: ['conv | businesscouponredeemed'],

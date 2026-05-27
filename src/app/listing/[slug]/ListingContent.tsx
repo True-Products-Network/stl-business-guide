@@ -18,6 +18,8 @@ import {
   Percent,
   Gift,
   Clock,
+  MessageSquare,
+  Navigation,
 } from "lucide-react";
 
 interface ListingContentProps {
@@ -28,6 +30,7 @@ export default function ListingContent({ business }: ListingContentProps) {
   const planKey = business.plan_key || "free";
   const isVip = planKey === "vip";
   const isPremium = planKey === "premium";
+  const isPaid = isVip || isPremium;
   const mainCategory = business.categories?.[0]?.name || "Business";
   const otherCategories = business.categories?.slice(1) || [];
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -38,6 +41,12 @@ export default function ListingContent({ business }: ListingContentProps) {
   const [redeeming, setRedeeming] = useState(false);
   const [redeemSuccess, setRedeemSuccess] = useState(false);
   const [redeemCode, setRedeemCode] = useState("");
+  
+  // Modal states
+  const [showContactModal, setShowContactModal] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
+  const [sending, setSending] = useState(false);
 
   // Load coupons on mount
   useEffect(() => {
@@ -132,7 +141,7 @@ export default function ListingContent({ business }: ListingContentProps) {
         redeemForm.email,
         redeemForm.phone,
         redemptionCode,
-        { code: selectedCoupon.code, title: selectedCoupon.title },
+        { code: selectedCoupon.code, title: selectedCoupon.title, end_date: selectedCoupon.end_date },
         { id: business.id, business_name: business.business_name }
       );
       
@@ -149,6 +158,19 @@ export default function ListingContent({ business }: ListingContentProps) {
       alert("Failed to redeem coupon. Please try again.");
     }
     setRedeeming(false);
+  }
+
+  async function handleContactSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSending(true);
+    
+    // Simulate sending (replace with actual email logic)
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    setSending(false);
+    setShowContactModal(false);
+    setContactForm({ name: "", email: "", message: "" });
+    alert("Message sent successfully!");
   }
 
   // Track page view on mount
@@ -185,7 +207,22 @@ export default function ListingContent({ business }: ListingContentProps) {
 
   // Get gallery images from business data
   const galleryImages = business.gallery_images || [];
+  const featuredImage = business.featured_image_url || business.logo_url;
   const videoUrl = business.video_url;
+  
+  // Add featured image to gallery if not already included
+  const allImages = featuredImage && !galleryImages.includes(featuredImage) 
+    ? [featuredImage, ...galleryImages] 
+    : galleryImages;
+
+  // Get address for map
+  const hasLocation = business.address_line_1 || business.city || business.state;
+  const mapAddress = [
+    business.address_line_1,
+    business.city,
+    business.state,
+    business.zip_code
+  ].filter(Boolean).join(", ");
 
   return (
     <>
@@ -295,10 +332,10 @@ export default function ListingContent({ business }: ListingContentProps) {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Full Description */}
+            {/* Full Description - Premium/VIP only, Free gets short */}
             <div className="bg-white rounded-xl shadow-md p-8">
               <h2 className="text-2xl font-bold text-[#371a5b] mb-4">About</h2>
-              {business.description_long ? (
+              {isPaid && business.description_long ? (
                 <div className="text-gray-600 leading-relaxed whitespace-pre-line">
                   {business.description_long}
                 </div>
@@ -309,14 +346,19 @@ export default function ListingContent({ business }: ListingContentProps) {
               ) : (
                 <p className="text-gray-500 italic">No description available</p>
               )}
+              {!isPaid && business.description_long && (
+                <p className="text-sm text-gray-400 mt-4 italic">
+                  Upgrade to Premium or VIP to see the full business description.
+                </p>
+              )}
             </div>
 
             {/* Photo Gallery */}
-            {galleryImages.length > 0 && (
+            {allImages.length > 0 && (
               <div className="bg-white rounded-xl shadow-md p-8">
                 <h2 className="text-2xl font-bold text-[#371a5b] mb-4">Photo Gallery</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  {galleryImages.map((img: string, idx: number) => (
+                  {allImages.map((img: string, idx: number) => (
                     <div
                       key={idx}
                       className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition"
@@ -417,53 +459,6 @@ export default function ListingContent({ business }: ListingContentProps) {
                 </div>
               </div>
             )}
-
-            {/* Contact Form */}
-            <div className="bg-white rounded-xl shadow-md p-8">
-              <h2 className="text-2xl font-bold text-[#371a5b] mb-4">
-                Contact This Business
-              </h2>
-              <form className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Your Name
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-[#54afe6]"
-                      placeholder="John Smith"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Your Email
-                    </label>
-                    <input
-                      type="email"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-[#54afe6]"
-                      placeholder="you@example.com"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Message
-                  </label>
-                  <textarea
-                    rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-[#54afe6]"
-                    placeholder="How can we help you?"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
-                >
-                  Send Message
-                </button>
-              </form>
-            </div>
           </div>
 
           {/* Sidebar */}
@@ -566,6 +561,29 @@ export default function ListingContent({ business }: ListingContentProps) {
                 Quick Actions
               </h2>
               <div className="space-y-3">
+                {/* Contact Business - Premium/VIP only */}
+                {isPaid && (
+                  <button
+                    onClick={() => setShowContactModal(true)}
+                    className="flex items-center justify-center w-full py-3 bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white rounded-lg font-semibold hover:opacity-90 transition"
+                  >
+                    <MessageSquare className="w-4 h-4 mr-2" />
+                    Contact This Business
+                  </button>
+                )}
+                
+                {/* Map Location - Only when location exists */}
+                {hasLocation && (
+                  <button
+                    onClick={() => setShowMapModal(true)}
+                    className="flex items-center justify-center w-full py-3 border-2 border-[#54afe6] text-[#54afe6] rounded-lg font-semibold hover:bg-[#54afe6] hover:text-white transition"
+                  >
+                    <Navigation className="w-4 h-4 mr-2" />
+                    Map Location
+                  </button>
+                )}
+                
+                {/* Call Now - Only when phone exists */}
                 {business.phone && (
                   <button
                     onClick={() => {
@@ -573,12 +591,13 @@ export default function ListingContent({ business }: ListingContentProps) {
                         window.location.href = `tel:${business.phone}`;
                       });
                     }}
-                    className="flex items-center justify-center w-full py-3 bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white rounded-lg font-semibold hover:opacity-90 transition"
+                    className="flex items-center justify-center w-full py-3 border-2 border-[#371a5b] text-[#371a5b] rounded-lg font-semibold hover:bg-[#371a5b] hover:text-white transition"
                   >
                     <Phone className="w-4 h-4 mr-2" />
                     Call Now
                   </button>
                 )}
+                
                 {business.website_url && (
                   <button
                     onClick={() => {
@@ -586,7 +605,7 @@ export default function ListingContent({ business }: ListingContentProps) {
                         window.open(business.website_url, '_blank');
                       });
                     }}
-                    className="flex items-center justify-center w-full py-3 border-2 border-[#371a5b] text-[#371a5b] rounded-lg font-semibold hover:bg-[#371a5b] hover:text-white transition"
+                    className="flex items-center justify-center w-full py-3 border-2 border-gray-400 text-gray-600 rounded-lg font-semibold hover:bg-gray-100 transition"
                   >
                     <Globe className="w-4 h-4 mr-2" />
                     Visit Website
@@ -626,6 +645,136 @@ export default function ListingContent({ business }: ListingContentProps) {
             alt="Gallery image"
             className="max-w-full max-h-full rounded-lg"
           />
+        </div>
+      )}
+
+      {/* Contact Modal - Premium/VIP only */}
+      {showContactModal && isPaid && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-[#371a5b]">Contact {business.business_name}</h3>
+              <button
+                onClick={() => setShowContactModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <form onSubmit={handleContactSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Your Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={contactForm.name}
+                  onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-[#54afe6]"
+                  placeholder="John Smith"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Your Email *
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={contactForm.email}
+                  onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-[#54afe6]"
+                  placeholder="you@example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Message *
+                </label>
+                <textarea
+                  rows={4}
+                  required
+                  value={contactForm.message}
+                  onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-[#54afe6]"
+                  placeholder="How can we help you?"
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowContactModal(false)}
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={sending}
+                  className="flex-1 bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50"
+                >
+                  {sending ? "Sending..." : "Send Message"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Map Modal */}
+      {showMapModal && hasLocation && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-[#371a5b]">Location</h3>
+              <button
+                onClick={() => setShowMapModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className="aspect-video rounded-lg overflow-hidden bg-gray-100">
+              <iframe
+                width="100%"
+                height="100%"
+                frameBorder="0"
+                style={{ border: 0 }}
+                src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}&q=${encodeURIComponent(mapAddress)}`}
+                allowFullScreen
+              />
+            </div>
+            
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <p className="font-medium text-[#371a5b]">{business.business_name}</p>
+              <p className="text-gray-600">{mapAddress}</p>
+            </div>
+            
+            <div className="mt-4 flex gap-3">
+              <a
+                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapAddress)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition text-center"
+              >
+                Get Directions
+              </a>
+              <button
+                onClick={() => setShowMapModal(false)}
+                className="px-6 py-3 border border-gray-300 rounded-lg font-semibold hover:bg-gray-50 transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
