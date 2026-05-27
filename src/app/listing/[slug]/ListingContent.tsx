@@ -53,11 +53,16 @@ export default function ListingContent({ business }: ListingContentProps) {
         .select("*")
         .eq("business_id", business.id)
         .eq("status", "active")
-        .or(`end_date.is.null,end_date.gte.${new Date().toISOString().split('T')[0]}`)
         .order("created_at", { ascending: false });
 
       if (!error && data) {
-        setCoupons(data);
+        // Filter out expired coupons client-side
+        const today = new Date().toISOString().split('T')[0];
+        const activeCoupons = data.filter((coupon: any) => {
+          if (!coupon.end_date) return true;
+          return coupon.end_date >= today;
+        });
+        setCoupons(activeCoupons);
       }
     } catch (err) {
       console.error("Error loading coupons:", err);
