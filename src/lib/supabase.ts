@@ -444,6 +444,7 @@ export async function submitListing(formData: {
   category_ids: string[];
   plan_id: string;
   user_id?: string | null;
+  full_name?: string;
 }) {
   // Check if business name already exists
   const { exists, business: existingBusiness } = await checkBusinessNameExists(formData.business_name);
