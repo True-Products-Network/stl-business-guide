@@ -48,7 +48,7 @@ export default function CouponsPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [showCreateModal, setShowCreateModal] = useState(false);
+
 
   useEffect(() => {
     checkUser();
@@ -254,13 +254,13 @@ export default function CouponsPage() {
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold text-[#371a5b]">Your Coupons</h2>
           {businesses.some((b) => canCreateCoupon(b.plan_key)) ? (
-            <button
-              onClick={() => setShowCreateModal(true)}
+            <a
+              href="/dashboard/coupons/new"
               className="inline-flex items-center bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
             >
               <Plus className="w-5 h-5 mr-2" />
               Create Coupon
-            </button>
+            </a>
           ) : (
             <div className="text-gray-600">
               Upgrade to Premium or VIP to create coupons{" "}
@@ -285,13 +285,13 @@ export default function CouponsPage() {
               Create your first coupon to attract more customers
             </p>
             {businesses.some((b) => canCreateCoupon(b.plan_key)) && (
-              <button
-                onClick={() => setShowCreateModal(true)}
+              <a
+                href="/dashboard/coupons/new"
                 className="inline-flex items-center bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Create First Coupon
-              </button>
+              </a>
             )}
           </div>
         ) : (
