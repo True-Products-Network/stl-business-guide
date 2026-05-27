@@ -23,6 +23,7 @@ import {
   Eye,
   Image as ImageIcon,
   FileText,
+  Tag,
 } from "lucide-react";
 
 interface Business {
