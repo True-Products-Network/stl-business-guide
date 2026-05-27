@@ -74,14 +74,26 @@ export default function CouponsPage() {
       const { data: userData } = await supabase.auth.getUser();
       const userEmail = userData.user?.email;
       
-      // Get user's businesses (linked by email)
+      // Get user's businesses with plan info (linked by email)
       const { data: businessesData, error: businessesError } = await supabase
         .from("businesses")
-        .select("id, business_name, plan_key")
+        .select(`
+          id, 
+          business_name,
+          business_listings!inner(plan_id, listing_plans!inner(plan_key))
+        `)
         .eq("email", userEmail);
 
       if (businessesError) throw businessesError;
-      setBusinesses(businessesData || []);
+      
+      // Transform data to include plan_key
+      const transformedData = businessesData?.map((b: any) => ({
+        id: b.id,
+        business_name: b.business_name,
+        plan_key: b.business_listings?.[0]?.listing_plans?.plan_key || 'free'
+      })) || [];
+      
+      setBusinesses(transformedData);
 
       if (businessesData && businessesData.length > 0) {
         // Get coupons for all user's businesses
