@@ -75,20 +75,68 @@ export default function ListingContent({ business }: ListingContentProps) {
     
     setRedeeming(true);
     try {
+      // Get the STL fee percentage for this business
+      const { data: feeData } = await supabase
+        .from('business_fees')
+        .select('stl_fee_percentage')
+        .eq('business_id', business.id)
+        .single();
+      
+      const stlFeePercent = feeData?.stl_fee_percentage ?? 10; // Default 10%
+      
+      // Calculate discount value for STL fee
+      let discountValue = 0;
+      if (selectedCoupon.discount_type === 'fixed_amount' && selectedCoupon.discount_value) {
+        discountValue = parseFloat(selectedCoupon.discount_value);
+      } else if (selectedCoupon.discount_type === 'percentage' && selectedCoupon.discount_value) {
+        // For percentage, we'd need the original value - use a default or estimate
+        discountValue = 0; // Will be calculated when business provides actual value
+      }
+      
+      const stlFeeAmount = (discountValue * stlFeePercent) / 100;
+      
+      const redemptionCode = `STL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      
       const { data, error } = await supabase
         .from("coupon_redemptions")
         .insert({
           coupon_id: selectedCoupon.id,
           business_id: business.id,
+          customer_name: redeemForm.name,
           customer_email: redeemForm.email,
           customer_phone: redeemForm.phone || null,
-          redemption_code: `STL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+          redemption_code: redemptionCode,
           status: "redeemed",
+          original_value: discountValue,
+          discount_applied: discountValue,
+          stl_fee_amount: stlFeeAmount,
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // Update coupon totals
+      await supabase
+        .from('coupons')
+        .update({
+          total_redemptions: supabase.rpc('increment', { x: 1 }),
+          stl_fee_earned: supabase.rpc('increment', { x: stlFeeAmount }),
+        })
+        .eq('id', selectedCoupon.id);
+
+      // Send to GHL
+      const { sendRedemptionToGHL, formatRedemptionForGHL } = await import('@/lib/ghl-webhook');
+      const ghlPayload = formatRedemptionForGHL(
+        redeemForm.name,
+        redeemForm.email,
+        redeemForm.phone,
+        redemptionCode,
+        { code: selectedCoupon.code, title: selectedCoupon.title },
+        { id: business.id, business_name: business.business_name }
+      );
+      
+      await sendRedemptionToGHL(ghlPayload);
 
       // Use the redemption code from the database
       setRedeemCode(data?.redemption_code || '');

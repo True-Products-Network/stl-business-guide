@@ -24,6 +24,7 @@ import {
   Image as ImageIcon,
   FileText,
   Tag,
+  DollarSign,
 } from "lucide-react";
 
 interface Business {
@@ -448,6 +449,13 @@ export default function DashboardPage() {
               >
                 <Tag className="w-5 h-5 mr-2" />
                 Coupon Management
+              </a>
+              <a
+                href="/admin/fees"
+                className="inline-flex items-center bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
+              >
+                <DollarSign className="w-5 h-5 mr-2" />
+                Fee Management
               </a>
             </>
           )}
