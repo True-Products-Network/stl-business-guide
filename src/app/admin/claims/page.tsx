@@ -156,14 +156,19 @@ export default function AdminClaimsPage() {
 
       // If approved, update the business with new owner info
       if (status === "approved" && claim) {
+        const updateData: any = {
+          email: claim.claimant_email,
+          phone: claim.claimant_phone || null,
+        };
+        
+        // Add website_url if it exists in the claim
+        if (claim.website_url) {
+          updateData.website_url = claim.website_url;
+        }
+        
         const { error: businessError } = await supabase
           .from("businesses")
-          .update({
-            email: claim.claimant_email,
-            phone: claim.claimant_phone || null,
-            // Store claimant name in a field or note - depends on your schema
-            // You might need to add an 'owner_name' column to businesses table
-          })
+          .update(updateData)
           .eq("id", claim.business_id);
 
         if (businessError) {

@@ -95,10 +95,21 @@ export default function AdminAnalyticsPage() {
 
   async function loadAnalytics() {
     try {
-      // Get all businesses with their analytics
-      const { data: businesses, error: businessError } = await supabase
+      // Get all businesses with their plan info from business_listings
+      const { data: businessesData, error: businessError } = await supabase
         .from("businesses")
-        .select("id, business_name, slug, plan_key, is_featured");
+        .select(`
+          id, 
+          business_name, 
+          slug,
+          business_listings!left (
+            id,
+            is_featured,
+            listing_plans!left (
+              plan_key
+            )
+          )
+        `);
 
       if (businessError) throw businessError;
 
@@ -110,7 +121,11 @@ export default function AdminAnalyticsPage() {
       if (analyticsError) throw analyticsError;
 
       // Combine data
-      const combined = (businesses as Business[] | null)?.map((business: Business) => {
+      const combined = (businessesData as any[] | null)?.map((business: any) => {
+        // Extract plan_key and is_featured from joined data
+        const listing = business.business_listings?.[0];
+        const planKey = listing?.listing_plans?.plan_key || "free";
+        const isFeatured = listing?.is_featured || false;
         const businessAnalytics = (analyticsData as AnalyticsRecord[] | null)?.filter(
           (a: AnalyticsRecord) => a.business_id === business.id
         ) || [];
@@ -137,8 +152,8 @@ export default function AdminAnalyticsPage() {
           business_id: business.id,
           business_name: business.business_name,
           slug: business.slug,
-          plan_key: business.plan_key || "free",
-          is_featured: business.is_featured || false,
+          plan_key: planKey,
+          is_featured: isFeatured,
           ...totals,
           total_engagement:
             totals.website_clicks +

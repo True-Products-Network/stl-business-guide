@@ -452,14 +452,14 @@ export default function DashboardPage() {
               </a>
               <a
                 href="/admin/fees"
-                className="inline-flex items-center bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
+                className="inline-flex items-center bg-gradient-to-r from-emerald-600 to-teal-700 text-white px-6 py-3 rounded-lg font-bold hover:opacity-90 transition shadow-lg border-2 border-emerald-800"
               >
                 <DollarSign className="w-5 h-5 mr-2" />
                 Fee Management
               </a>
               <a
                 href="/admin/claims"
-                className="inline-flex items-center bg-gradient-to-r from-orange-500 to-red-600 text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition shadow-lg"
+                className="inline-flex items-center bg-gradient-to-r from-amber-500 to-orange-600 text-white px-6 py-3 rounded-lg font-bold hover:opacity-90 transition shadow-lg border-2 border-orange-700"
               >
                 <Building2 className="w-5 h-5 mr-2" />
                 Claim Requests
