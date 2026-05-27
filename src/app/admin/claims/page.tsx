@@ -157,10 +157,34 @@ export default function AdminClaimsPage() {
 
       // If approved, update the business with new owner info
       if (status === "approved" && claim) {
+        // First, find or create the claimant's user profile
+        const { data: claimantProfile, error: profileError } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", claim.claimant_email)
+          .single();
+
+        let newOwnerId = null;
+        
+        if (profileError || !claimantProfile) {
+          // Profile doesn't exist - we need to handle this
+          // The claimant needs to sign up first, or we create a placeholder
+          console.warn("Claimant profile not found:", claim.claimant_email);
+          alert("Warning: Claimant does not have an account yet. They need to sign up with this email before they can access the dashboard.");
+        } else {
+          newOwnerId = claimantProfile.id;
+        }
+
         const updateData: any = {
           email: claim.claimant_email,
           phone: claim.claimant_phone || null,
+          business_owner_name: claim.claimant_name,
         };
+        
+        // Only update owner_profile_id if we found the profile
+        if (newOwnerId) {
+          updateData.owner_profile_id = newOwnerId;
+        }
         
         // Add website_url if it exists in the claim
         if (claim.website_url) {

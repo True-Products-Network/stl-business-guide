@@ -471,6 +471,7 @@ export async function submitListing(formData: {
       phone: formData.phone,
       email: formData.email,
       website_url: formData.website_url || null,
+      business_owner_name: formData.full_name,
       status: 'pending'
     })
     .select()
