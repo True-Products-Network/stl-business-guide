@@ -80,9 +80,9 @@ export default function ListingContent({ business }: ListingContentProps) {
         .insert({
           coupon_id: selectedCoupon.id,
           business_id: business.id,
-          customer_name: redeemForm.name,
           customer_email: redeemForm.email,
           customer_phone: redeemForm.phone || null,
+          redemption_code: `STL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
           status: "redeemed",
         })
         .select()
@@ -90,9 +90,8 @@ export default function ListingContent({ business }: ListingContentProps) {
 
       if (error) throw error;
 
-      // Generate redemption code
-      const code = `STL-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-      setRedeemCode(code);
+      // Use the redemption code from the database
+      setRedeemCode(data?.redemption_code || '');
       setRedeemSuccess(true);
       
       // Refresh coupons to update redemption count

@@ -74,40 +74,61 @@ export default function CouponsPage() {
       const { data: userData } = await supabase.auth.getUser();
       const userEmail = userData.user?.email;
       
-      // Get user's businesses with plan info (linked by email)
+      if (!userEmail) {
+        setError("User email not found");
+        setLoading(false);
+        return;
+      }
+      
+      // Get user's businesses (linked by email)
       const { data: businessesData, error: businessesError } = await supabase
         .from("businesses")
-        .select(`
-          id, 
-          business_name,
-          business_listings!inner(plan_id, listing_plans!inner(plan_key))
-        `)
+        .select("id, business_name")
         .eq("email", userEmail);
 
       if (businessesError) throw businessesError;
       
+      if (!businessesData || businessesData.length === 0) {
+        setBusinesses([]);
+        setCoupons([]);
+        setLoading(false);
+        return;
+      }
+      
+      // Get plan info for each business separately
+      const businessIds = businessesData.map((b: any) => b.id);
+      const { data: listingsData, error: listingsError } = await supabase
+        .from("business_listings")
+        .select("business_id, plan_id, listing_plans(plan_key)")
+        .in("business_id", businessIds);
+      
+      // Create a map of business_id to plan_key
+      const planMap = new Map();
+      if (listingsData) {
+        listingsData.forEach((listing: any) => {
+          const planKey = listing.listing_plans?.plan_key || 'free';
+          planMap.set(listing.business_id, planKey);
+        });
+      }
+      
       // Transform data to include plan_key
-      const transformedData = businessesData?.map((b: any) => ({
+      const transformedData = businessesData.map((b: any) => ({
         id: b.id,
         business_name: b.business_name,
-        plan_key: b.business_listings?.[0]?.listing_plans?.plan_key || 'free'
-      })) || [];
+        plan_key: planMap.get(b.id) || 'free'
+      }));
       
       setBusinesses(transformedData);
 
-      interface Business { id: string; }
-      if (businessesData && businessesData.length > 0) {
-        // Get coupons for all user's businesses
-        const businessIds = (businessesData as Business[]).map((b) => b.id);
-        const { data: couponsData, error: couponsError } = await supabase
-          .from("coupons")
-          .select("*")
-          .in("business_id", businessIds)
-          .order("created_at", { ascending: false });
+      // Get coupons for all user's businesses
+      const { data: couponsData, error: couponsError } = await supabase
+        .from("coupons")
+        .select("*")
+        .in("business_id", businessIds)
+        .order("created_at", { ascending: false });
 
-        if (couponsError) throw couponsError;
-        setCoupons(couponsData || []);
-      }
+      if (couponsError) throw couponsError;
+      setCoupons(couponsData || []);
     } catch (err) {
       console.error("Error loading data:", err);
       setError("Failed to load coupons");

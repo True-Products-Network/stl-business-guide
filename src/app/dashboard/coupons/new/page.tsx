@@ -61,25 +61,43 @@ export default function NewCouponPage() {
     // Get user's email
     const userEmail = user?.email;
     
-    // Get user's businesses with plan info (linked by email)
+    if (!userEmail) {
+      setError("User email not found");
+      setLoading(false);
+      return;
+    }
+    
+    // Get user's businesses (linked by email)
     const { data: businessesData, error: businessesError } = await supabase
       .from("businesses")
-      .select(`
-        id, 
-        business_name,
-        business_listings!inner(plan_id, listing_plans!inner(plan_key))
-      `)
+      .select("id, business_name")
       .eq("email", userEmail);
 
     if (businessesError) {
       setError("Failed to load businesses");
-    } else {
+    } else if (businessesData && businessesData.length > 0) {
+      // Get plan info for each business
+      const businessIds = businessesData.map((b: any) => b.id);
+      const { data: listingsData } = await supabase
+        .from("business_listings")
+        .select("business_id, plan_id, listing_plans(plan_key)")
+        .in("business_id", businessIds);
+      
+      // Create a map of business_id to plan_key
+      const planMap = new Map();
+      if (listingsData) {
+        listingsData.forEach((listing: any) => {
+          const planKey = listing.listing_plans?.plan_key || 'free';
+          planMap.set(listing.business_id, planKey);
+        });
+      }
+      
       // Transform data to include plan_key
-      const transformedData = businessesData?.map((b: any) => ({
+      const transformedData = businessesData.map((b: any) => ({
         id: b.id,
         business_name: b.business_name,
-        plan_key: b.business_listings?.[0]?.listing_plans?.plan_key || 'free'
-      })) || [];
+        plan_key: planMap.get(b.id) || 'free'
+      }));
       
       setBusinesses(transformedData);
       if (transformedData.length > 0) {
