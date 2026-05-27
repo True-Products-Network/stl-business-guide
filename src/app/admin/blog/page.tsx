@@ -17,6 +17,7 @@ import {
   Calendar,
   Search,
   Image as ImageIcon,
+  ArrowLeft,
 } from "lucide-react";
 
 interface BlogPost {
@@ -187,6 +188,13 @@ export default function AdminBlogPage() {
       {/* Hero */}
       <div className="bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white pt-32 pb-20">
         <div className="max-w-7xl mx-auto px-4">
+          <a
+            href="/dashboard"
+            className="inline-flex items-center text-white/80 hover:text-white mb-6 transition"
+          >
+            <ArrowLeft className="w-5 h-5 mr-2" />
+            Back to Dashboard
+          </a>
           <div className="flex items-center justify-between">
             <div>
               <h1
