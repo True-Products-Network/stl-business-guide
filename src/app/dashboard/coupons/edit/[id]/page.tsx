@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Navbar from "../../../components/Navbar";
-import Footer from "../../../components/Footer";
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import Navbar from "../../../../components/Navbar";
+import Footer from "../../../../components/Footer";
 import { supabase } from "@/lib/supabase";
 import {
   Loader2,
@@ -17,17 +17,18 @@ import {
   Gift,
 } from "lucide-react";
 
-export default function NewCouponPage() {
+export default function EditCouponPage() {
   const router = useRouter();
+  const params = useParams();
+  const couponId = params.id as string;
+
   const [user, setUser] = useState<any>(null);
-  const [businesses, setBusinesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const [formData, setFormData] = useState({
-    business_id: "",
     code: "",
     title: "",
     description: "",
@@ -35,7 +36,7 @@ export default function NewCouponPage() {
     discount_value: "",
     max_redemptions: "",
     max_redemptions_per_customer: "1",
-    start_date: new Date().toISOString().split("T")[0],
+    start_date: "",
     end_date: "",
     terms_conditions: "",
     redemption_instructions: "",
@@ -57,45 +58,52 @@ export default function NewCouponPage() {
     }
 
     setUser(user);
-
-    // Get user's email
-    const userEmail = user?.email;
-    
-    // Get user's businesses with plan info (linked by email)
-    const { data: businessesData, error: businessesError } = await supabase
-      .from("businesses")
-      .select(`
-        id, 
-        business_name,
-        business_listings!inner(plan_id, listing_plans!inner(plan_key))
-      `)
-      .eq("email", userEmail);
-
-    if (businessesError) {
-      setError("Failed to load businesses");
-    } else {
-      // Transform data to include plan_key
-      const transformedData = businessesData?.map((b: any) => ({
-        id: b.id,
-        business_name: b.business_name,
-        plan_key: b.business_listings?.[0]?.listing_plans?.plan_key || 'free'
-      })) || [];
-      
-      setBusinesses(transformedData);
-      if (transformedData.length > 0) {
-        setFormData((prev) => ({ ...prev, business_id: transformedData[0].id }));
-      }
-    }
-    setLoading(false);
+    await loadCoupon(user.email);
   }
 
-  function generateCode() {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let code = "";
-    for (let i = 0; i < 8; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length));
+  async function loadCoupon(userEmail: string) {
+    try {
+      // First verify this coupon belongs to one of the user's businesses
+      const { data: businessesData } = await supabase
+        .from("businesses")
+        .select("id")
+        .eq("email", userEmail);
+
+      const businessIds = businessesData?.map((b) => b.id) || [];
+
+      const { data, error } = await supabase
+        .from("coupons")
+        .select("*")
+        .eq("id", couponId)
+        .in("business_id", businessIds)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setFormData({
+          code: data.code,
+          title: data.title,
+          description: data.description || "",
+          discount_type: data.discount_type,
+          discount_value: data.discount_value?.toString() || "",
+          max_redemptions: data.max_redemptions?.toString() || "",
+          max_redemptions_per_customer:
+            data.max_redemptions_per_customer?.toString() || "1",
+          start_date: data.start_date,
+          end_date: data.end_date || "",
+          terms_conditions: data.terms_conditions || "",
+          redemption_instructions: data.redemption_instructions || "",
+          image_url: data.image_url || "",
+        });
+      } else {
+        setError("Coupon not found or you don't have permission to edit it");
+      }
+    } catch (err) {
+      console.error("Error loading coupon:", err);
+      setError("Failed to load coupon");
     }
-    setFormData({ ...formData, code });
+    setLoading(false);
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -131,19 +139,22 @@ export default function NewCouponPage() {
     setError("");
 
     try {
-      const { error } = await supabase.from("coupons").insert({
-        ...formData,
-        discount_value: formData.discount_value
-          ? parseFloat(formData.discount_value)
-          : null,
-        max_redemptions: formData.max_redemptions
-          ? parseInt(formData.max_redemptions)
-          : null,
-        max_redemptions_per_customer: parseInt(
-          formData.max_redemptions_per_customer
-        ),
-        created_by: user.id,
-      });
+      const { error } = await supabase
+        .from("coupons")
+        .update({
+          ...formData,
+          discount_value: formData.discount_value
+            ? parseFloat(formData.discount_value)
+            : null,
+          max_redemptions: formData.max_redemptions
+            ? parseInt(formData.max_redemptions)
+            : null,
+          max_redemptions_per_customer: parseInt(
+            formData.max_redemptions_per_customer
+          ),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", couponId);
 
       if (error) {
         setError(error.message);
@@ -168,30 +179,6 @@ export default function NewCouponPage() {
     );
   }
 
-  if (businesses.length === 0) {
-    return (
-      <main className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-          <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-[#371a5b] mb-4">
-            No Business Found
-          </h1>
-          <p className="text-gray-600 mb-6">
-            You need to create a business listing before you can create coupons.
-          </p>
-          <a
-            href="/submit-listing"
-            className="inline-block bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
-          >
-            Create Business Listing
-          </a>
-        </div>
-        <Footer />
-      </main>
-    );
-  }
-
   return (
     <main className="min-h-screen bg-gray-50">
       <Navbar />
@@ -204,13 +191,13 @@ export default function NewCouponPage() {
             className="inline-flex items-center text-white/80 hover:text-white mb-6 transition"
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Coupons
+            Back to My Coupons
           </a>
           <h1
             className="text-4xl md:text-5xl font-bold"
             style={{ fontFamily: "Montserrat, sans-serif" }}
           >
-            Create New Coupon
+            Edit Coupon
           </h1>
         </div>
       </div>
@@ -224,27 +211,6 @@ export default function NewCouponPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Business Selection */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Business *
-            </label>
-            <select
-              value={formData.business_id}
-              onChange={(e) =>
-                setFormData({ ...formData, business_id: e.target.value })
-              }
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-[#54afe6]"
-            >
-              {businesses.map((business) => (
-                <option key={business.id} value={business.id}>
-                  {business.business_name}
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Coupon Image */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -279,7 +245,7 @@ export default function NewCouponPage() {
                   ) : (
                     <ImageIcon className="w-5 h-5 mr-2" />
                   )}
-                  {uploadingImage ? "Uploading..." : "Upload Image"}
+                  {uploadingImage ? "Uploading..." : "Change Image"}
                 </label>
               </div>
             </div>
@@ -290,28 +256,16 @@ export default function NewCouponPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Coupon Code *
             </label>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={formData.code}
-                onChange={(e) =>
-                  setFormData({ ...formData, code: e.target.value.toUpperCase() })
-                }
-                required
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-[#54afe6]"
-                placeholder="SUMMER2024"
-              />
-              <button
-                type="button"
-                onClick={generateCode}
-                className="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
-              >
-                Generate
-              </button>
-            </div>
-            <p className="text-sm text-gray-500 mt-2">
-              Customers will enter this code to redeem the offer
-            </p>
+            <input
+              type="text"
+              value={formData.code}
+              onChange={(e) =>
+                setFormData({ ...formData, code: e.target.value.toUpperCase() })
+              }
+              required
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-[#54afe6]"
+              placeholder="SUMMER2024"
+            />
           </div>
 
           {/* Title & Description */}
@@ -351,7 +305,9 @@ export default function NewCouponPage() {
 
           {/* Discount Type & Value */}
           <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="font-semibold text-[#371a5b] mb-4">Discount Details</h3>
+            <h3 className="font-semibold text-[#371a5b] mb-4">
+              Discount Details
+            </h3>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -432,7 +388,9 @@ export default function NewCouponPage() {
 
           {/* Limits & Dates */}
           <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="font-semibold text-[#371a5b] mb-4">Limits & Availability</h3>
+            <h3 className="font-semibold text-[#371a5b] mb-4">
+              Limits & Availability
+            </h3>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -497,7 +455,9 @@ export default function NewCouponPage() {
 
           {/* Terms & Instructions */}
           <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="font-semibold text-[#371a5b] mb-4">Additional Information</h3>
+            <h3 className="font-semibold text-[#371a5b] mb-4">
+              Additional Information
+            </h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -551,7 +511,7 @@ export default function NewCouponPage() {
               ) : (
                 <Save className="w-5 h-5 mr-2" />
               )}
-              {saving ? "Creating..." : "Create Coupon"}
+              {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>
