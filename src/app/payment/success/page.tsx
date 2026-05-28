@@ -5,13 +5,21 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
-import { CheckCircle, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2, Eye } from "lucide-react";
+
+interface PaymentDetails {
+  businessId: string;
+  businessName: string;
+  planName: string;
+  slug?: string;
+}
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [paymentDetails, setPaymentDetails] = useState<PaymentDetails | null>(null);
 
   useEffect(() => {
     if (sessionId) {
@@ -24,13 +32,24 @@ function PaymentSuccessContent() {
 
   async function verifyPayment() {
     try {
-      // The webhook will have already updated the database
-      // We just wait a moment to ensure it's processed
+      // Fetch session details from Stripe to get business info
+      const response = await fetch(`/api/stripe/session?session_id=${sessionId}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setPaymentDetails({
+          businessId: data.businessId,
+          businessName: data.businessName,
+          planName: data.planName,
+          slug: data.slug,
+        });
+      }
+      
+      // Wait a moment for webhook to process
       await new Promise((resolve) => setTimeout(resolve, 2000));
       setLoading(false);
     } catch (err) {
       console.error("Error:", err);
-      setError("An error occurred");
       setLoading(false);
     }
   }
@@ -79,7 +98,8 @@ function PaymentSuccessContent() {
                 Payment Successful!
               </h1>
               <p className="text-gray-600 mb-2">
-                Thank you for your payment. Your listing has been activated.
+                Thank you for your payment. Your listing has been upgraded to{" "}
+                <strong>{paymentDetails?.planName || "Premium"}</strong>.
               </p>
               <p className="text-gray-600 mb-8">
                 You can now manage your listing from your dashboard.
@@ -87,16 +107,27 @@ function PaymentSuccessContent() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
                   href="/dashboard"
-                  className="inline-block bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
+                  className="inline-flex items-center justify-center bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
                 >
                   Go to Dashboard
                 </Link>
-                <Link
-                  href="/listings"
-                  className="inline-block bg-white text-[#371a5b] border-2 border-[#371a5b] px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition"
-                >
-                  Browse Listings
-                </Link>
+                {paymentDetails?.slug ? (
+                  <Link
+                    href={`/listing/${paymentDetails.slug}`}
+                    className="inline-flex items-center justify-center bg-white text-[#371a5b] border-2 border-[#371a5b] px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    View Listing
+                  </Link>
+                ) : (
+                  <Link
+                    href="/listings"
+                    className="inline-flex items-center justify-center bg-white text-[#371a5b] border-2 border-[#371a5b] px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    Browse Listings
+                  </Link>
+                )}
               </div>
             </div>
           )}
@@ -110,15 +141,17 @@ function PaymentSuccessContent() {
 
 export default function PaymentSuccessPage() {
   return (
-    <Suspense fallback={
-      <main className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="flex items-center justify-center h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-[#54afe6]" />
-        </div>
-        <Footer />
-      </main>
-    }>
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-gray-50">
+          <Navbar />
+          <div className="flex items-center justify-center h-[60vh]">
+            <Loader2 className="w-8 h-8 animate-spin text-[#54afe6]" />
+          </div>
+          <Footer />
+        </main>
+      }
+    >
       <PaymentSuccessContent />
     </Suspense>
   );
