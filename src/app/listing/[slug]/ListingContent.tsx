@@ -642,21 +642,40 @@ export default function ListingContent({ business }: ListingContentProps) {
               </div>
             </div>
 
-            {/* Claim Listing */}
+            {/* Claim Listing - Only for Free listings */}
             <div className="bg-gradient-to-r from-[#54afe6]/10 to-[#bb7ce4]/10 rounded-xl p-6 border border-[#54afe6]/20">
-              <h3 className="font-bold text-[#371a5b] mb-2">
-                Own this business?
-              </h3>
-              <p className="text-gray-600 text-sm mb-4">
-                Claim your listing to update information, add photos, and
-                respond to reviews.
-              </p>
-              <Link
-                href={`/claim-listing?business=${business.id}`}
-                className="block text-center bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-4 py-2 rounded-lg font-semibold hover:opacity-90 transition"
-              >
-                Claim Listing
-              </Link>
+              {isPaid ? (
+                <>
+                  <h3 className="font-bold text-[#371a5b] mb-2">
+                    Need to update ownership?
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    This is a {isVip ? 'VIP' : 'Premium'} listing. Contact support to request ownership changes.
+                  </p>
+                  <a
+                    href="mailto:support@trueproductsnetwork.com?subject=Ownership Change Request"
+                    className="block text-center bg-gradient-to-r from-amber-500 to-orange-600 text-white px-4 py-2 rounded-lg font-semibold hover:opacity-90 transition"
+                  >
+                    Contact Support
+                  </a>
+                </>
+              ) : (
+                <>
+                  <h3 className="font-bold text-[#371a5b] mb-2">
+                    Own this business?
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-4">
+                    Claim your listing to update information, add photos, and
+                    respond to reviews.
+                  </p>
+                  <Link
+                    href={`/claim-listing?business=${business.id}`}
+                    className="block text-center bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-4 py-2 rounded-lg font-semibold hover:opacity-90 transition"
+                  >
+                    Claim Listing
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
