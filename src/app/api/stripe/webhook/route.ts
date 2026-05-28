@@ -31,15 +31,53 @@ export async function POST(request: NextRequest) {
         const session = event.data.object;
         console.log('✅ Checkout completed:', session.id);
         
+        // Update business plan in database
+        const businessId = session.metadata?.businessId;
+        const planName = session.metadata?.planName;
+        
+        if (businessId && businessId !== 'temp-business-id' && planName) {
+          try {
+            const { supabase } = await import('@/lib/supabase');
+            
+            // Get plan ID from plan name
+            const planKey = planName.toLowerCase().includes('vip') ? 'vip' : 'premium';
+            const { data: planData } = await supabase
+              .from('listing_plans')
+              .select('id')
+              .eq('plan_key', planKey)
+              .single();
+            
+            if (planData) {
+              // Update the business listing with new plan
+              const { error: updateError } = await supabase
+                .from('business_listings')
+                .update({
+                  plan_id: planData.id,
+                  listing_status: 'approved',
+                  payment_status: 'paid',
+                  updated_at: new Date().toISOString(),
+                })
+                .eq('business_id', businessId);
+              
+              if (updateError) {
+                console.error('Error updating business plan:', updateError);
+              } else {
+                console.log(`✅ Updated business ${businessId} to ${planKey} plan`);
+              }
+            }
+          } catch (err) {
+            console.error('Error in plan update:', err);
+          }
+        }
+        
         // Send buyer to GHL for follow-up and nurture
         if (session.customer_email && session.customer_details?.name) {
-          const planName = session.metadata?.planName || 'Unknown';
           const amount = session.amount_total ? session.amount_total / 100 : 0;
           
           await handleStripeCheckoutForGHL(
             session.customer_email,
             session.customer_details.name,
-            planName,
+            planName || 'Unknown',
             amount
           );
         }
