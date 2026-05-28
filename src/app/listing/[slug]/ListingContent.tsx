@@ -603,7 +603,11 @@ export default function ListingContent({ business }: ListingContentProps) {
                 {/* Map Location - Only when location exists */}
                 {hasLocation && (
                   <button
-                    onClick={() => setShowMapModal(true)}
+                    onClick={() => {
+                      trackAnalytics("direction_clicks").then(() => {
+                        setShowMapModal(true);
+                      });
+                    }}
                     className="flex items-center justify-center w-full py-3 border-2 border-[#54afe6] text-[#54afe6] rounded-lg font-semibold hover:bg-[#54afe6] hover:text-white transition"
                   >
                     <Navigation className="w-4 h-4 mr-2" />
@@ -810,6 +814,7 @@ export default function ListingContent({ business }: ListingContentProps) {
                 href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapAddress)}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackAnalytics("direction_clicks")}
                 className="flex-1 bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-4 py-3 rounded-lg font-semibold hover:opacity-90 transition text-center"
               >
                 Get Directions

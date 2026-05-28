@@ -48,6 +48,19 @@ function SearchResults() {
   const [searchQuery, setSearchQuery] = useState(query);
   const [selectedCategory, setSelectedCategory] = useState(categoryParam);
 
+  // Track listing click analytics
+  async function trackListingClick(listingId: string, businessName: string) {
+    try {
+      await supabase.rpc("increment_analytics", {
+        p_business_id: listingId,
+        p_metric: "profile_views",
+      });
+      console.log("Tracked profile view for:", businessName);
+    } catch (err) {
+      console.error("Analytics error:", err);
+    }
+  }
+
   useEffect(() => {
     loadData();
   }, [query, categoryParam]);
@@ -107,6 +120,14 @@ function SearchResults() {
             return false;
           });
         }
+        
+        // Sort by plan: VIP first, then Premium, then Free
+        results.sort((a: PublicListing, b: PublicListing) => {
+          const planOrder: { [key: string]: number } = { 'vip': 0, 'premium': 1, 'free': 2 };
+          const planA = planOrder[a.plan_key || 'free'] || 2;
+          const planB = planOrder[b.plan_key || 'free'] || 2;
+          return planA - planB;
+        });
         
         setBusinesses(results);
       }
@@ -346,6 +367,7 @@ function SearchResults() {
                       <div className="mt-4 pt-4 border-t">
                         <Link
                           href={`/listing/${business.slug}`}
+                          onClick={() => trackListingClick(business.id, business.business_name)}
                           className="block text-center bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white py-2 rounded-lg font-medium hover:opacity-90 transition"
                         >
                           View Listing

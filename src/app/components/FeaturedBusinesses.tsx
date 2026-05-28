@@ -5,6 +5,19 @@ import Link from "next/link";
 import { Star, MapPin, Phone, ExternalLink, BadgeCheck, Crown, Globe } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
+// Track listing click analytics
+async function trackListingClick(listingId: string, businessName: string) {
+  try {
+    await supabase.rpc("increment_analytics", {
+      p_business_id: listingId,
+      p_metric: "profile_views",
+    });
+    console.log("Tracked profile view for:", businessName);
+  } catch (err) {
+    console.error("Analytics error:", err);
+  }
+}
+
 interface FeaturedBusiness {
   id: string;
   business_name: string;
@@ -228,6 +241,7 @@ export default function FeaturedBusinesses() {
                   {/* View Profile Button */}
                   <Link
                     href={`/listing/${business.slug}`}
+                    onClick={() => trackListingClick(business.id, business.business_name)}
                     className="flex items-center justify-center w-full py-3 bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white rounded-xl font-semibold hover:opacity-90 transition-opacity"
                   >
                     View Profile

@@ -62,26 +62,53 @@ export default function Newsletter() {
             </div>
           </div>
 
-          {/* Right Content - GHL Newsletter Form (no background) */}
-          <div>
-            <div className="w-full" style={{ height: '934px' }}>
-              <iframe
-                src="https://link.leadprospectrr.com/widget/form/5e01wgF05YFBhAevtaLC"
-                style={{ width: '100%', height: '100%', border: 'none', borderRadius: '25px' }}
-                id="inline-5e01wgF05YFBhAevtaLC"
-                data-layout="{'id':'INLINE'}"
-                data-trigger-type="alwaysShow"
-                data-trigger-value=""
-                data-activation-type="alwaysActivated"
-                data-activation-value=""
-                data-deactivation-type="neverDeactivate"
-                data-deactivation-value=""
-                data-form-name="Subscribe to Our Newsletter"
-                data-height="934"
-                data-layout-iframe-id="inline-5e01wgF05YFBhAevtaLC"
-                data-form-id="5e01wgF05YFBhAevtaLC"
-                title="Subscribe to Our Newsletter"
-              />
+          {/* Right Content - Stats & Benefits */}
+          <div className="grid grid-cols-2 gap-6">
+            {/* Stat Card 1 */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+              <div className="text-4xl font-bold text-[#ffc107] mb-2">500+</div>
+              <div className="text-white/80">Local Businesses</div>
+            </div>
+            
+            {/* Stat Card 2 */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+              <div className="text-4xl font-bold text-[#ffc107] mb-2">5,000+</div>
+              <div className="text-white/80">Happy Customers</div>
+            </div>
+            
+            {/* Stat Card 3 */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+              <div className="text-4xl font-bold text-[#ffc107] mb-2">50+</div>
+              <div className="text-white/80">Weekly Deals</div>
+            </div>
+            
+            {/* Stat Card 4 */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+              <div className="text-4xl font-bold text-[#ffc107] mb-2">100%</div>
+              <div className="text-white/80">Local Focus</div>
+            </div>
+            
+            {/* Newsletter Preview */}
+            <div className="col-span-2 bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+              <h3 className="text-xl font-bold text-white mb-4">What You'll Get</h3>
+              <ul className="space-y-3 text-white/80">
+                <li className="flex items-center">
+                  <span className="w-2 h-2 bg-[#ffc107] rounded-full mr-3"></span>
+                  Weekly community updates and local news
+                </li>
+                <li className="flex items-center">
+                  <span className="w-2 h-2 bg-[#ffc107] rounded-full mr-3"></span>
+                  Exclusive discounts from VIP businesses
+                </li>
+                <li className="flex items-center">
+                  <span className="w-2 h-2 bg-[#ffc107] rounded-full mr-3"></span>
+                  New business announcements and grand openings
+                </li>
+                <li className="flex items-center">
+                  <span className="w-2 h-2 bg-[#ffc107] rounded-full mr-3"></span>
+                  Local events and networking opportunities
+                </li>
+              </ul>
             </div>
           </div>
         </div>

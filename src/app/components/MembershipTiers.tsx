@@ -38,7 +38,7 @@ const tiers = [
     features: [
       "Everything in Free, plus:",
       "Featured placement on homepage",
-      "Photo gallery (up to 10 photos)",
+      "Photo gallery (up to 5 photos)",
       "3 category inclusions",
       "Customer reviews showcase",
       "Social media integration",
@@ -64,7 +64,7 @@ const tiers = [
       "Everything in Premium, plus:",
       "VIP badge & branding",
       "Top priority in all searches",
-      "Unlimited photos & videos",
+      "Up to 10 photos + 1 brand video",
       "Unlimited categories",
       "Featured in newsletter",
       "Social media promotion",

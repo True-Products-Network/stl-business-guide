@@ -381,13 +381,16 @@ export default function DashboardPage() {
             Add New Listing
           </a>
 
-          <a
-            href="/dashboard/analytics"
-            className="inline-flex items-center bg-white text-[#371a5b] border-2 border-[#371a5b] px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition"
-          >
-            <BarChart3 className="w-5 h-5 mr-2" />
-            View Analytics
-          </a>
+          {/* Analytics - VIP only */}
+          {businesses.some(b => b.plan_tier?.toLowerCase() === 'vip') && (
+            <a
+              href="/dashboard/analytics"
+              className="inline-flex items-center bg-white text-[#371a5b] border-2 border-[#371a5b] px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition"
+            >
+              <BarChart3 className="w-5 h-5 mr-2" />
+              View Analytics
+            </a>
+          )}
 
           <a
             href="/dashboard/images"
@@ -405,8 +408,8 @@ export default function DashboardPage() {
             Account Settings
           </a>
 
-          {/* Business Owner Coupons Button */}
-          {!isAdmin && businesses.length > 0 && (
+          {/* Business Owner Coupons Button - VIP only */}
+          {!isAdmin && businesses.some(b => b.plan_tier?.toLowerCase() === 'vip') && (
             <a
               href="/dashboard/coupons"
               className="inline-flex items-center bg-gradient-to-r from-[#ffc107] to-[#f68712] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
