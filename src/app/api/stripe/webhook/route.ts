@@ -64,6 +64,31 @@ export async function POST(request: NextRequest) {
               } else {
                 console.log(`✅ Updated business ${businessId} to ${planKey} plan`);
               }
+              
+              // Also update owner_profile_id if we have customer email
+              if (session.customer_email) {
+                const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('id')
+                  .eq('email', session.customer_email)
+                  .single();
+                
+                if (profile) {
+                  const { error: ownerError } = await supabase
+                    .from('businesses')
+                    .update({
+                      owner_profile_id: profile.id,
+                      updated_at: new Date().toISOString(),
+                    })
+                    .eq('id', businessId);
+                  
+                  if (ownerError) {
+                    console.error('Error updating owner:', ownerError);
+                  } else {
+                    console.log(`✅ Updated owner for business ${businessId}`);
+                  }
+                }
+              }
             }
           } catch (err) {
             console.error('Error in plan update:', err);
