@@ -190,3 +190,45 @@ export async function handleFreePlanSignupForGHL(
 
   return result;
 }
+
+/**
+ * Handle listing approval - send to GHL CRM with "New Listing" tag
+ */
+export async function handleListingApprovalForGHL(
+  email: string,
+  businessName: string,
+  contactName: string,
+  phone: string,
+  planName: string,
+  websiteUrl?: string
+) {
+  // Parse name into first/last
+  const nameParts = contactName.split(' ');
+  const firstName = nameParts[0] || contactName;
+  const lastName = nameParts.slice(1).join(' ') || '';
+
+  // Create contact in GHL with New Listing tag
+  const result = await createOrUpdateGHLContact({
+    firstName,
+    lastName,
+    email,
+    phone,
+    tags: ['New Listing', 'STL Business Guide', planName],
+    source: 'STL Business Guide - Listing Approved',
+    customFields: [
+      { key: 'business_name', value: businessName },
+      { key: 'plan_name', value: planName },
+      { key: 'website_url', value: websiteUrl || '' },
+      { key: 'lead_source', value: 'STL Business Guide' },
+      { key: 'lead_temperature', value: 'Hot' },
+    ],
+  });
+
+  if (result.success) {
+    console.log(`✅ NEW LISTING added to GHL: ${email} - ${businessName}`);
+  } else {
+    console.error(`❌ Failed to add new listing to GHL: ${result.error}`);
+  }
+
+  return result;
+}
