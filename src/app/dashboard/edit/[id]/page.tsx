@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Navbar from '../../../components/Navbar';
 import Footer from '../../../components/Footer';
 import { supabase } from '../../../../lib/supabase';
-import { Loader2, AlertCircle, Save, ArrowLeft, Trash2 } from 'lucide-react';
+import { Loader2, AlertCircle, Save, ArrowLeft, Trash2, Check } from 'lucide-react';
 
 interface Business {
   id: string;
@@ -426,10 +426,8 @@ export default function EditBusinessPage() {
         {success && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all scale-100">
-              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                </svg>
+              <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
+                <Check className="w-10 h-10 text-white stroke-[3]" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
                 Changes Saved!
