@@ -122,11 +122,19 @@ function SearchResults() {
         }
         
         // Sort by plan: VIP first, then Premium, then Free
+        // Within each plan level, shuffle randomly
         results.sort((a: PublicListing, b: PublicListing) => {
           const planOrder: { [key: string]: number } = { 'vip': 0, 'premium': 1, 'free': 2 };
           const planA = planOrder[a.plan_key || 'free'] || 2;
           const planB = planOrder[b.plan_key || 'free'] || 2;
-          return planA - planB;
+          
+          // If different plans, sort by plan
+          if (planA !== planB) {
+            return planA - planB;
+          }
+          
+          // Same plan level - shuffle randomly
+          return Math.random() - 0.5;
         });
         
         setBusinesses(results);

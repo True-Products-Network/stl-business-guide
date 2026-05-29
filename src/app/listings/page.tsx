@@ -79,13 +79,17 @@ function ListingsContent() {
         }
 
         // Sort by plan: VIP first, then Premium, then Free
+        // Within each plan level, shuffle randomly
         results.sort((a: PublicListing, b: PublicListing) => {
           const planOrder: { [key: string]: number } = { 'vip': 0, 'premium': 1, 'free': 2 };
           const planA = planOrder[a.plan_key || 'free'] ?? 2;
           const planB = planOrder[b.plan_key || 'free'] ?? 2;
+          
+          // If different plans, sort by plan
           if (planA !== planB) return planA - planB;
-          // Secondary sort by business name
-          return (a.business_name || '').localeCompare(b.business_name || '');
+          
+          // Same plan level - shuffle randomly
+          return Math.random() - 0.5;
         });
 
         setBusinesses(results);
@@ -189,13 +193,17 @@ function ListingsContent() {
     }
     
     // Sort by plan: VIP first, then Premium, then Free
+    // Within each plan level, shuffle randomly
     results.sort((a: PublicListing, b: PublicListing) => {
       const planOrder: { [key: string]: number } = { 'vip': 0, 'premium': 1, 'free': 2 };
       const planA = planOrder[a.plan_key || 'free'] ?? 2;
       const planB = planOrder[b.plan_key || 'free'] ?? 2;
+      
+      // If different plans, sort by plan
       if (planA !== planB) return planA - planB;
-      // Secondary sort by business name
-      return (a.business_name || '').localeCompare(b.business_name || '');
+      
+      // Same plan level - shuffle randomly
+      return Math.random() - 0.5;
     });
     
     setBusinesses(results);
