@@ -481,8 +481,8 @@ export default function EditBusinessPage() {
         {success && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all scale-100">
-              <div style={{ backgroundColor: '#22c55e', width: '80px', height: '80px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
-                <span style={{ color: 'white', fontSize: '36px' }}>✓</span>
+              <div className="mx-auto mb-4" style={{width: '80px', height: '80px', backgroundColor: '#10b981', borderRadius: '9999px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                <span className="text-white text-4xl font-bold">✓</span>
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
                 Changes Saved!
