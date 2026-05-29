@@ -618,11 +618,19 @@ export default function ListingContent({ business }: ListingContentProps) {
                     <MapPin className="w-5 h-5 text-[#54afe6] mr-3 mt-0.5" />
                     <div>
                       <p className="text-xs text-gray-500">Location</p>
-                      <p className="text-gray-800 font-medium">
+                      <button
+                        onClick={() => {
+                          const locationQuery = encodeURIComponent(`${business.business_name}, ${business.city}, ${business.state}`);
+                          trackAnalytics("direction_clicks").then(() => {
+                            window.open(`https://www.google.com/maps/dir/?api=1&destination=${locationQuery}`, '_blank');
+                          });
+                        }}
+                        className="text-gray-800 font-medium hover:text-[#54afe6] hover:underline text-left"
+                      >
                         {business.city}
                         {business.city && business.state ? ", " : ""}
                         {business.state}
-                      </p>
+                      </button>
                     </div>
                   </div>
                 )}
@@ -777,16 +785,19 @@ export default function ListingContent({ business }: ListingContentProps) {
                   </button>
                 )}
                 
-                {/* Map Location - Only when location exists */}
+                {/* Get Directions - Only when location exists */}
                 {hasLocation && (
                   <button
                     onClick={() => {
-                      setShowMapModal(true);
+                      const locationQuery = encodeURIComponent(`${business.business_name}, ${business.city}, ${business.state}`);
+                      trackAnalytics("direction_clicks").then(() => {
+                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${locationQuery}`, '_blank');
+                      });
                     }}
                     className="flex items-center justify-center w-full py-3 border-2 border-[#54afe6] text-[#54afe6] rounded-lg font-semibold hover:bg-[#54afe6] hover:text-white transition"
                   >
                     <Navigation className="w-4 h-4 mr-2" />
-                    Map Location
+                    Get Directions
                   </button>
                 )}
                 
