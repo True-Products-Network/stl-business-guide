@@ -111,11 +111,12 @@ function ListingsContent() {
       }
 
       // Extract unique cities from business_locations that have active businesses
-      const uniqueCities = [...new Map((listingsData || [])
+      const uniqueCitiesMap = new Map((listingsData || [])
         .filter((l: PublicListing) => l.city && l.state)
-        .map((l: PublicListing) => [`${l.city}, ${l.state}`, { city: l.city, state: l.state }]))
-        .values()]
-        .sort((a: { city: string }, b: { city: string }) => a.city.localeCompare(b.city));
+        .map((l: PublicListing) => [`${l.city}, ${l.state}`, { city: l.city, state: l.state }]));
+      
+      const uniqueCities = Array.from(uniqueCitiesMap.values())
+        .sort((a, b) => (a.city || '').localeCompare(b.city || ''));
       
       setCities(uniqueCities as { city: string; state: string }[]);
     } catch (err) {
