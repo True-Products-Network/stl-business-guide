@@ -1,4 +1,4 @@
--- Fix public_approved_listings view - restore with social media fields
+-- Update public_approved_listings view to include social media URLs
 DROP VIEW IF EXISTS public_approved_listings;
 
 CREATE OR REPLACE VIEW public_approved_listings AS
@@ -57,15 +57,14 @@ SELECT
 FROM businesses b
 LEFT JOIN business_locations bl ON bl.business_id = b.id
 LEFT JOIN business_categories bc ON bc.business_id = b.id
-LEFT JOIN categories c ON bc.category_id = c.id AND c.is_active = true
+LEFT JOIN categories c ON bc.category_id = c.id
 LEFT JOIN business_listings l ON l.business_id = b.id
 LEFT JOIN listing_plans lp ON l.plan_id = lp.id
-WHERE b.status = 'active'
-    AND (l.listing_status = 'approved' OR l.listing_status IS NULL)
-    AND (lp.plan_key IN ('free', 'premium', 'vip') OR lp.plan_key IS NULL);
+WHERE b.status = 'approved'
+AND (l.listing_status = 'active' OR l.listing_status IS NULL);
 
 -- Grant permissions
 GRANT SELECT ON public_approved_listings TO anon;
 GRANT SELECT ON public_approved_listings TO authenticated;
 
-SELECT 'public_approved_listings view restored with social media fields' as status;
+SELECT 'public_approved_listings view updated with social media fields' as status;
