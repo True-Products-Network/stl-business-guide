@@ -7,6 +7,62 @@ import Footer from '../components/Footer';
 import { getListingPlans, getCategories, getLocations, submitListing, signUp, signIn } from '@/lib/supabase';
 import { handleFreePlanSignupForGHL } from '@/lib/ghl';
 import type { ListingPlan, Category, Location } from '@/lib/supabase';
+import { Building2, User, MapPin, Check, Send, AlertTriangle } from 'lucide-react';
+
+// All US states with 2-letter codes
+const usStates = [
+  { code: 'AL', name: 'Alabama' },
+  { code: 'AK', name: 'Alaska' },
+  { code: 'AZ', name: 'Arizona' },
+  { code: 'AR', name: 'Arkansas' },
+  { code: 'CA', name: 'California' },
+  { code: 'CO', name: 'Colorado' },
+  { code: 'CT', name: 'Connecticut' },
+  { code: 'DE', name: 'Delaware' },
+  { code: 'DC', name: 'District of Columbia' },
+  { code: 'FL', name: 'Florida' },
+  { code: 'GA', name: 'Georgia' },
+  { code: 'HI', name: 'Hawaii' },
+  { code: 'ID', name: 'Idaho' },
+  { code: 'IL', name: 'Illinois' },
+  { code: 'IN', name: 'Indiana' },
+  { code: 'IA', name: 'Iowa' },
+  { code: 'KS', name: 'Kansas' },
+  { code: 'KY', name: 'Kentucky' },
+  { code: 'LA', name: 'Louisiana' },
+  { code: 'ME', name: 'Maine' },
+  { code: 'MD', name: 'Maryland' },
+  { code: 'MA', name: 'Massachusetts' },
+  { code: 'MI', name: 'Michigan' },
+  { code: 'MN', name: 'Minnesota' },
+  { code: 'MS', name: 'Mississippi' },
+  { code: 'MO', name: 'Missouri' },
+  { code: 'MT', name: 'Montana' },
+  { code: 'NE', name: 'Nebraska' },
+  { code: 'NV', name: 'Nevada' },
+  { code: 'NH', name: 'New Hampshire' },
+  { code: 'NJ', name: 'New Jersey' },
+  { code: 'NM', name: 'New Mexico' },
+  { code: 'NY', name: 'New York' },
+  { code: 'NC', name: 'North Carolina' },
+  { code: 'ND', name: 'North Dakota' },
+  { code: 'OH', name: 'Ohio' },
+  { code: 'OK', name: 'Oklahoma' },
+  { code: 'OR', name: 'Oregon' },
+  { code: 'PA', name: 'Pennsylvania' },
+  { code: 'RI', name: 'Rhode Island' },
+  { code: 'SC', name: 'South Carolina' },
+  { code: 'SD', name: 'South Dakota' },
+  { code: 'TN', name: 'Tennessee' },
+  { code: 'TX', name: 'Texas' },
+  { code: 'UT', name: 'Utah' },
+  { code: 'VT', name: 'Vermont' },
+  { code: 'VA', name: 'Virginia' },
+  { code: 'WA', name: 'Washington' },
+  { code: 'WV', name: 'West Virginia' },
+  { code: 'WI', name: 'Wisconsin' },
+  { code: 'WY', name: 'Wyoming' }
+];
 
 function SubmitListingForm() {
   const searchParams = useSearchParams();
@@ -21,6 +77,7 @@ function SubmitListingForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [hasAccount, setHasAccount] = useState<boolean | null>(null);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -105,16 +162,41 @@ function SubmitListingForm() {
   };
 
   const handleCategoryChange = (categoryId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      category_ids: prev.category_ids.includes(categoryId)
-        ? prev.category_ids.filter(id => id !== categoryId)
-        : [...prev.category_ids, categoryId]
-    }));
+    const selectedPlanObj = plans.find(p => p.id === selectedPlan);
+    const planKey = selectedPlanObj?.plan_key || 'free';
+    const maxCategories = planKey === 'vip' ? Infinity : planKey === 'premium' ? 5 : 1;
+    
+    setFormData(prev => {
+      const isSelected = prev.category_ids.includes(categoryId);
+      
+      if (isSelected) {
+        // Remove if already selected
+        return {
+          ...prev,
+          category_ids: prev.category_ids.filter(id => id !== categoryId)
+        };
+      } else {
+        // Add if under limit
+        if (prev.category_ids.length < maxCategories) {
+          return {
+            ...prev,
+            category_ids: [...prev.category_ids, categoryId]
+          };
+        }
+        return prev;
+      }
+    });
   };
 
   // Get selected plan details
   const selectedPlanObj = plans.find(p => p.id === selectedPlan);
+
+  const getCategoryLimit = () => {
+    const planKey = selectedPlanObj?.plan_key || 'free';
+    if (planKey === 'vip') return 'Unlimited';
+    if (planKey === 'premium') return '5';
+    return '1';
+  };
 
   const generateSlug = (name: string) => {
     return name
@@ -176,7 +258,7 @@ function SubmitListingForm() {
       if (!submitResult.success) {
         // Handle specific error for duplicate business name
         if (submitResult.error?.code === 'BUSINESS_NAME_EXISTS') {
-          setError(submitResult.error.message);
+          setShowDuplicateModal(true);
           setLoading(false);
           return;
         }
@@ -185,9 +267,8 @@ function SubmitListingForm() {
 
       // Send Free Plan signups to GHL for nurturing
       console.log('Checking plan:', { selectedPlan, plans });
-      const selectedPlanObj = plans.find(p => p.id === selectedPlan);
-      console.log('Selected plan object:', selectedPlanObj);
       const planKey = selectedPlanObj?.plan_key;
+      console.log('Selected plan object:', selectedPlanObj);
       console.log('Plan key:', planKey);
       
       if (planKey === 'free') {
@@ -297,7 +378,7 @@ function SubmitListingForm() {
   return (
     <main className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       <div className="bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white pt-32 pb-20">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -335,34 +416,38 @@ function SubmitListingForm() {
         </div>
 
         {error && (
-          <div className={`border px-4 py-4 rounded-lg mb-6 ${
-            error.includes('already exists') 
-              ? 'bg-amber-50 border-amber-200 text-amber-800' 
-              : 'bg-red-50 border-red-200 text-red-700'
-          }`}>
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-4 rounded-lg mb-6">
             <div className="flex items-start">
-              <svg className={`w-5 h-5 mr-3 mt-0.5 flex-shrink-0 ${
-                error.includes('already exists') ? 'text-amber-500' : 'text-red-500'
-              }`} fill="currentColor" viewBox="0 0 20 20">
-                {error.includes('already exists') ? (
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                ) : (
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                )}
+              <svg className="w-5 h-5 mr-3 mt-0.5 flex-shrink-0 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
               <div>
-                <p className="font-semibold">
-                  {error.includes('already exists') ? 'Business Name Already Exists' : 'Error'}
-                </p>
+                <p className="font-semibold">Error</p>
                 <p className="mt-1">{error}</p>
-                {error.includes('already exists') && (
-                  <p className="mt-2 text-sm">
-                    Please use a different business name or{' '}
-                    <a href="/contact" className="underline hover:text-amber-900">contact us</a>
-                    {' '}if you need help.
-                  </p>
-                )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Duplicate Business Name Modal */}
+        {showDuplicateModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
+              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="w-8 h-8 text-amber-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Business Name Already Exists
+              </h3>
+              <p className="text-gray-600 mb-6">
+                A business with this name is already registered in our directory. Please use a different business name or contact us if you need help.
+              </p>
+              <button
+                onClick={() => setShowDuplicateModal(false)}
+                className="w-full bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white py-3 rounded-xl font-semibold hover:opacity-90 transition"
+              >
+                OK
+              </button>
             </div>
           </div>
         )}
@@ -463,9 +548,9 @@ function SubmitListingForm() {
 
             <div className="mt-8 flex justify-end">
               <button
-                onClick={() => selectedPlan && setStep(2)}
+                onClick={() => setStep(2)}
                 disabled={!selectedPlan}
-                className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
+                className="bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Continue
               </button>
@@ -477,376 +562,67 @@ function SubmitListingForm() {
         {step === 2 && (
           <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Create Your Account</h2>
-
-            {hasAccount === null && (
-              <div className="flex gap-4 mb-6">
+            
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Do you already have an account?
+              </label>
+              <div className="flex gap-4">
                 <button
-                  onClick={() => setHasAccount(false)}
-                  className="flex-1 border-2 border-blue-600 text-blue-600 py-4 rounded-lg font-semibold hover:bg-blue-50 transition"
+                  type="button"
+                  onClick={() => setHasAccount(true)}
+                  className={`px-4 py-2 rounded-lg border-2 font-medium transition ${
+                    hasAccount === true
+                      ? 'border-blue-600 bg-blue-50 text-blue-600'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
                 >
-                  I need to create an account
+                  Yes, I have an account
                 </button>
                 <button
-                  onClick={() => setHasAccount(true)}
-                  className="flex-1 border-2 border-gray-300 text-gray-700 py-4 rounded-lg font-semibold hover:bg-gray-50 transition"
+                  type="button"
+                  onClick={() => setHasAccount(false)}
+                  className={`px-4 py-2 rounded-lg border-2 font-medium transition ${
+                    hasAccount === false
+                      ? 'border-blue-600 bg-blue-50 text-blue-600'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
                 >
-                  I already have an account
+                  No, create new account
                 </button>
               </div>
-            )}
+            </div>
 
             {hasAccount !== null && (
-              <form onSubmit={(e) => { e.preventDefault(); setStep(3); }}>
-                <div className="space-y-4">
+              <form className="space-y-4">
+                {!hasAccount && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Name *
+                    </label>
                     <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
+                      type="text"
+                      name="full_name"
+                      value={formData.full_name}
                       onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="you@example.com"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required={!hasAccount}
                     />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input
-                      type="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                      minLength={6}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="••••••••"
-                    />
-                  </div>
-
-                  {!hasAccount && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                      <input
-                        type="text"
-                        name="full_name"
-                        value={formData.full_name}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="John Smith"
-                      />
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-8 flex justify-between">
-                  <button
-                    type="button"
-                    onClick={() => { setHasAccount(null); setStep(1); }}
-                    className="text-gray-600 hover:text-gray-800 font-medium"
-                  >
-                    ← Back
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
-                  >
-                    Continue
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        )}
-
-        {/* Step 3: Business Information */}
-        {step === 3 && (
-          <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-6 md:p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Business Information</h2>
-
-            <div className="space-y-6">
-              {/* Business Name */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Business Name *</label>
-                <input
-                  type="text"
-                  name="business_name"
-                  value={formData.business_name}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Your Business Name"
-                />
-              </div>
-
-              {/* Location */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Service Area / Location *</label>
-                <select
-                  name="location_id"
-                  value={formData.location_id}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Select your service area</option>
-                  {locations.map((location) => (
-                    <option key={location.id} value={location.id}>
-                      {location.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Categories */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Categories * 
-                  <span className="text-xs text-gray-500 ml-2">
-                    ({selectedPlanObj?.plan_name === 'Free' ? 'Select 1' : selectedPlanObj?.plan_name === 'Premium' ? 'Select up to 3' : 'Select unlimited'})
-                  </span>
-                </label>
-                <select
-                  name="category_ids"
-                  value={formData.category_ids[0] || ''}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value) {
-                      const maxCategories = selectedPlanObj?.plan_name === 'Free' ? 1 : selectedPlanObj?.plan_name === 'Premium' ? 3 : 999;
-                      setFormData(prev => ({
-                        ...prev,
-                        category_ids: prev.category_ids.length < maxCategories 
-                          ? [...prev.category_ids, value]
-                          : [value] // Replace if at max
-                      }));
-                    }
-                  }}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-2"
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                
-                {/* Show selected categories */}
-                {formData.category_ids.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {formData.category_ids.map((catId) => {
-                      const cat = categories.find(c => c.id === catId);
-                      return cat ? (
-                        <span key={catId} className="inline-flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                          {cat.name}
-                          <button
-                            type="button"
-                            onClick={() => handleCategoryChange(catId)}
-                            className="ml-2 text-blue-600 hover:text-blue-800"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ) : null;
-                    })}
                   </div>
                 )}
-              </div>
 
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Short Description *</label>
-                <input
-                  type="text"
-                  name="description_short"
-                  value={formData.description_short}
-                  onChange={handleInputChange}
-                  required
-                  maxLength={200}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Brief description of your business (max 200 characters)"
-                />
-                <p className="text-xs text-gray-500 mt-1">{formData.description_short.length}/200 characters</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Description</label>
-                <textarea
-                  name="description_long"
-                  value={formData.description_long}
-                  onChange={handleInputChange}
-                  rows={4}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Detailed description of your products/services"
-                />
-              </div>
-
-              {/* Contact Info */}
-              <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="(314) 555-0123"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Business Email *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email *
+                  </label>
                   <input
                     type="email"
-                    name="business_email"
-                    value={formData.business_email}
+                    name="email"
+                    value={formData.email}
                     onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="contact@yourbusiness.com"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
-                <input
-                  type="url"
-                  name="website_url"
-                  value={formData.website_url}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="https://www.yourbusiness.com"
-                />
-              </div>
-
-              {/* Address */}
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Business Address</h3>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
-                    <input
-                      type="text"
-                      name="address_line_1"
-                      value={formData.address_line_1}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="123 Main Street"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Apt, Suite, etc.</label>
-                    <input
-                      type="text"
-                      name="address_line_2"
-                      value={formData.address_line_2}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Suite 100"
-                    />
-                  </div>
-
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
-                      <input
-                        type="text"
-                        name="city"
-                        value={formData.city}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="St. Louis"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
-                      <select
-                        name="state"
-                        value={formData.state}
-                        onChange={handleInputChange}
-                        required
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="MO">Missouri</option>
-                        <option value="IL">Illinois</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code *</label>
-                      <input
-                        type="text"
-                        name="zip_code"
-                        value={formData.zip_code}
-                        onChange={handleInputChange}
-                        required
-                        pattern="[0-9]{5}(-[0-9]{4})?"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="63101"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Service Area</label>
-                    <input
-                      type="text"
-                      name="service_area"
-                      value={formData.service_area}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="e.g., St. Louis County, St. Charles County"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 flex justify-between">
-              <button
-                type="button"
-                onClick={() => setStep(2)}
-                className="text-gray-600 hover:text-gray-800 font-medium"
-              >
-                ← Back
-              </button>
-              <button
-                type="submit"
-                disabled={loading || formData.category_ids.length === 0}
-                className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:bg-gray-300 disabled:cursor-not-allowed"
-              >
-                {loading ? 'Submitting...' : 'Submit Listing'}
-              </button>
-            </div>
-          </form>
-        )}
-      </div>
-
-      <Footer />
-    </main>
-  );
-}
-
-export default function SubmitListingPage() {
-  return (
-    <Suspense fallback={
-      <main className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-        <Footer />
-      </main>
-    }>
-      <SubmitListingForm />
-    </Suspense>
-  );
-}
+                <div>
