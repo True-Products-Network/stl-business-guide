@@ -115,11 +115,18 @@ function SubmitListingForm() {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       setCurrentUser(user);
-      // Pre-fill email from user
+      // Get full name from user metadata or profile
+      const fullName = user.user_metadata?.full_name || '';
+      const userEmail = user.email || '';
+      
+      // Pre-fill form data from user profile
       setFormData(prev => ({
         ...prev,
-        email: user.email || '',
-        full_name: user.user_metadata?.full_name || ''
+        email: userEmail,
+        full_name: fullName,
+        // Pre-fill contact info (user can change if needed)
+        contact_name: fullName,
+        business_email: userEmail
       }));
       // Skip account creation step if user is logged in
       setHasAccount(true);
