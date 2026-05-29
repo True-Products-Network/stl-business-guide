@@ -18,6 +18,10 @@ interface Business {
   website_url: string | null;
   logo_url: string | null;
   status: string;
+  facebook_url: string | null;
+  instagram_url: string | null;
+  linkedin_url: string | null;
+  youtube_url: string | null;
 }
 
 export default function EditBusinessPage() {
@@ -40,6 +44,10 @@ export default function EditBusinessPage() {
     phone: '',
     email: '',
     website_url: '',
+    facebook_url: '',
+    instagram_url: '',
+    linkedin_url: '',
+    youtube_url: '',
   });
 
   useEffect(() => {
@@ -87,6 +95,10 @@ export default function EditBusinessPage() {
         phone: data.phone || '',
         email: data.email || '',
         website_url: data.website_url || '',
+        facebook_url: data.facebook_url || '',
+        instagram_url: data.instagram_url || '',
+        linkedin_url: data.linkedin_url || '',
+        youtube_url: data.youtube_url || '',
       });
     } catch (err) {
       setError('An error occurred while loading the business.');
@@ -111,6 +123,10 @@ export default function EditBusinessPage() {
           phone: formData.phone,
           email: formData.email,
           website_url: formData.website_url,
+          facebook_url: formData.facebook_url,
+          instagram_url: formData.instagram_url,
+          linkedin_url: formData.linkedin_url,
+          youtube_url: formData.youtube_url,
           updated_at: new Date().toISOString(),
         })
         .eq('id', businessId);
@@ -308,6 +324,70 @@ export default function EditBusinessPage() {
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-transparent"
               />
+            </div>
+
+            {/* Social Media Links - Paid listings only */}
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Social Media Links</h3>
+              <p className="text-sm text-gray-500 mb-4">Add your social media profiles to help customers connect with you.</p>
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Facebook URL
+                  </label>
+                  <input
+                    type="url"
+                    name="facebook_url"
+                    value={formData.facebook_url}
+                    onChange={handleInputChange}
+                    placeholder="https://facebook.com/yourbusiness"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Instagram URL
+                  </label>
+                  <input
+                    type="url"
+                    name="instagram_url"
+                    value={formData.instagram_url}
+                    onChange={handleInputChange}
+                    placeholder="https://instagram.com/yourbusiness"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    LinkedIn URL
+                  </label>
+                  <input
+                    type="url"
+                    name="linkedin_url"
+                    value={formData.linkedin_url}
+                    onChange={handleInputChange}
+                    placeholder="https://linkedin.com/company/yourbusiness"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    YouTube URL
+                  </label>
+                  <input
+                    type="url"
+                    name="youtube_url"
+                    value={formData.youtube_url}
+                    onChange={handleInputChange}
+                    placeholder="https://youtube.com/@yourbusiness"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-transparent"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
