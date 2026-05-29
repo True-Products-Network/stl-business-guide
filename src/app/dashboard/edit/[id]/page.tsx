@@ -25,6 +25,19 @@ interface Business {
   business_hours: Record<string, { open: string; close: string; closed: boolean }> | null;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+interface BusinessLocation {
+  id: string;
+  city: string;
+  state: string;
+  service_area: string | null;
+}
+
 export default function EditBusinessPage() {
   const router = useRouter();
   const params = useParams();
@@ -61,8 +74,30 @@ export default function EditBusinessPage() {
     sunday: { open: '09:00', close: '17:00', closed: true },
   });
 
+  // Location and Categories state
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [location, setLocation] = useState<{ city: string; state: string }>({ city: '', state: 'MO' });
+  const [serviceArea, setServiceArea] = useState('');
+  const [locationId, setLocationId] = useState<string | null>(null);
+
+  // Predefined St. Louis area cities
+  const stLouisCities = [
+    'St. Louis', 'Clayton', 'University City', 'Maplewood', 'Richmond Heights',
+    'Brentwood', 'Ladue', 'Webster Groves', 'Kirkwood', 'Ferguson',
+    'Florissant', 'Hazelwood', 'Bridgeton', 'Maryland Heights', 'Creve Coeur',
+    'Olivette', 'Overland', 'St. Ann', 'St. John', 'Jennings',
+    'Bellefontaine Neighbors', 'Normandy', 'Chesterfield', 'Ballwin', 'Ellisville',
+    'Wildwood', 'Manchester', 'Town and Country', 'Des Peres', 'Sunset Hills',
+    'Crestwood', 'Fenton', 'Arnold', 'Imperial', 'Festus',
+    'Crystal City', 'Eureka', 'Pacific', 'Valley Park', 'St. Charles',
+    'St. Peters', 'O\'Fallon', 'Cottleville', 'Lake Saint Louis', 'Wentzville',
+    'East St. Louis', 'Belleville', 'Fairview Heights', 'Collinsville', 'Edwardsville'
+  ];
+
   useEffect(() => {
     checkAuthAndLoadBusiness();
+    loadCategories();
   }, []);
 
   async function checkAuthAndLoadBusiness() {
@@ -76,8 +111,25 @@ export default function EditBusinessPage() {
     await loadBusiness(businessId, user.email || '');
   }
 
+  async function loadCategories() {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (!error && data) {
+        setCategories(data);
+      }
+    } catch (err) {
+      console.error('Error loading categories:', err);
+    }
+  }
+
   async function loadBusiness(id: string, userEmail: string) {
     try {
+      // Fetch business data
       const { data, error } = await supabase
         .from('businesses')
         .select('*')
@@ -116,6 +168,32 @@ export default function EditBusinessPage() {
       if (data.business_hours) {
         setBusinessHours(data.business_hours);
       }
+
+      // Fetch location data
+      const { data: locationData } = await supabase
+        .from('business_locations')
+        .select('*')
+        .eq('business_id', id)
+        .single();
+      
+      if (locationData) {
+        setLocationId(locationData.id);
+        setLocation({
+          city: locationData.city || '',
+          state: locationData.state || 'MO'
+        });
+        setServiceArea(locationData.service_area || '');
+      }
+
+      // Fetch business categories
+      const { data: categoryData } = await supabase
+        .from('business_categories')
+        .select('category_id')
+        .eq('business_id', id);
+      
+      if (categoryData) {
+        setSelectedCategories(categoryData.map(c => c.category_id));
+      }
     } catch (err) {
       setError('An error occurred while loading the business.');
     } finally {
@@ -130,7 +208,8 @@ export default function EditBusinessPage() {
     setSuccess(false);
     
     try {
-      const { error } = await supabase
+      // Update business data
+      const { error: businessError } = await supabase
         .from('businesses')
         .update({
           business_name: formData.business_name,
@@ -148,11 +227,72 @@ export default function EditBusinessPage() {
         })
         .eq('id', businessId);
       
-      if (error) {
-        setError('Failed to save changes: ' + error.message);
-      } else {
-        setSuccess(true);
+      if (businessError) {
+        setError('Failed to save changes: ' + businessError.message);
+        setSaving(false);
+        return;
       }
+
+      // Update or insert location
+      if (location.city) {
+        if (locationId) {
+          // Update existing location
+          const { error: locationError } = await supabase
+            .from('business_locations')
+            .update({
+              city: location.city,
+              state: location.state,
+              service_area: serviceArea || null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', locationId);
+          
+          if (locationError) {
+            console.error('Error updating location:', locationError);
+          }
+        } else {
+          // Insert new location
+          const { error: locationError } = await supabase
+            .from('business_locations')
+            .insert({
+              business_id: businessId,
+              city: location.city,
+              state: location.state,
+              service_area: serviceArea || null,
+            });
+          
+          if (locationError) {
+            console.error('Error inserting location:', locationError);
+          }
+        }
+      }
+
+      // Update categories - delete existing and insert new
+      const { error: deleteCatError } = await supabase
+        .from('business_categories')
+        .delete()
+        .eq('business_id', businessId);
+      
+      if (deleteCatError) {
+        console.error('Error deleting categories:', deleteCatError);
+      }
+
+      if (selectedCategories.length > 0) {
+        const categoryInserts = selectedCategories.map(catId => ({
+          business_id: businessId,
+          category_id: catId,
+        }));
+        
+        const { error: catError } = await supabase
+          .from('business_categories')
+          .insert(categoryInserts);
+        
+        if (catError) {
+          console.error('Error inserting categories:', catError);
+        }
+      }
+      
+      setSuccess(true);
     } catch (err) {
       setError('An error occurred while saving.');
     } finally {
@@ -360,6 +500,87 @@ export default function EditBusinessPage() {
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-transparent"
               />
+            </div>
+
+            {/* Location & Service Area */}
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Location & Service Area</h3>
+              <p className="text-sm text-gray-500 mb-4">Select your primary location and describe your service area.</p>
+              
+              <div className="grid md:grid-cols-2 gap-6 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    City *
+                  </label>
+                  <select
+                    value={location.city}
+                    onChange={(e) => setLocation({ ...location, city: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-transparent"
+                    required
+                  >
+                    <option value="">Select a city</option>
+                    {stLouisCities.map((city) => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    State
+                  </label>
+                  <select
+                    value={location.state}
+                    onChange={(e) => setLocation({ ...location, state: e.target.value })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-transparent"
+                  >
+                    <option value="MO">Missouri</option>
+                    <option value="IL">Illinois</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Service Area
+                </label>
+                <textarea
+                  value={serviceArea}
+                  onChange={(e) => setServiceArea(e.target.value)}
+                  placeholder="Describe your service area (e.g., 'We serve the greater St. Louis area including St. Charles and Jefferson County')"
+                  rows={3}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Describe the geographic area you serve beyond your primary location.
+                </p>
+              </div>
+            </div>
+
+            {/* Categories */}
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Business Categories</h3>
+              <p className="text-sm text-gray-500 mb-4">Select all categories that apply to your business.</p>
+              
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {categories.map((category) => (
+                  <label key={category.id} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedCategories.includes(category.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedCategories([...selectedCategories, category.id]);
+                        } else {
+                          setSelectedCategories(selectedCategories.filter(id => id !== category.id));
+                        }
+                      }}
+                      className="mr-3 rounded border-gray-300 text-[#54afe6] focus:ring-[#54afe6]"
+                    />
+                    <span className="text-sm text-gray-700">{category.name}</span>
+                  </label>
+                ))}
+              </div>
             </div>
 
             {/* Social Media Links - Paid listings only */}
