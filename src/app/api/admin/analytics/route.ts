@@ -1,10 +1,22 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Lazy initialization - only create client when needed
+let supabaseAdmin: SupabaseClient | null = null;
+
+function getSupabaseAdmin(): SupabaseClient {
+  if (!supabaseAdmin) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    
+    if (!url || !key) {
+      throw new Error('Missing Supabase environment variables');
+    }
+    
+    supabaseAdmin = createClient(url, key);
+  }
+  return supabaseAdmin;
+}
 
 export async function GET(request: Request) {
   try {
@@ -17,14 +29,14 @@ export async function GET(request: Request) {
     const token = authHeader.split(' ')[1];
     
     // Verify the user and check if they're an admin
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    const { data: { user }, error: authError } = await getSupabaseAdmin().auth.getUser(token);
     
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user is admin
-    const { data: profile, error: profileError } = await supabaseAdmin
+    const { data: profile, error: profileError } = await getSupabaseAdmin()
       .from('profiles')
       .select('role')
       .eq('id', user.id)
@@ -39,7 +51,7 @@ export async function GET(request: Request) {
     }
 
     // Fetch all businesses with their listing info using service role (bypasses RLS)
-    const { data: businesses, error: businessesError } = await supabaseAdmin
+    const { data: businesses, error: businessesError } = await getSupabaseAdmin()
       .from('businesses')
       .select(`
         id, 
@@ -62,7 +74,7 @@ export async function GET(request: Request) {
     }
 
     // Fetch all analytics records
-    const { data: analytics, error: analyticsError } = await supabaseAdmin
+    const { data: analytics, error: analyticsError } = await getSupabaseAdmin()
       .from('business_analytics')
       .select('business_id, date, profile_views, website_clicks, phone_clicks, email_clicks, direction_clicks');
 
