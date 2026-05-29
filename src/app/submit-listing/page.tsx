@@ -631,10 +631,12 @@ function SubmitListingForm() {
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Business Information</h2>
             
             {/* Instructions */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-center">
               <p className="text-sm text-gray-700">
-                Submit your business information to be featured in our directory. All listings are reviewed before publication. 
-                <span className="text-red-500 font-bold">*</span> indicates a required field.
+                Submit your business information to be featured in our directory.
+              </p>
+              <p className="text-sm text-gray-700 mt-1">
+                All listings are reviewed before publication. <span className="text-red-500 font-bold">*</span> indicates a required field.
               </p>
             </div>
 
@@ -649,41 +651,42 @@ function SubmitListingForm() {
                 </div>
                 
                 <div className="space-y-4">
-                  {/* Business Name */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Business Name <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="business_name"
-                      value={formData.business_name}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter your business name"
-                    />
-                  </div>
+                  {/* Business Name and Location - 2 columns */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Business Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="business_name"
+                        value={formData.business_name}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter your business name"
+                      />
+                    </div>
 
-                  {/* Location */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Location <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      name="location_id"
-                      value={formData.location_id}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Select your location</option>
-                      {locations.map((location) => (
-                        <option key={location.id} value={location.id}>
-                          {location.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Location <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="location_id"
+                        value={formData.location_id}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Select your location</option>
+                        {locations.map((location) => (
+                          <option key={location.id} value={location.id}>
+                            {location.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
                   {/* Categories */}
@@ -691,7 +694,7 @@ function SubmitListingForm() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Categories <span className="text-red-500">*</span>
                       <span className="text-xs text-gray-500 ml-2 font-normal">
-                        (Limit: {selectedPlanObj?.plan_name === 'Free' ? '1' : selectedPlanObj?.plan_name === 'Premium' ? '5' : 'Unlimited'})
+                        (Limit: {selectedPlanObj?.plan_key === 'free' ? '1' : selectedPlanObj?.plan_key === 'premium' ? '5' : 'Unlimited'})
                       </span>
                     </label>
                     <select
@@ -700,7 +703,7 @@ function SubmitListingForm() {
                       onChange={(e) => {
                         const value = e.target.value;
                         if (value) {
-                          const maxCategories = selectedPlanObj?.plan_name === 'Free' ? 1 : selectedPlanObj?.plan_name === 'Premium' ? 5 : 999;
+                          const maxCategories = selectedPlanObj?.plan_key === 'free' ? 1 : selectedPlanObj?.plan_key === 'premium' ? 5 : 999;
                           setFormData(prev => ({
                             ...prev,
                             category_ids: prev.category_ids.length < maxCategories 
@@ -769,6 +772,19 @@ function SubmitListingForm() {
                       rows={4}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Tell us more about your business..."
+                    />
+                  </div>
+
+                  {/* Service Area - moved from Business Address */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Service Area</label>
+                    <input
+                      type="text"
+                      name="service_area"
+                      value={formData.service_area}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g., St. Louis County, St. Charles County"
                     />
                   </div>
                 </div>
@@ -929,18 +945,6 @@ function SubmitListingForm() {
                         placeholder="63101"
                       />
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Service Area</label>
-                    <input
-                      type="text"
-                      name="service_area"
-                      value={formData.service_area}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="e.g., St. Louis County, St. Charles County"
-                    />
                   </div>
                 </div>
               </div>
