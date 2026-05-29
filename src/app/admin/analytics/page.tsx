@@ -135,22 +135,33 @@ export default function AdminAnalyticsPage() {
       cutoffDate.setDate(cutoffDate.getDate() - parseInt(dateRange));
     }
 
-    // Build a map of business_id to listing_id for analytics matching
-    const businessToListingMap = new Map<string, string>();
+    // Build a map of business_id to listing_ids for analytics matching
+    // A business can have multiple listings over time
+    const businessToListingsMap = new Map<string, string[]>();
     const listingToBusinessMap = new Map<string, string>();
     businesses.forEach((business: any) => {
-      const listing = business.business_listings?.[0];
-      if (listing?.id) {
-        businessToListingMap.set(business.id, listing.id);
-        listingToBusinessMap.set(listing.id, business.id);
+      const listings = business.business_listings || [];
+      const listingIds: string[] = [];
+      listings.forEach((listing: any) => {
+        if (listing?.id) {
+          listingIds.push(listing.id);
+          listingToBusinessMap.set(listing.id, business.id);
+        }
+      });
+      if (listingIds.length > 0) {
+        businessToListingsMap.set(business.id, listingIds);
       }
     });
 
     // Filter analytics by date range
+    // Compare dates only (ignore time) to match dashboard behavior
     const filteredAnalytics = allAnalytics.filter((record: AnalyticsRecord) => {
       if (!cutoffDate) return true; // "all" selected
       const recordDate = new Date(record.date);
-      return recordDate >= cutoffDate;
+      // Set both dates to midnight for accurate day comparison
+      const recordDateOnly = new Date(recordDate.getFullYear(), recordDate.getMonth(), recordDate.getDate());
+      const cutoffDateOnly = new Date(cutoffDate.getFullYear(), cutoffDate.getMonth(), cutoffDate.getDate());
+      return recordDateOnly >= cutoffDateOnly;
     });
 
     // Group analytics by business_id
