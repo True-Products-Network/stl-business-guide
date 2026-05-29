@@ -192,7 +192,7 @@ export default function EditBusinessPage() {
         .eq('business_id', id);
       
       if (categoryData) {
-        setSelectedCategories(categoryData.map(c => c.category_id));
+        setSelectedCategories(categoryData.map((c: { category_id: string }) => c.category_id));
       }
     } catch (err) {
       setError('An error occurred while loading the business.');
