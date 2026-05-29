@@ -186,6 +186,10 @@ export default function AnalyticsDashboardPage() {
       const day = String(cutoffDate.getDate()).padStart(2, '0');
       const dateString = `${year}-${month}-${day}`;
 
+      console.log("Dashboard - Date range:", dateRange, "days");
+      console.log("Dashboard - Cutoff date string:", dateString);
+      console.log("Dashboard - Business ID:", businessId);
+
       const { data, error } = await supabase
         .from("business_analytics")
         .select("*")
@@ -197,6 +201,19 @@ export default function AnalyticsDashboardPage() {
         console.error("Error loading analytics:", error);
         return;
       }
+
+      console.log("Dashboard - Analytics records:", data?.length);
+      console.log("Dashboard - First record:", data?.[0]);
+      console.log("Dashboard - Last record:", data?.[data?.length - 1]);
+      
+      // Calculate and log totals
+      const debugTotals = data?.reduce((acc, curr) => ({
+        website_clicks: acc.website_clicks + (curr.website_clicks || 0),
+        phone_clicks: acc.phone_clicks + (curr.phone_clicks || 0),
+        email_clicks: acc.email_clicks + (curr.email_clicks || 0),
+        direction_clicks: acc.direction_clicks + (curr.direction_clicks || 0),
+      }), { website_clicks: 0, phone_clicks: 0, email_clicks: 0, direction_clicks: 0 });
+      console.log("Dashboard - Calculated totals:", debugTotals);
 
       setAnalytics(data || []);
     } catch (err) {
