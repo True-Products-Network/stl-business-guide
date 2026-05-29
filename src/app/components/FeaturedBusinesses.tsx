@@ -64,7 +64,18 @@ export default function FeaturedBusinesses() {
       if (error) {
         console.error('Error fetching featured businesses:', error);
       } else {
-        setBusinesses(data || []);
+        // Sort: VIP first, then Premium
+        const sorted = (data || []).sort((a: FeaturedBusiness, b: FeaturedBusiness) => {
+          const planOrder: { [key: string]: number } = { 'vip': 0, 'premium': 1 };
+          const planA = planOrder[a.plan_key || 'premium'] ?? 1;
+          const planB = planOrder[b.plan_key || 'premium'] ?? 1;
+          if (planA !== planB) return planA - planB;
+          // Secondary sort by featured status
+          if (a.is_featured && !b.is_featured) return -1;
+          if (!a.is_featured && b.is_featured) return 1;
+          return 0;
+        });
+        setBusinesses(sorted);
       }
     } catch (err) {
       console.error('Error:', err);
@@ -97,7 +108,7 @@ export default function FeaturedBusinesses() {
               Premium & VIP Businesses
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              Premium and VIP listings will appear here. Be the first to upgrade your listing!
+              VIP and Premium listings will appear here. Be the first to upgrade your listing!
             </p>
           </div>
         </div>
@@ -114,7 +125,7 @@ export default function FeaturedBusinesses() {
             Featured Listings
           </span>
           <h2 className="text-4xl font-bold text-[#371a5b] mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-            Premium & VIP Businesses
+            VIP & Premium Businesses
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto text-lg">
             Discover the best local businesses in St. Louis. Our Premium and VIP members get prime visibility and exclusive benefits.

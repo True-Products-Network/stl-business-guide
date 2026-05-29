@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Navbar from '../../../components/Navbar';
 import Footer from '../../../components/Footer';
 import { supabase } from '../../../../lib/supabase';
-import { Loader2, AlertCircle, Save, ArrowLeft } from 'lucide-react';
+import { Loader2, AlertCircle, Save, ArrowLeft, Trash2 } from 'lucide-react';
 
 interface Business {
   id: string;
@@ -28,6 +28,8 @@ export default function EditBusinessPage() {
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   
@@ -122,6 +124,35 @@ export default function EditBusinessPage() {
       setError('An error occurred while saving.');
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleDelete() {
+    setDeleting(true);
+    setError('');
+    
+    try {
+      // Delete related records first (analytics, coupons, etc.)
+      await supabase.from('business_analytics').delete().eq('business_id', businessId);
+      await supabase.from('business_listings').delete().eq('business_id', businessId);
+      await supabase.from('business_categories').delete().eq('business_id', businessId);
+      await supabase.from('business_locations').delete().eq('business_id', businessId);
+      
+      // Finally delete the business
+      const { error } = await supabase
+        .from('businesses')
+        .delete()
+        .eq('id', businessId);
+      
+      if (error) {
+        setError('Failed to delete listing: ' + error.message);
+        setDeleting(false);
+      } else {
+        router.push('/dashboard');
+      }
+    } catch (err) {
+      setError('An error occurred while deleting.');
+      setDeleting(false);
     }
   }
 
@@ -281,12 +312,22 @@ export default function EditBusinessPage() {
           </div>
 
           <div className="mt-8 flex items-center justify-between">
-            <a
-              href="/dashboard"
-              className="text-gray-600 hover:text-gray-800"
-            >
-              Cancel
-            </a>
+            <div className="flex items-center space-x-4">
+              <a
+                href="/dashboard"
+                className="text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </a>
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="text-red-600 hover:text-red-800 flex items-center"
+              >
+                <Trash2 className="w-4 h-4 mr-1" />
+                Delete Listing
+              </button>
+            </div>
             <button
               type="submit"
               disabled={saving}
@@ -305,6 +346,44 @@ export default function EditBusinessPage() {
               )}
             </button>
           </div>
+
+          {/* Delete Confirmation Modal */}
+          {showDeleteConfirm && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Delete Listing?</h3>
+                <p className="text-gray-600 mb-6">
+                  This will permanently delete <strong>{business?.business_name}</strong> and all associated data. This action cannot be undone.
+                </p>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    disabled={deleting}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className="inline-flex items-center bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition disabled:opacity-50"
+                  >
+                    {deleting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Yes, Delete
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </form>
       </div>
 

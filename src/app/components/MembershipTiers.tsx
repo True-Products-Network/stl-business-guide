@@ -27,6 +27,7 @@ const tiers = [
     ],
     cta: "Get Started Free",
     popular: false,
+    planKey: "free",
   },
   {
     name: "Premium",
@@ -52,6 +53,7 @@ const tiers = [
     ],
     cta: "Upgrade to Premium",
     popular: true,
+    planKey: "premium",
   },
   {
     name: "VIP",
@@ -68,13 +70,14 @@ const tiers = [
       "Unlimited categories",
       "Featured in newsletter",
       "Social media promotion",
-      "Dedicated account manager",
-      "Priority phone support",
-      "Custom marketing materials",
+      "Analytics dashboard",
+      "Coupon/Deal listing",
+      "Priority support",
     ],
     notIncluded: [],
     cta: "Become VIP",
     popular: false,
+    planKey: "vip",
   },
 ];
 
@@ -155,7 +158,7 @@ export default function MembershipTiers() {
 
                 {/* CTA */}
                 <Link
-                  href={tier.name === 'Free Listing' ? '/submit-listing?plan=free' : '/pricing'}
+                  href={`/submit-listing?plan=${tier.planKey}`}
                   className={`flex items-center justify-center w-full py-4 rounded-xl font-semibold transition-all duration-300 ${
                     tier.popular
                       ? 'btn-primary text-white'

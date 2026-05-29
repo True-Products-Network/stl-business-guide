@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Building2 } from "lucide-react";
 
 const footerLinks = {
   business: [
@@ -21,6 +21,7 @@ const footerLinks = {
     { name: "Contact", href: "/contact" },
     { name: "Careers", href: "/careers" },
     { name: "Press Kit", href: "/press" },
+    { name: "Newsletter", href: "/newsletter" },
   ],
   legal: [
     { name: "Privacy Policy", href: "/privacy" },
@@ -44,12 +45,10 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
           {/* Brand Column */}
           <div className="col-span-2">
-            <Link href="/" className="flex items-center space-x-2 mb-6">
-              <img 
-                src="https://assets.cdn.filesafe.space/Y75D8z0j5aPHXtDyWr3y/media/6a15d683ecd67a415b8e9625.png"
-                alt="STL Business Guide"
-                className="h-10 w-auto"
-              />
+            <Link href="/" className="flex items-center space-x-3 mb-6">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#54afe6] to-[#bb7ce4] rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">S</span>
+              </div>
               <div>
                 <span className="text-xl font-bold">STL Business</span>
                 <span className="text-xl font-bold text-[#54afe6]"> Guide</span>

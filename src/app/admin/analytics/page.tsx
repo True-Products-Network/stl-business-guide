@@ -35,16 +35,9 @@ interface BusinessAnalytics {
   total_engagement: number;
 }
 
-interface Business {
-  id: string;
-  business_name: string;
-  slug: string;
-  plan_key: string | null;
-  is_featured: boolean | null;
-}
-
 interface AnalyticsRecord {
   business_id: string;
+  date: string;
   profile_views: number | null;
   website_clicks: number | null;
   phone_clicks: number | null;
@@ -56,6 +49,8 @@ export default function AdminAnalyticsPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [analytics, setAnalytics] = useState<BusinessAnalytics[]>([]);
+  const [allAnalytics, setAllAnalytics] = useState<AnalyticsRecord[]>([]);
+  const [businesses, setBusinesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
@@ -65,6 +60,12 @@ export default function AdminAnalyticsPage() {
   useEffect(() => {
     checkUser();
   }, []);
+
+  useEffect(() => {
+    if (businesses.length > 0 && allAnalytics.length > 0) {
+      processAnalytics();
+    }
+  }, [dateRange, businesses, allAnalytics]);
 
   async function checkUser() {
     const {
@@ -86,91 +87,135 @@ export default function AdminAnalyticsPage() {
 
     if (profile?.role === "admin" || profile?.role === "super_admin") {
       setIsAdmin(true);
-      await loadAnalytics();
+      await loadData();
     } else {
       setError("You don't have permission to access this page");
+      setLoading(false);
     }
-    setLoading(false);
   }
 
-  async function loadAnalytics() {
+  async function loadData() {
     try {
-      // Get all businesses with their plan info from business_listings
-      const { data: businessesData, error: businessError } = await supabase
-        .from("businesses")
-        .select(`
-          id, 
-          business_name, 
-          slug,
-          business_listings!left (
-            id,
-            is_featured,
-            listing_plans!left (
-              plan_key
-            )
-          )
-        `);
+      // Get the current session for the auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('No access token available');
+      }
 
-      if (businessError) throw businessError;
+      // Fetch data from admin API endpoint (bypasses RLS using service role)
+      const response = await fetch('/api/admin/analytics', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
 
-      // Get analytics for all businesses
-      const { data: analyticsData, error: analyticsError } = await supabase
-        .from("business_analytics")
-        .select("business_id, profile_views, website_clicks, phone_clicks, email_clicks, direction_clicks");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch analytics');
+      }
 
-      if (analyticsError) throw analyticsError;
+      const data = await response.json();
+      setBusinesses(data.businesses || []);
+      setAllAnalytics(data.analytics || []);
 
-      // Combine data
-      const combined = (businessesData as any[] | null)?.map((business: any) => {
-        // Extract plan_key and is_featured from joined data
-        const listing = business.business_listings?.[0];
-        const planKey = listing?.listing_plans?.plan_key || "free";
-        const isFeatured = listing?.is_featured || false;
-        const businessAnalytics = (analyticsData as AnalyticsRecord[] | null)?.filter(
-          (a: AnalyticsRecord) => a.business_id === business.id
-        ) || [];
-
-        const totals = businessAnalytics.reduce(
-          (acc: { profile_views: number; website_clicks: number; phone_clicks: number; email_clicks: number; direction_clicks: number }, 
-           curr: AnalyticsRecord) => ({
-            profile_views: acc.profile_views + (curr.profile_views || 0),
-            website_clicks: acc.website_clicks + (curr.website_clicks || 0),
-            phone_clicks: acc.phone_clicks + (curr.phone_clicks || 0),
-            email_clicks: acc.email_clicks + (curr.email_clicks || 0),
-            direction_clicks: acc.direction_clicks + (curr.direction_clicks || 0),
-          }),
-          {
-            profile_views: 0,
-            website_clicks: 0,
-            phone_clicks: 0,
-            email_clicks: 0,
-            direction_clicks: 0,
-          }
-        );
-
-        return {
-          business_id: business.id,
-          business_name: business.business_name,
-          slug: business.slug,
-          plan_key: planKey,
-          is_featured: isFeatured,
-          ...totals,
-          total_engagement:
-            totals.website_clicks +
-            totals.phone_clicks +
-            totals.email_clicks +
-            totals.direction_clicks,
-        };
-      }) || [];
-
-      // Sort by total engagement
-      combined.sort((a: BusinessAnalytics, b: BusinessAnalytics) => b.total_engagement - a.total_engagement);
-
-      setAnalytics(combined);
-    } catch (err) {
-      console.error("Error loading analytics:", err);
-      setError("Failed to load analytics");
+    } catch (err: any) {
+      console.error("Error loading data:", err);
+      setError(err.message || "Failed to load analytics");
+    } finally {
+      setLoading(false);
     }
+  }
+
+  function processAnalytics() {
+    // Calculate date cutoff based on selected range
+    let cutoffDate: Date | null = null;
+    if (dateRange !== "all") {
+      cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - parseInt(dateRange));
+    }
+
+    // Build a map of business_id to listing_id for analytics matching
+    const businessToListingMap = new Map<string, string>();
+    const listingToBusinessMap = new Map<string, string>();
+    businesses.forEach((business: any) => {
+      const listing = business.business_listings?.[0];
+      if (listing?.id) {
+        businessToListingMap.set(business.id, listing.id);
+        listingToBusinessMap.set(listing.id, business.id);
+      }
+    });
+
+    // Filter analytics by date range
+    const filteredAnalytics = allAnalytics.filter((record: AnalyticsRecord) => {
+      if (!cutoffDate) return true; // "all" selected
+      const recordDate = new Date(record.date);
+      return recordDate >= cutoffDate;
+    });
+
+    // Group analytics by business_id
+    const analyticsByBusiness = new Map<string, AnalyticsRecord[]>();
+    
+    filteredAnalytics.forEach((record: AnalyticsRecord) => {
+      let businessId = record.business_id;
+      
+      // If this is a listing_id, convert to business_id
+      if (listingToBusinessMap.has(businessId)) {
+        businessId = listingToBusinessMap.get(businessId)!;
+      }
+      
+      if (!analyticsByBusiness.has(businessId)) {
+        analyticsByBusiness.set(businessId, []);
+      }
+      analyticsByBusiness.get(businessId)!.push(record);
+    });
+
+    // Combine data for all businesses
+    const combined = businesses.map((business: any) => {
+      // Extract plan_key and is_featured from joined data
+      const listing = business.business_listings?.[0];
+      const planKey = listing?.listing_plans?.plan_key || "free";
+      const isFeatured = listing?.is_featured || false;
+
+      // Get analytics for this business
+      const businessAnalytics = analyticsByBusiness.get(business.id) || [];
+
+      const totals = businessAnalytics.reduce(
+        (acc, curr) => ({
+          profile_views: acc.profile_views + (curr.profile_views || 0),
+          website_clicks: acc.website_clicks + (curr.website_clicks || 0),
+          phone_clicks: acc.phone_clicks + (curr.phone_clicks || 0),
+          email_clicks: acc.email_clicks + (curr.email_clicks || 0),
+          direction_clicks: acc.direction_clicks + (curr.direction_clicks || 0),
+        }),
+        {
+          profile_views: 0,
+          website_clicks: 0,
+          phone_clicks: 0,
+          email_clicks: 0,
+          direction_clicks: 0,
+        }
+      );
+
+      return {
+        business_id: business.id,
+        business_name: business.business_name,
+        slug: business.slug,
+        plan_key: planKey,
+        is_featured: isFeatured,
+        ...totals,
+        total_engagement:
+          totals.website_clicks +
+          totals.phone_clicks +
+          totals.email_clicks +
+          totals.direction_clicks,
+      };
+    });
+
+    // Sort by total engagement
+    combined.sort((a: BusinessAnalytics, b: BusinessAnalytics) => b.total_engagement - a.total_engagement);
+
+    setAnalytics(combined);
   }
 
   const filteredAnalytics = analytics.filter(

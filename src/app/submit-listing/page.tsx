@@ -16,7 +16,7 @@ function SubmitListingForm() {
   const [plans, setPlans] = useState<ListingPlan[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(planParam);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -60,11 +60,48 @@ function SubmitListingForm() {
     setPlans(plansData);
     setCategories(categoriesData);
     setLocations(locationsData);
+    
+    // If planParam is provided (e.g., 'free', 'premium', 'vip'), find matching plan ID
+    if (planParam && plansData.length > 0) {
+      const matchingPlan = plansData.find(p => p.plan_key === planParam);
+      if (matchingPlan) {
+        setSelectedPlan(matchingPlan.id);
+      } else {
+        // Default to free plan if no match found
+        const freePlan = plansData.find(p => p.plan_key === 'free');
+        if (freePlan) setSelectedPlan(freePlan.id);
+      }
+    } else if (plansData.length > 0) {
+      // Default to free plan if no planParam
+      const freePlan = plansData.find(p => p.plan_key === 'free');
+      if (freePlan) setSelectedPlan(freePlan.id);
+    }
   }
+
+  const formatPhoneNumber = (value: string) => {
+    // Remove all non-numeric characters
+    const numbers = value.replace(/\D/g, '');
+    
+    // Format as (XXX) XXX-XXXX
+    if (numbers.length <= 3) {
+      return numbers;
+    } else if (numbers.length <= 6) {
+      return `(${numbers.slice(0, 3)}) ${numbers.slice(3)}`;
+    } else {
+      return `(${numbers.slice(0, 3)}) ${numbers.slice(3, 6)}-${numbers.slice(6, 10)}`;
+    }
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Apply phone formatting
+    if (name === 'phone') {
+      const formattedPhone = formatPhoneNumber(value);
+      setFormData(prev => ({ ...prev, [name]: formattedPhone }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleCategoryChange = (categoryId: string) => {
@@ -378,22 +415,46 @@ function SubmitListingForm() {
                       </span>
                     </li>
                     <li className="flex items-center">
-                      <svg className={`w-4 h-4 mr-2 ${plan.allows_coupon ? 'text-green-500' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      {plan.allows_coupon ? 'Coupons allowed' : 'No coupons'}
+                      {plan.allows_coupon ? (
+                        <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4 mr-2 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                      <span className={plan.allows_coupon ? '' : 'text-gray-400'}>
+                        {plan.allows_coupon ? 'Coupons allowed' : 'No coupons'}
+                      </span>
                     </li>
                     <li className="flex items-center">
-                      <svg className={`w-4 h-4 mr-2 ${plan.allows_video ? 'text-green-500' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      {plan.allows_video ? 'Video support' : 'No video'}
+                      {plan.allows_video ? (
+                        <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4 mr-2 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                      <span className={plan.allows_video ? '' : 'text-gray-400'}>
+                        {plan.allows_video ? 'Video support' : 'No video'}
+                      </span>
                     </li>
                     <li className="flex items-center">
-                      <svg className={`w-4 h-4 mr-2 ${plan.allows_banner_ads ? 'text-green-500' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      {plan.allows_banner_ads ? 'Banner ads' : 'No banner ads'}
+                      {plan.allows_banner_ads ? (
+                        <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <svg className="w-4 h-4 mr-2 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                      <span className={plan.allows_banner_ads ? '' : 'text-gray-400'}>
+                        {plan.allows_banner_ads ? 'Banner ads' : 'No banner ads'}
+                      </span>
                     </li>
                   </ul>
                 </div>

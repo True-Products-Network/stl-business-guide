@@ -1,6 +1,7 @@
 "use client";
 
-import { Mail, Gift, Star, Zap } from "lucide-react";
+import { useState } from "react";
+import { Mail, Gift, Star, Zap, X } from "lucide-react";
 
 const benefits = [
   { icon: Gift, text: "Exclusive deals & coupons" },
@@ -9,8 +10,10 @@ const benefits = [
 ];
 
 export default function Newsletter() {
+  const [showModal, setShowModal] = useState(false);
+
   return (
-    <section className="py-12 bg-gradient-to-br from-[#371a5b] via-[#54afe6] to-[#bb7ce4] relative overflow-hidden">
+    <section id="newsletter" className="py-12 bg-gradient-to-br from-[#371a5b] via-[#54afe6] to-[#bb7ce4] relative overflow-hidden">
       {/* Background Decorations */}
       <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2"></div>
@@ -47,7 +50,7 @@ export default function Newsletter() {
             </p>
 
             {/* Benefits */}
-            <div className="space-y-4">
+            <div className="space-y-4 mb-8">
               {benefits.map((benefit, index) => {
                 const Icon = benefit.icon;
                 return (
@@ -60,6 +63,15 @@ export default function Newsletter() {
                 );
               })}
             </div>
+
+            {/* Subscribe Button - Moved below benefits */}
+            <button
+              onClick={() => setShowModal(true)}
+              className="inline-flex items-center bg-white text-[#371a5b] px-8 py-4 rounded-lg font-bold hover:bg-gray-100 transition shadow-lg"
+            >
+              <Mail className="w-5 h-5 mr-2" />
+              Subscribe to Newsletter
+            </button>
           </div>
 
           {/* Right Content - Stats & Benefits */}
@@ -78,8 +90,8 @@ export default function Newsletter() {
             
             {/* Stat Card 3 */}
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-              <div className="text-4xl font-bold text-[#ffc107] mb-2">50+</div>
-              <div className="text-white/80">Weekly Deals</div>
+              <div className="text-4xl font-bold text-[#ffc107] mb-2">2-3</div>
+              <div className="text-white/80">Weekly Features</div>
             </div>
             
             {/* Stat Card 4 */}
@@ -114,8 +126,44 @@ export default function Newsletter() {
         </div>
       </div>
 
-      {/* GHL Form Embed Script */}
-      <script src="https://link.leadprospectrr.com/js/form_embed.js" async />
+      {/* Newsletter Subscribe Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-2xl font-bold text-[#371a5b]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  Subscribe to Our Newsletter
+                </h3>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600 transition"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              {/* GHL Embedded Form */}
+              <iframe
+                src="https://link.leadprospectrr.com/widget/form/5e01wgF05YFBhAevtaLC"
+                style={{ width: '100%', height: '921px', border: 'none', borderRadius: '25px' }}
+                id="inline-5e01wgF05YFBhAevtaLC"
+                data-layout="{'id':'INLINE'}"
+                data-trigger-type="alwaysShow"
+                data-trigger-value=""
+                data-activation-type="alwaysActivated"
+                data-activation-value=""
+                data-deactivation-type="neverDeactivate"
+                data-deactivation-value=""
+                data-form-name="Subscribe to Our Newsletter"
+                data-height="921"
+                data-layout-iframe-id="inline-5e01wgF05YFBhAevtaLC"
+                data-form-id="5e01wgF05YFBhAevtaLC"
+                title="Subscribe to Our Newsletter"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

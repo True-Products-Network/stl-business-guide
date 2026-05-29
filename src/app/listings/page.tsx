@@ -78,6 +78,16 @@ function ListingsContent() {
           results = filterByCategory(results, initialCategory);
         }
 
+        // Sort by plan: VIP first, then Premium, then Free
+        results.sort((a: PublicListing, b: PublicListing) => {
+          const planOrder: { [key: string]: number } = { 'vip': 0, 'premium': 1, 'free': 2 };
+          const planA = planOrder[a.plan_key || 'free'] ?? 2;
+          const planB = planOrder[b.plan_key || 'free'] ?? 2;
+          if (planA !== planB) return planA - planB;
+          // Secondary sort by business name
+          return (a.business_name || '').localeCompare(b.business_name || '');
+        });
+
         setBusinesses(results);
       }
 
@@ -177,6 +187,16 @@ function ListingsContent() {
     if (selectedCity) {
       results = results.filter((b: PublicListing) => b.city === selectedCity);
     }
+    
+    // Sort by plan: VIP first, then Premium, then Free
+    results.sort((a: PublicListing, b: PublicListing) => {
+      const planOrder: { [key: string]: number } = { 'vip': 0, 'premium': 1, 'free': 2 };
+      const planA = planOrder[a.plan_key || 'free'] ?? 2;
+      const planB = planOrder[b.plan_key || 'free'] ?? 2;
+      if (planA !== planB) return planA - planB;
+      // Secondary sort by business name
+      return (a.business_name || '').localeCompare(b.business_name || '');
+    });
     
     setBusinesses(results);
     setLoading(false);

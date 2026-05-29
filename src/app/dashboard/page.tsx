@@ -25,6 +25,7 @@ import {
   FileText,
   Tag,
   DollarSign,
+  Trash2,
 } from "lucide-react";
 
 interface Business {
@@ -46,6 +47,7 @@ interface Business {
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [filteredBusinesses, setFilteredBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,14 +75,16 @@ export default function DashboardPage() {
 
     setUser(user);
     
-    // Check if user is admin
-    const { data: profile } = await supabase
+    // Check if user is admin and get profile data
+    const { data: profileData } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, first_name, last_name")
       .eq("id", user.id)
       .single();
     
-    if (profile?.role === "admin" || profile?.role === "super_admin") {
+    setProfile(profileData);
+    
+    if (profileData?.role === "admin" || profileData?.role === "super_admin") {
       setIsAdmin(true);
     }
     
@@ -305,7 +309,7 @@ export default function DashboardPage() {
                 Business Dashboard
               </h1>
               <p className="text-xl text-white/80">
-                Welcome back, {user?.user_metadata?.first_name || "Business Owner"}
+                Welcome back, {profile?.first_name || user?.user_metadata?.first_name || "Business Owner"}
               </p>
             </div>
             <button
@@ -643,6 +647,13 @@ export default function DashboardPage() {
                           <Edit className="w-5 h-5" />
                         </span>
                       )}
+                      <a
+                        href={`/dashboard/edit/${business.id}`}
+                        className="p-2 text-gray-400 hover:text-red-600 transition"
+                        title="Delete Listing"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </a>
                     </div>
                   </div>
 
