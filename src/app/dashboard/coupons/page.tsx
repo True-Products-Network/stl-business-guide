@@ -151,7 +151,7 @@ export default function CouponsPage() {
   }
 
   function canCreateCoupon(planKey: string) {
-    return planKey === "premium" || planKey === "vip";
+    return planKey === "vip";
   }
 
   function getStatusBadge(status: string) {
@@ -309,7 +309,7 @@ export default function CouponsPage() {
             </a>
           ) : (
             <div className="text-gray-600">
-              Upgrade to Premium or VIP to create coupons{" "}
+              Upgrade to VIP to create coupons{" "}
               <a
                 href="/pricing"
                 className="text-[#54afe6] hover:underline font-medium"

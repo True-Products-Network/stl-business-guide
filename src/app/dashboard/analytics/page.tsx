@@ -122,10 +122,10 @@ export default function AnalyticsDashboardPage() {
       // Get business IDs
       const businessIds = businessesData.map((b: any) => b.id);
 
-      // Now get the listings for these businesses
+      // Now get the listings for these businesses with plan info
       const { data: listingsData, error: listingsError } = await supabase
         .from("business_listings")
-        .select("id, business_id, listing_status")
+        .select("id, business_id, listing_status, listing_plans(plan_key)")
         .in("business_id", businessIds)
         .order("created_at", { ascending: false });
 
@@ -144,21 +144,24 @@ export default function AnalyticsDashboardPage() {
       }
       const businessMap = new Map<string, BusinessData>((businessesData as BusinessData[] | null)?.map((b) => [b.id, b]) || []);
 
-      // Transform data to match expected format
+      // Transform data to match expected format - VIP ONLY
       interface ListingData {
         id: string;
         business_id: string;
         listing_status: string;
+        listing_plans?: { plan_key: string };
       }
-      const transformedData = ((listingsData as ListingData[] | null) || []).map((item) => {
-        const business = businessMap.get(item.business_id);
-        return {
-          id: item.id,
-          business_name: business?.business_name || "Unnamed Business",
-          slug: business?.slug || "",
-          plan_tier: item.listing_status || "free",
-        };
-      });
+      const transformedData = ((listingsData as ListingData[] | null) || [])
+        .filter((item) => item.listing_plans?.plan_key === "vip")
+        .map((item) => {
+          const business = businessMap.get(item.business_id);
+          return {
+            id: item.id,
+            business_name: business?.business_name || "Unnamed Business",
+            slug: business?.slug || "",
+            plan_tier: item.listing_plans?.plan_key || "free",
+          };
+        });
 
       setBusinesses(transformedData);
       if (transformedData.length > 0) {
@@ -282,16 +285,16 @@ export default function AnalyticsDashboardPage() {
           <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
             <BarChart3 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-[#371a5b] mb-2">
-              No businesses yet
+              Analytics is a VIP Feature
             </h2>
             <p className="text-gray-500 mb-6">
-              Submit a listing to start tracking analytics
+              Upgrade to VIP to access detailed analytics for your business listings
             </p>
             <a
-              href="/submit-listing"
+              href="/pricing"
               className="inline-flex items-center bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
             >
-              Submit Your First Listing
+              View VIP Plans
             </a>
           </div>
         ) : (

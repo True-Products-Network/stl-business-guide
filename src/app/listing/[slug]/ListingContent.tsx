@@ -604,9 +604,7 @@ export default function ListingContent({ business }: ListingContentProps) {
                 {hasLocation && (
                   <button
                     onClick={() => {
-                      trackAnalytics("direction_clicks").then(() => {
-                        setShowMapModal(true);
-                      });
+                      setShowMapModal(true);
                     }}
                     className="flex items-center justify-center w-full py-3 border-2 border-[#54afe6] text-[#54afe6] rounded-lg font-semibold hover:bg-[#54afe6] hover:text-white transition"
                   >

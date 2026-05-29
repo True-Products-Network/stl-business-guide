@@ -1,14 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Menu, X, Phone, Search, User, LogOut, LayoutDashboard } from "lucide-react";
+import { Menu, X, Phone, Search, User, LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
 import { supabase } from "../../lib/supabase";
+
+interface NavLink {
+  name: string;
+  href: string;
+  submenu?: { name: string; href: string }[];
+}
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const [showBusinessesMenu, setShowBusinessesMenu] = useState(false);
+  const businessesMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     checkUser();
@@ -19,6 +27,17 @@ export default function Navbar() {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    // Close businesses menu when clicking outside
+    function handleClickOutside(event: MouseEvent) {
+      if (businessesMenuRef.current && !businessesMenuRef.current.contains(event.target as Node)) {
+        setShowBusinessesMenu(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   async function checkUser() {
@@ -32,9 +51,16 @@ export default function Navbar() {
     window.location.href = "/";
   }
 
-  const navLinks = [
+  const navLinks: NavLink[] = [
     { name: "Home", href: "/" },
-    { name: "Businesses", href: "/listings" },
+    { 
+      name: "Businesses", 
+      href: "/listings",
+      submenu: [
+        { name: "View Directory", href: "/listings" },
+        { name: "List Your Business", href: "/submit-listing" },
+      ]
+    },
     { name: "Pricing", href: "/pricing" },
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
@@ -64,13 +90,40 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                className="text-gray-700 hover:text-[#54afe6] font-medium transition-colors duration-200"
-              >
-                {link.name}
-              </Link>
+              <div key={link.name} className="relative" ref={link.submenu ? businessesMenuRef : undefined}>
+                {link.submenu ? (
+                  <>
+                    <button
+                      onClick={() => setShowBusinessesMenu(!showBusinessesMenu)}
+                      className="flex items-center text-gray-700 hover:text-[#54afe6] font-medium transition-colors duration-200"
+                    >
+                      {link.name}
+                      <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${showBusinessesMenu ? 'rotate-180' : ''}`} />
+                    </button>
+                    {showBusinessesMenu && (
+                      <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                        {link.submenu.map((subItem) => (
+                          <Link
+                            key={subItem.name}
+                            href={subItem.href}
+                            onClick={() => setShowBusinessesMenu(false)}
+                            className="block px-4 py-2 text-gray-700 hover:bg-gray-50 hover:text-[#54afe6]"
+                          >
+                            {subItem.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Link
+                    href={link.href}
+                    className="text-gray-700 hover:text-[#54afe6] font-medium transition-colors duration-200"
+                  >
+                    {link.name}
+                  </Link>
+                )}
+              </div>
             ))}
           </div>
 
@@ -137,7 +190,7 @@ export default function Navbar() {
                 href="/auth/login"
                 className="bg-gradient-to-r from-[#54afe6] to-[#bb7ce4] px-6 py-2.5 rounded-full text-white font-semibold shadow-lg hover:shadow-xl transition"
               >
-                List Your Business
+                Owner Login
               </Link>
             )}
           </div>
@@ -157,14 +210,35 @@ export default function Navbar() {
         <div className="md:hidden bg-white border-t">
           <div className="px-4 pt-2 pb-6 space-y-2">
             {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                href={link.href}
-                onClick={() => setIsOpen(false)}
-                className="block px-3 py-2 text-gray-700 hover:text-[#54afe6] font-medium rounded-lg hover:bg-gray-50"
-              >
-                {link.name}
-              </Link>
+              <div key={link.name}>
+                {link.submenu ? (
+                  <>
+                    <div className="px-3 py-2 text-gray-700 font-medium">
+                      {link.name}
+                    </div>
+                    <div className="pl-6 space-y-1">
+                      {link.submenu.map((subItem) => (
+                        <Link
+                          key={subItem.name}
+                          href={subItem.href}
+                          onClick={() => setIsOpen(false)}
+                          className="block px-3 py-2 text-gray-600 hover:text-[#54afe6] rounded-lg hover:bg-gray-50"
+                        >
+                          {subItem.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <Link
+                    href={link.href}
+                    onClick={() => setIsOpen(false)}
+                    className="block px-3 py-2 text-gray-700 hover:text-[#54afe6] font-medium rounded-lg hover:bg-gray-50"
+                  >
+                    {link.name}
+                  </Link>
+                )}
+              </div>
             ))}
             <div className="pt-4 space-y-3">
               <Link
@@ -191,7 +265,7 @@ export default function Navbar() {
                     className="flex items-center space-x-2 px-3 py-2 text-[#371a5b] font-medium"
                   >
                     <LayoutDashboard className="w-4 h-4" />
-                    <span>Dashboard</span>
+                    <span>My Account</span>
                   </Link>
                   <button
                     onClick={() => {
@@ -210,7 +284,7 @@ export default function Navbar() {
                   onClick={() => setIsOpen(false)}
                   className="block w-full text-center bg-gradient-to-r from-[#54afe6] to-[#bb7ce4] px-6 py-3 rounded-full text-white font-semibold"
                 >
-                  List Your Business
+                  Owner Login
                 </Link>
               )}
             </div>
