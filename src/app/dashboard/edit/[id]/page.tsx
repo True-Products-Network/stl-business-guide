@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 import Navbar from '../../../components/Navbar';
 import Footer from '../../../components/Footer';
 import { supabase } from '../../../../lib/supabase';
@@ -23,6 +24,7 @@ interface Business {
   linkedin_url: string | null;
   youtube_url: string | null;
   business_hours: Record<string, { open: string; close: string; closed: boolean }> | null;
+  plan_key?: string | null;
 }
 
 interface Category {
@@ -80,6 +82,20 @@ export default function EditBusinessPage() {
   const [location, setLocation] = useState<{ city: string; state: string }>({ city: '', state: 'MO' });
   const [serviceArea, setServiceArea] = useState('');
   const [locationId, setLocationId] = useState<string | null>(null);
+  const [planKey, setPlanKey] = useState<string>('free');
+
+  // Category limits by plan
+  const getCategoryLimit = (plan: string) => {
+    switch (plan?.toLowerCase()) {
+      case 'vip': return Infinity;
+      case 'premium': return 5;
+      case 'free':
+      default: return 1;
+    }
+  };
+
+  const categoryLimit = getCategoryLimit(planKey);
+  const canSelectMoreCategories = selectedCategories.length < categoryLimit;
 
   // Predefined St. Louis area cities
   const stLouisCities = [
@@ -193,6 +209,18 @@ export default function EditBusinessPage() {
       
       if (categoryData) {
         setSelectedCategories(categoryData.map((c: { category_id: string }) => c.category_id));
+      }
+
+      // Fetch plan info from business_listings
+      const { data: listingData } = await supabase
+        .from('business_listings')
+        .select('plan_id, listing_plans!inner(plan_key)')
+        .eq('business_id', id)
+        .single();
+      
+      if (listingData && listingData.listing_plans) {
+        const plan = (listingData.listing_plans as any).plan_key || 'free';
+        setPlanKey(plan);
       }
     } catch (err) {
       setError('An error occurred while loading the business.');
@@ -419,8 +447,34 @@ export default function EditBusinessPage() {
           </div>
         )}
 
+        {/* Quick Navigation */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+          <h3 className="text-sm font-semibold text-gray-700 mb-3">Quick Navigation</h3>
+          <div className="flex flex-wrap gap-2">
+            <a href="#basic-info" className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition">
+              Basic Info
+            </a>
+            <a href="#location-section" className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition">
+              Location & Service Area
+            </a>
+            <a href="#categories-section" className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition">
+              Categories
+            </a>
+            <a href="#social-media-section" className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition">
+              Social Media
+            </a>
+            <a href="#business-hours-section" className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm text-gray-700 transition">
+              Business Hours
+            </a>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-8">
           <div className="space-y-6">
+            {/* Basic Info Section */}
+            <div id="basic-info">
+              <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Basic Information</h3>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Business Name
@@ -503,7 +557,7 @@ export default function EditBusinessPage() {
             </div>
 
             {/* Location & Service Area */}
-            <div className="border-t border-gray-200 pt-6 mt-6">
+            <div id="location-section" className="border-t border-gray-200 pt-6 mt-6">
               <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Location & Service Area</h3>
               <p className="text-sm text-gray-500 mb-4">Select your primary location and describe your service area.</p>
               
@@ -558,33 +612,66 @@ export default function EditBusinessPage() {
             </div>
 
             {/* Categories */}
-            <div className="border-t border-gray-200 pt-6 mt-6">
+            <div id="categories-section" className="border-t border-gray-200 pt-6 mt-6">
               <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Business Categories</h3>
-              <p className="text-sm text-gray-500 mb-4">Select all categories that apply to your business.</p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Your Plan:</strong> {planKey?.toUpperCase() || 'FREE'} | 
+                  <strong> Categories:</strong> {selectedCategories.length} of {categoryLimit === Infinity ? 'Unlimited' : categoryLimit} selected
+                  {planKey === 'free' && (
+                    <span className="block mt-1 text-xs">
+                      Free listings can select 1 category. <Link href="/pricing" className="underline hover:text-blue-600">Upgrade to select more</Link>.
+                    </span>
+                  )}
+                  {planKey === 'premium' && (
+                    <span className="block mt-1 text-xs">
+                      Premium listings can select up to 5 categories. <Link href="/pricing" className="underline hover:text-blue-600">Upgrade to VIP for unlimited</Link>.
+                    </span>
+                  )}
+                </p>
+              </div>
+              <p className="text-sm text-gray-500 mb-4">Select categories that apply to your business.</p>
               
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {categories.map((category) => (
-                  <label key={category.id} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedCategories.includes(category.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedCategories([...selectedCategories, category.id]);
-                        } else {
-                          setSelectedCategories(selectedCategories.filter(id => id !== category.id));
-                        }
-                      }}
-                      className="mr-3 rounded border-gray-300 text-[#54afe6] focus:ring-[#54afe6]"
-                    />
-                    <span className="text-sm text-gray-700">{category.name}</span>
-                  </label>
-                ))}
+                {categories.map((category) => {
+                  const isSelected = selectedCategories.includes(category.id);
+                  const isDisabled = !isSelected && !canSelectMoreCategories;
+                  
+                  return (
+                    <label 
+                      key={category.id} 
+                      className={`flex items-center p-3 border rounded-lg cursor-pointer transition ${
+                        isDisabled 
+                          ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed' 
+                          : 'border-gray-200 hover:bg-gray-50'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        disabled={isDisabled}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            if (canSelectMoreCategories) {
+                              setSelectedCategories([...selectedCategories, category.id]);
+                            }
+                          } else {
+                            setSelectedCategories(selectedCategories.filter(id => id !== category.id));
+                          }
+                        }}
+                        className="mr-3 rounded border-gray-300 text-[#54afe6] focus:ring-[#54afe6] disabled:opacity-50"
+                      />
+                      <span className={`text-sm ${isDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
+                        {category.name}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
             </div>
 
             {/* Social Media Links - Paid listings only */}
-            <div className="border-t border-gray-200 pt-6 mt-6">
+            <div id="social-media-section" className="border-t border-gray-200 pt-6 mt-6">
               <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Social Media Links</h3>
               <p className="text-sm text-gray-500 mb-4">Add your social media profiles to help customers connect with you.</p>
               
@@ -648,7 +735,7 @@ export default function EditBusinessPage() {
             </div>
 
             {/* Business Hours - Paid listings only */}
-            <div className="border-t border-gray-200 pt-6 mt-6">
+            <div id="business-hours-section" className="border-t border-gray-200 pt-6 mt-6">
               <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Business Hours</h3>
               <p className="text-sm text-gray-500 mb-4">Set your operating hours so customers know when you're open.</p>
               
