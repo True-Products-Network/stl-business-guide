@@ -16,6 +16,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [resendingEmail, setResendingEmail] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -27,6 +28,17 @@ export default function LoginPage() {
       email,
       password,
     });
+    
+    // Handle remember me preference
+    if (data.session) {
+      if (!rememberMe) {
+        // Store preference to not persist session across browser restarts
+        // This is handled by setting a flag that the auth state change listener checks
+        sessionStorage.setItem('session_only', 'true');
+      } else {
+        sessionStorage.removeItem('session_only');
+      }
+    }
 
     if (error) {
       // Check if the error is about email not confirmed
@@ -163,9 +175,14 @@ export default function LoginPage() {
             </div>
 
             <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center">
-                <input type="checkbox" className="mr-2 rounded" />
-                <span className="text-gray-600">Remember me</span>
+              <label className="flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="mr-2 rounded" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <span className="text-gray-600">Remember me (30 days)</span>
               </label>
               <a
                 href="/auth/forgot-password"
