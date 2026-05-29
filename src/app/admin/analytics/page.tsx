@@ -134,6 +134,10 @@ export default function AdminAnalyticsPage() {
       cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - parseInt(dateRange));
     }
+    
+    console.log("Admin - Date range:", dateRange, "days");
+    console.log("Admin - Cutoff date:", cutoffDate?.toISOString());
+    console.log("Admin - Total analytics records:", allAnalytics.length);
 
     // Build a map of business_id to listing_ids for analytics matching
     // A business can have multiple listings over time
@@ -161,8 +165,14 @@ export default function AdminAnalyticsPage() {
       // Set both dates to midnight for accurate day comparison
       const recordDateOnly = new Date(recordDate.getFullYear(), recordDate.getMonth(), recordDate.getDate());
       const cutoffDateOnly = new Date(cutoffDate.getFullYear(), cutoffDate.getMonth(), cutoffDate.getDate());
-      return recordDateOnly >= cutoffDateOnly;
+      const include = recordDateOnly >= cutoffDateOnly;
+      if (record.date >= '2026-05-22' && record.date <= '2026-05-23') {
+        console.log(`Admin - Record ${record.date}: include=${include}, recordDateOnly=${recordDateOnly.toISOString()}, cutoffDateOnly=${cutoffDateOnly.toISOString()}`);
+      }
+      return include;
     });
+    
+    console.log("Admin - Filtered analytics records:", filteredAnalytics.length);
 
     // Group analytics by business_id
     const analyticsByBusiness = new Map<string, AnalyticsRecord[]>();
