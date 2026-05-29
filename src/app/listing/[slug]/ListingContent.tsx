@@ -612,7 +612,7 @@ export default function ListingContent({ business }: ListingContentProps) {
                   </div>
                 )}
 
-                {/* Location */}
+                {/* Location - Public view shows City, State only */}
                 {(business.city || business.state) && (
                   <div className="flex items-start">
                     <MapPin className="w-5 h-5 text-[#54afe6] mr-3 mt-0.5" />
@@ -620,8 +620,9 @@ export default function ListingContent({ business }: ListingContentProps) {
                       <p className="text-xs text-gray-500">Location</p>
                       <button
                         onClick={() => {
-                          // Build full address for Google Maps
+                          // Build full address for Google Maps (hidden from public view)
                           const addressParts = [
+                            business.business_name,
                             business.address_line_1,
                             business.address_line_2,
                             business.city,
@@ -641,18 +642,9 @@ export default function ListingContent({ business }: ListingContentProps) {
                         }}
                         className="text-gray-800 font-medium hover:text-[#54afe6] hover:underline text-left"
                       >
-                        {business.address_line_1 && (
-                          <span className="block">{business.address_line_1}</span>
-                        )}
-                        {business.address_line_2 && (
-                          <span className="block">{business.address_line_2}</span>
-                        )}
-                        <span>
-                          {business.city}
-                          {business.city && business.state ? ", " : ""}
-                          {business.state}
-                          {business.zip_code ? ` ${business.zip_code}` : ""}
-                        </span>
+                        {business.city}
+                        {business.city && business.state ? ", " : ""}
+                        {business.state}
                       </button>
                     </div>
                   </div>
@@ -812,8 +804,9 @@ export default function ListingContent({ business }: ListingContentProps) {
                 {hasLocation && (
                   <button
                     onClick={() => {
-                      // Build full address for Google Maps
+                      // Build full address for Google Maps (includes business name + full address)
                       const addressParts = [
+                        business.business_name,
                         business.address_line_1,
                         business.address_line_2,
                         business.city,
