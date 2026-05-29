@@ -620,16 +620,39 @@ export default function ListingContent({ business }: ListingContentProps) {
                       <p className="text-xs text-gray-500">Location</p>
                       <button
                         onClick={() => {
-                          const locationQuery = encodeURIComponent(`${business.business_name}, ${business.city}, ${business.state}`);
+                          // Build full address for Google Maps
+                          const addressParts = [
+                            business.address_line_1,
+                            business.address_line_2,
+                            business.city,
+                            business.state,
+                            business.zip_code
+                          ].filter(Boolean);
+                          
+                          const locationQuery = encodeURIComponent(
+                            addressParts.length > 0 
+                              ? addressParts.join(', ')
+                              : `${business.business_name}, ${business.city}, ${business.state}`
+                          );
+                          
                           trackAnalytics("direction_clicks").then(() => {
                             window.open(`https://www.google.com/maps/dir/?api=1&destination=${locationQuery}`, '_blank');
                           });
                         }}
                         className="text-gray-800 font-medium hover:text-[#54afe6] hover:underline text-left"
                       >
-                        {business.city}
-                        {business.city && business.state ? ", " : ""}
-                        {business.state}
+                        {business.address_line_1 && (
+                          <span className="block">{business.address_line_1}</span>
+                        )}
+                        {business.address_line_2 && (
+                          <span className="block">{business.address_line_2}</span>
+                        )}
+                        <span>
+                          {business.city}
+                          {business.city && business.state ? ", " : ""}
+                          {business.state}
+                          {business.zip_code ? ` ${business.zip_code}` : ""}
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -789,7 +812,21 @@ export default function ListingContent({ business }: ListingContentProps) {
                 {hasLocation && (
                   <button
                     onClick={() => {
-                      const locationQuery = encodeURIComponent(`${business.business_name}, ${business.city}, ${business.state}`);
+                      // Build full address for Google Maps
+                      const addressParts = [
+                        business.address_line_1,
+                        business.address_line_2,
+                        business.city,
+                        business.state,
+                        business.zip_code
+                      ].filter(Boolean);
+                      
+                      const locationQuery = encodeURIComponent(
+                        addressParts.length > 0 
+                          ? addressParts.join(', ')
+                          : `${business.business_name}, ${business.city}, ${business.state}`
+                      );
+                      
                       trackAnalytics("direction_clicks").then(() => {
                         window.open(`https://www.google.com/maps/dir/?api=1&destination=${locationQuery}`, '_blank');
                       });
