@@ -123,23 +123,19 @@ function SearchResults() {
         
         // Sort by plan: VIP first, then Premium, then Free
         // Within each plan level, shuffle randomly
-        results.sort((a: PublicListing, b: PublicListing) => {
-          const planOrder: { [key: string]: number } = { 'vip': 0, 'premium': 1, 'free': 2 };
-          const planKeyA = (a.plan_key || 'free').toLowerCase();
-          const planKeyB = (b.plan_key || 'free').toLowerCase();
-          const planA = planOrder[planKeyA] ?? 2;
-          const planB = planOrder[planKeyB] ?? 2;
-          
-          console.log(`Sorting: ${a.business_name} (${planKeyA}=${planA}) vs ${b.business_name} (${planKeyB}=${planB})`);
-          
-          // If different plans, sort by plan
-          if (planA !== planB) {
-            return planA - planB;
-          }
-          
-          // Same plan level - shuffle randomly
-          return Math.random() - 0.5;
+        // First, separate by plan
+        const vipListings = results.filter((b: PublicListing) => (b.plan_key || 'free').toLowerCase() === 'vip');
+        const premiumListings = results.filter((b: PublicListing) => (b.plan_key || 'free').toLowerCase() === 'premium');
+        const freeListings = results.filter((b: PublicListing) => {
+          const key = (b.plan_key || 'free').toLowerCase();
+          return key !== 'vip' && key !== 'premium';
         });
+        
+        // Shuffle each group
+        const shuffle = (arr: PublicListing[]) => arr.sort(() => Math.random() - 0.5);
+        
+        // Combine: VIP first, then Premium, then Free
+        results = [...shuffle(vipListings), ...shuffle(premiumListings), ...shuffle(freeListings)];
         
         setBusinesses(results);
       }
