@@ -91,6 +91,7 @@ function SubmitListingForm() {
     phone: '',
     business_email: '',
     website_url: '',
+    contact_name: '',
     // Location
     address_line_1: '',
     address_line_2: '',
@@ -625,7 +626,8 @@ function SubmitListingForm() {
             {/* Instructions */}
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <p className="text-sm text-gray-700">
-                <span className="text-red-500 font-bold">*</span> indicates a required field. Please fill out all required fields to submit your listing.
+                Submit your business information to be featured in our directory. All listings are reviewed before publication. 
+                <span className="text-red-500 font-bold">*</span> indicates a required field.
               </p>
             </div>
 
@@ -654,6 +656,27 @@ function SubmitListingForm() {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Enter your business name"
                     />
+                  </div>
+
+                  {/* Location */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Location <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      name="location_id"
+                      value={formData.location_id}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select your location</option>
+                      {locations.map((location) => (
+                        <option key={location.id} value={location.id}>
+                          {location.name}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Categories */}
@@ -715,7 +738,7 @@ function SubmitListingForm() {
                   {/* Description */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Short Description <span className="text-red-500">*</span>
+                      Brief Description <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
@@ -731,14 +754,14 @@ function SubmitListingForm() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Description</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Business Description</label>
                     <textarea
                       name="description_long"
                       value={formData.description_long}
                       onChange={handleInputChange}
                       rows={4}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Detailed description of your products/services"
+                      placeholder="Tell us more about your business..."
                     />
                   </div>
                 </div>
@@ -754,10 +777,25 @@ function SubmitListingForm() {
                 </div>
                 
                 <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Contact Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="contact_name"
+                      value={formData.contact_name || ''}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="John Smith"
+                    />
+                  </div>
+
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Phone <span className="text-red-500">*</span>
+                        Business Phone <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="tel"
