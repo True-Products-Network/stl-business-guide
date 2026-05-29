@@ -207,7 +207,7 @@ export default function AnalyticsDashboardPage() {
       console.log("Dashboard - Last record:", data?.[data?.length - 1]);
       
       // Calculate and log totals
-      const debugTotals = data?.reduce((acc, curr) => ({
+      const debugTotals = data?.reduce((acc: any, curr: any) => ({
         website_clicks: acc.website_clicks + (curr.website_clicks || 0),
         phone_clicks: acc.phone_clicks + (curr.phone_clicks || 0),
         email_clicks: acc.email_clicks + (curr.email_clicks || 0),
