@@ -22,6 +22,7 @@ interface Business {
   instagram_url: string | null;
   linkedin_url: string | null;
   youtube_url: string | null;
+  business_hours: Record<string, { open: string; close: string; closed: boolean }> | null;
 }
 
 export default function EditBusinessPage() {
@@ -48,6 +49,16 @@ export default function EditBusinessPage() {
     instagram_url: '',
     linkedin_url: '',
     youtube_url: '',
+  });
+
+  const [businessHours, setBusinessHours] = useState<Record<string, { open: string; close: string; closed: boolean }>>({
+    monday: { open: '09:00', close: '17:00', closed: false },
+    tuesday: { open: '09:00', close: '17:00', closed: false },
+    wednesday: { open: '09:00', close: '17:00', closed: false },
+    thursday: { open: '09:00', close: '17:00', closed: false },
+    friday: { open: '09:00', close: '17:00', closed: false },
+    saturday: { open: '10:00', close: '14:00', closed: false },
+    sunday: { open: '09:00', close: '17:00', closed: true },
   });
 
   useEffect(() => {
@@ -100,6 +111,11 @@ export default function EditBusinessPage() {
         linkedin_url: data.linkedin_url || '',
         youtube_url: data.youtube_url || '',
       });
+      
+      // Load business hours if they exist
+      if (data.business_hours) {
+        setBusinessHours(data.business_hours);
+      }
     } catch (err) {
       setError('An error occurred while loading the business.');
     } finally {
@@ -127,6 +143,7 @@ export default function EditBusinessPage() {
           instagram_url: formData.instagram_url,
           linkedin_url: formData.linkedin_url,
           youtube_url: formData.youtube_url,
+          business_hours: businessHours,
           updated_at: new Date().toISOString(),
         })
         .eq('id', businessId);
@@ -387,6 +404,70 @@ export default function EditBusinessPage() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-transparent"
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Business Hours - Paid listings only */}
+            <div className="border-t border-gray-200 pt-6 mt-6">
+              <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Business Hours</h3>
+              <p className="text-sm text-gray-500 mb-4">Set your operating hours so customers know when you're open.</p>
+              
+              <div className="space-y-3">
+                {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
+                  const dayLabel = day.charAt(0).toUpperCase() + day.slice(1);
+                  const hours = businessHours[day] || { open: '09:00', close: '17:00', closed: false };
+                  
+                  return (
+                    <div key={day} className="flex items-center space-x-4">
+                      <div className="w-24">
+                        <span className="text-sm font-medium text-gray-700">{dayLabel}</span>
+                      </div>
+                      
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={hours.closed}
+                          onChange={(e) => {
+                            setBusinessHours(prev => ({
+                              ...prev,
+                              [day]: { ...hours, closed: e.target.checked }
+                            }));
+                          }}
+                          className="mr-2 rounded border-gray-300 text-[#54afe6] focus:ring-[#54afe6]"
+                        />
+                        <span className="text-sm text-gray-600">Closed</span>
+                      </label>
+                      
+                      {!hours.closed && (
+                        <>
+                          <input
+                            type="time"
+                            value={hours.open}
+                            onChange={(e) => {
+                              setBusinessHours(prev => ({
+                                ...prev,
+                                [day]: { ...hours, open: e.target.value }
+                              }));
+                            }}
+                            className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#54afe6] focus:border-transparent"
+                          />
+                          <span className="text-gray-500">to</span>
+                          <input
+                            type="time"
+                            value={hours.close}
+                            onChange={(e) => {
+                              setBusinessHours(prev => ({
+                                ...prev,
+                                [day]: { ...hours, close: e.target.value }
+                              }));
+                            }}
+                            className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#54afe6] focus:border-transparent"
+                          />
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

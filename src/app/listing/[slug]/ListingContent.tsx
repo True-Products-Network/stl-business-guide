@@ -35,6 +35,51 @@ function formatPhoneNumber(phone: string | null): string {
   return phone;
 }
 
+// Business hours helpers
+const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+const DAY_LABELS: Record<string, string> = {
+  monday: 'Mon',
+  tuesday: 'Tue',
+  wednesday: 'Wed',
+  thursday: 'Thu',
+  friday: 'Fri',
+  saturday: 'Sat',
+  sunday: 'Sun'
+};
+
+function formatTime(time: string): string {
+  const [hours, minutes] = time.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}:${minutes} ${ampm}`;
+}
+
+function isCurrentlyOpen(businessHours: Record<string, any>): boolean {
+  const now = new Date();
+  const dayName = DAYS_OF_WEEK[now.getDay()];
+  const dayHours = businessHours?.[dayName];
+  
+  if (!dayHours || dayHours.closed) return false;
+  
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+  const [openHour, openMin] = dayHours.open.split(':').map(Number);
+  const [closeHour, closeMin] = dayHours.close.split(':').map(Number);
+  const openTime = openHour * 60 + openMin;
+  const closeTime = closeHour * 60 + closeMin;
+  
+  return currentTime >= openTime && currentTime < closeTime;
+}
+
+function getTodaysHours(businessHours: Record<string, any>): string {
+  const now = new Date();
+  const dayName = DAYS_OF_WEEK[now.getDay()];
+  const dayHours = businessHours?.[dayName];
+  
+  if (!dayHours || dayHours.closed) return 'Closed today';
+  return `${formatTime(dayHours.open)} - ${formatTime(dayHours.close)}`;
+}
+
 export default function ListingContent({ business }: ListingContentProps) {
   const planKey = business.plan_key || "free";
   const isVip = planKey === "vip";
@@ -578,6 +623,52 @@ export default function ListingContent({ business }: ListingContentProps) {
                         {business.city && business.state ? ", " : ""}
                         {business.state}
                       </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Business Hours - Paid listings only */}
+                {isPaid && business.business_hours && (
+                  <div className="flex items-start mt-4">
+                    <Clock className="w-5 h-5 text-[#54afe6] mr-3 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-xs text-gray-500">Hours</p>
+                      <div className="flex items-center">
+                        <p className="text-gray-800 font-medium">
+                          {getTodaysHours(business.business_hours)}
+                        </p>
+                        {isCurrentlyOpen(business.business_hours) ? (
+                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                            Open Now
+                          </span>
+                        ) : (
+                          <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                            Closed
+                          </span>
+                        )}
+                      </div>
+                      <details className="mt-2">
+                        <summary className="text-sm text-[#54afe6] cursor-pointer hover:underline">
+                          See all hours
+                        </summary>
+                        <div className="mt-2 space-y-1 text-sm">
+                          {DAYS_OF_WEEK.slice(1).concat(DAYS_OF_WEEK[0]).map((day) => {
+                            const dayHours = business.business_hours?.[day];
+                            const isToday = day === DAYS_OF_WEEK[new Date().getDay()];
+                            return (
+                              <div key={day} className={`flex justify-between ${isToday ? 'font-semibold text-[#371a5b]' : 'text-gray-600'}`}>
+                                <span>{DAY_LABELS[day]}</span>
+                                <span>
+                                  {dayHours?.closed 
+                                    ? 'Closed' 
+                                    : `${formatTime(dayHours?.open)} - ${formatTime(dayHours?.close)}`
+                                  }
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </details>
                     </div>
                   </div>
                 )}
