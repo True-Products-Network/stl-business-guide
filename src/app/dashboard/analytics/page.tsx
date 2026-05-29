@@ -177,14 +177,20 @@ export default function AnalyticsDashboardPage() {
 
   async function loadAnalytics(businessId: string) {
     try {
-      const daysAgo = new Date();
-      daysAgo.setDate(daysAgo.getDate() - parseInt(dateRange));
+      // Calculate cutoff date (date only, no time, to match admin behavior)
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - parseInt(dateRange));
+      // Format as YYYY-MM-DD using local date to avoid timezone issues
+      const year = cutoffDate.getFullYear();
+      const month = String(cutoffDate.getMonth() + 1).padStart(2, '0');
+      const day = String(cutoffDate.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
 
       const { data, error } = await supabase
         .from("business_analytics")
         .select("*")
         .eq("business_id", businessId)
-        .gte("date", daysAgo.toISOString().split("T")[0])
+        .gte("date", dateString)
         .order("date", { ascending: true });
 
       if (error) {
