@@ -88,10 +88,13 @@ function SearchResults() {
         setBusinesses([]);
         setAllBusinesses([]);
       } else {
-        setAllBusinesses(data || []);
+        // Remove duplicates - keep only one entry per business
+        const uniqueBusinesses = [...new Map((data || []).map((b: PublicListing) => [b.id, b])).values()];
+        
+        setAllBusinesses(uniqueBusinesses as PublicListing[]);
         
         // Filter results
-        let results = data || [];
+        let results = uniqueBusinesses as PublicListing[];
         
         // Text search
         if (query) {

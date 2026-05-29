@@ -65,8 +65,11 @@ function ListingsContent() {
         console.log('First listing categories:', listingsData?.[0]?.categories);
         console.log('First listing category:', listingsData?.[0]?.category);
         
-        setAllBusinesses(listingsData || []);
-        let results = listingsData || [];
+        // Remove duplicates - keep only one entry per business
+        const uniqueBusinesses = [...new Map((listingsData || []).map((b: PublicListing) => [b.id, b])).values()];
+        
+        setAllBusinesses(uniqueBusinesses as PublicListing[]);
+        let results = uniqueBusinesses as PublicListing[];
         
         // Apply initial query filter
         if (initialQuery) {
