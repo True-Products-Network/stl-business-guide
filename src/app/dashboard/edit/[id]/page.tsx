@@ -481,8 +481,8 @@ export default function EditBusinessPage() {
         {success && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-8 text-center transform transition-all scale-100">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
-                <Check className="w-10 h-10 text-white stroke-[3]" />
+              <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl text-4xl">
+                ✓
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
                 Changes Saved!
