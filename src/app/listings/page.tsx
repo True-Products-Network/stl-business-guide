@@ -110,61 +110,14 @@ function ListingsContent() {
         setCategories(categoriesData || []);
       }
 
-      // Predefined list of St. Louis area cities
-      const stLouisCities = [
-        { city: 'St. Louis', state: 'MO' },
-        { city: 'Clayton', state: 'MO' },
-        { city: 'University City', state: 'MO' },
-        { city: 'Maplewood', state: 'MO' },
-        { city: 'Richmond Heights', state: 'MO' },
-        { city: 'Brentwood', state: 'MO' },
-        { city: 'Ladue', state: 'MO' },
-        { city: 'Webster Groves', state: 'MO' },
-        { city: 'Kirkwood', state: 'MO' },
-        { city: 'Ferguson', state: 'MO' },
-        { city: 'Florissant', state: 'MO' },
-        { city: 'Hazelwood', state: 'MO' },
-        { city: 'Bridgeton', state: 'MO' },
-        { city: 'Maryland Heights', state: 'MO' },
-        { city: 'Creve Coeur', state: 'MO' },
-        { city: 'Olivette', state: 'MO' },
-        { city: 'Overland', state: 'MO' },
-        { city: 'St. Ann', state: 'MO' },
-        { city: 'St. John', state: 'MO' },
-        { city: 'Jennings', state: 'MO' },
-        { city: 'Bellefontaine Neighbors', state: 'MO' },
-        { city: 'Normandy', state: 'MO' },
-        { city: 'Chesterfield', state: 'MO' },
-        { city: 'Ballwin', state: 'MO' },
-        { city: 'Ellisville', state: 'MO' },
-        { city: 'Wildwood', state: 'MO' },
-        { city: 'Manchester', state: 'MO' },
-        { city: 'Town and Country', state: 'MO' },
-        { city: 'Des Peres', state: 'MO' },
-        { city: 'Sunset Hills', state: 'MO' },
-        { city: 'Crestwood', state: 'MO' },
-        { city: 'Fenton', state: 'MO' },
-        { city: 'Arnold', state: 'MO' },
-        { city: 'Imperial', state: 'MO' },
-        { city: 'Festus', state: 'MO' },
-        { city: 'Crystal City', state: 'MO' },
-        { city: 'Eureka', state: 'MO' },
-        { city: 'Pacific', state: 'MO' },
-        { city: 'Valley Park', state: 'MO' },
-        { city: 'St. Charles', state: 'MO' },
-        { city: 'St. Peters', state: 'MO' },
-        { city: 'O\'Fallon', state: 'MO' },
-        { city: 'Cottleville', state: 'MO' },
-        { city: 'Lake Saint Louis', state: 'MO' },
-        { city: 'Wentzville', state: 'MO' },
-        { city: 'East St. Louis', state: 'IL' },
-        { city: 'Belleville', state: 'IL' },
-        { city: 'Fairview Heights', state: 'IL' },
-        { city: 'Collinsville', state: 'IL' },
-        { city: 'Edwardsville', state: 'IL' },
-      ];
+      // Extract unique cities from business_locations that have active businesses
+      const uniqueCities = [...new Map((listingsData || [])
+        .filter((l: PublicListing) => l.city && l.state)
+        .map((l: PublicListing) => [`${l.city}, ${l.state}`, { city: l.city, state: l.state }]))
+        .values()]
+        .sort((a: { city: string }, b: { city: string }) => a.city.localeCompare(b.city));
       
-      setCities(stLouisCities);
+      setCities(uniqueCities as { city: string; state: string }[]);
     } catch (err) {
       console.error('Error loading data:', err);
     }
