@@ -158,18 +158,15 @@ export default function AdminAnalyticsPage() {
     });
 
     // Filter analytics by date range
-    // Compare dates only (ignore time) to match dashboard behavior
+    // Compare dates using UTC to avoid timezone issues
     const filteredAnalytics = allAnalytics.filter((record: AnalyticsRecord) => {
       if (!cutoffDate) return true; // "all" selected
-      const recordDate = new Date(record.date);
-      // Set both dates to midnight for accurate day comparison
-      const recordDateOnly = new Date(recordDate.getFullYear(), recordDate.getMonth(), recordDate.getDate());
-      const cutoffDateOnly = new Date(cutoffDate.getFullYear(), cutoffDate.getMonth(), cutoffDate.getDate());
-      const include = recordDateOnly >= cutoffDateOnly;
-      if (record.date >= '2026-05-22' && record.date <= '2026-05-23') {
-        console.log(`Admin - Record ${record.date}: include=${include}, recordDateOnly=${recordDateOnly.toISOString()}, cutoffDateOnly=${cutoffDateOnly.toISOString()}`);
-      }
-      return include;
+      // Parse record date as UTC (database stores YYYY-MM-DD)
+      const [year, month, day] = record.date.split('-').map(Number);
+      const recordDateUTC = Date.UTC(year, month - 1, day); // month is 0-indexed in UTC
+      // Create cutoff date as UTC midnight
+      const cutoffDateUTC = Date.UTC(cutoffDate.getFullYear(), cutoffDate.getMonth(), cutoffDate.getDate());
+      return recordDateUTC >= cutoffDateUTC;
     });
     
     console.log("Admin - Filtered analytics records:", filteredAnalytics.length);
