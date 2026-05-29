@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { getListingPlans, getCategories, getLocations, submitListing, signUp, signIn } from '@/lib/supabase';
+import { getListingPlans, getCategories, getLocations, submitListing, signUp, signIn, supabase } from '@/lib/supabase';
 import { handleFreePlanSignupForGHL } from '@/lib/ghl';
 import type { ListingPlan, Category, Location } from '@/lib/supabase';
 import { Building2, User, MapPin, Send } from 'lucide-react';
@@ -78,6 +78,7 @@ function SubmitListingForm() {
   const [success, setSuccess] = useState(false);
   const [hasAccount, setHasAccount] = useState<boolean | null>(null);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -106,8 +107,24 @@ function SubmitListingForm() {
   });
 
   useEffect(() => {
+    checkExistingUser();
     loadData();
   }, []);
+
+  async function checkExistingUser() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      setCurrentUser(user);
+      // Pre-fill email from user
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || '',
+        full_name: user.user_metadata?.full_name || ''
+      }));
+      // Skip account creation step if user is logged in
+      setHasAccount(true);
+    }
+  }
 
   async function loadData() {
     const [plansData, categoriesData, locationsData] = await Promise.all([
@@ -187,28 +204,30 @@ function SubmitListingForm() {
     setError(null);
 
     try {
-      let userId = null;
+      let userId = currentUser?.id || null;
 
-      // Step 1: Create account if needed
-      if (!hasAccount) {
-        const { success: signupSuccess, error: signupError, data: signupData } = await signUp(
-          formData.email,
-          formData.password,
-          formData.full_name
-        );
-        if (!signupSuccess) {
-          throw signupError;
+      // Step 1: Create account if needed (only if not already logged in)
+      if (!currentUser) {
+        if (!hasAccount) {
+          const { success: signupSuccess, error: signupError, data: signupData } = await signUp(
+            formData.email,
+            formData.password,
+            formData.full_name
+          );
+          if (!signupSuccess) {
+            throw signupError;
+          }
+          userId = signupData?.user?.id;
+        } else {
+          const { success: loginSuccess, error: loginError, data: loginData } = await signIn(
+            formData.email,
+            formData.password
+          );
+          if (!loginSuccess) {
+            throw loginError;
+          }
+          userId = loginData?.user?.id;
         }
-        userId = signupData?.user?.id;
-      } else {
-        const { success: loginSuccess, error: loginError, data: loginData } = await signIn(
-          formData.email,
-          formData.password
-        );
-        if (!loginSuccess) {
-          throw loginError;
-        }
-        userId = loginData?.user?.id;
       }
 
       // Step 2: Submit listing - use user's account email for linking
@@ -540,9 +559,23 @@ function SubmitListingForm() {
         {/* Step 2: Account */}
         {step === 2 && (
           <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Create Your Account</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              {currentUser ? 'Account Verified' : 'Create Your Account'}
+            </h2>
 
-            {hasAccount === null && (
+            {currentUser ? (
+              <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-4">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <p className="font-medium text-green-800">You're already logged in</p>
+                    <p className="text-green-600 text-sm">{currentUser.email}</p>
+                  </div>
+                </div>
+              </div>
+            ) : hasAccount === null && (
               <div className="flex gap-4 mb-6">
                 <button
                   onClick={() => setHasAccount(false)}
@@ -559,7 +592,7 @@ function SubmitListingForm() {
               </div>
             )}
 
-            {hasAccount !== null && (
+            {(hasAccount !== null || currentUser) && (
               <form onSubmit={(e) => { e.preventDefault(); setStep(3); }}>
                 <div className="space-y-4">
                   <div>
@@ -570,26 +603,29 @@ function SubmitListingForm() {
                       value={formData.email}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      disabled={!!currentUser}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-500"
                       placeholder="you@example.com"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input
-                      type="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                      minLength={6}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="••••••••"
-                    />
-                  </div>
+                  {!currentUser && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                      <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleInputChange}
+                        required
+                        minLength={6}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="••••••••"
+                      />
+                    </div>
+                  )}
 
-                  {!hasAccount && (
+                  {(!hasAccount || currentUser) && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                       <input
@@ -608,7 +644,14 @@ function SubmitListingForm() {
                 <div className="mt-8 flex justify-between">
                   <button
                     type="button"
-                    onClick={() => { setHasAccount(null); setStep(1); }}
+                    onClick={() => { 
+                      if (currentUser) {
+                        setStep(1);
+                      } else {
+                        setHasAccount(null); 
+                        setStep(1); 
+                      }
+                    }}
                     className="text-gray-600 hover:text-gray-800 font-medium"
                   >
                     ← Back
