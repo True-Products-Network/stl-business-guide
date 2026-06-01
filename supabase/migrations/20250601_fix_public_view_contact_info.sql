@@ -14,7 +14,6 @@ SELECT
     b.email,
     b.website_url,
     b.logo_url,
-    b.featured_image_url,
     b.facebook_url,
     b.instagram_url,
     b.linkedin_url,
@@ -48,17 +47,15 @@ SELECT
     blst.sort_priority,
     blst.cta_button_text,
     blst.cta_button_url,
-    blst.video_url,
-    blst.google_rating,
-    blst.google_reviews_count
+    blst.video_url
 FROM businesses b
 LEFT JOIN business_listings blst ON blst.business_id = b.id
 LEFT JOIN listing_plans lp ON lp.id = blst.plan_id
 LEFT JOIN business_locations bl ON bl.business_id = b.id
 LEFT JOIN business_categories bc ON bc.business_id = b.id AND bc.is_primary = true
 LEFT JOIN categories c ON c.id = bc.category_id
-WHERE b.status = 'approved'
-    AND blst.listing_status = 'active';
+WHERE b.status = 'active'
+    AND blst.listing_status = 'approved';
 
 -- Grant access to the view
 GRANT SELECT ON public_approved_listings TO anon;

@@ -64,8 +64,19 @@ export default function FeaturedBusinesses() {
       if (error) {
         console.error('Error fetching featured businesses:', error);
       } else {
+        // Parse JSON fields if they come as strings
+        const parsedData = (data || []).map((business: any) => ({
+          ...business,
+          categories: typeof business.categories === 'string' 
+            ? JSON.parse(business.categories) 
+            : business.categories,
+          gallery_images: typeof business.gallery_images === 'string'
+            ? JSON.parse(business.gallery_images)
+            : business.gallery_images
+        }));
+        
         // Sort: VIP first, then Premium, then shuffle randomly within each plan level
-        const sorted = (data || []).sort((a: FeaturedBusiness, b: FeaturedBusiness) => {
+        const sorted = parsedData.sort((a: FeaturedBusiness, b: FeaturedBusiness) => {
           const planOrder: { [key: string]: number } = { 'vip': 0, 'premium': 1 };
           const planA = planOrder[a.plan_key || 'premium'] ?? 1;
           const planB = planOrder[b.plan_key || 'premium'] ?? 1;
