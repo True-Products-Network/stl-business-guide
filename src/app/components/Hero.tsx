@@ -35,10 +35,14 @@ export default function Hero() {
         return;
       }
 
-      // Remove duplicates and sort
+      // Remove duplicates and filter out empty values, then sort
       const locationsList: Location[] = (data || []);
       const uniqueLocationsMap = new Map<string, Location>();
       locationsList.forEach((l: Location) => {
+        // Skip entries with empty city or state
+        if (!l.city || !l.state || l.city.trim() === '' || l.state.trim() === '') {
+          return;
+        }
         uniqueLocationsMap.set(`${l.city}, ${l.state}`, l);
       });
       const uniqueLocations = Array.from(uniqueLocationsMap.values())
