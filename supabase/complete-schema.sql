@@ -54,8 +54,8 @@ create table if not exists listing_plans (
 insert into listing_plans (plan_name, monthly_price, yearly_price, max_images, allows_coupon, allows_video, allows_banner_ads, featured_priority)
 values
   ('Free', 0, 0, 1, false, false, false, 0),
-  ('Premium', 97, 997, 3, true, false, false, 50),
-  ('VIP', 297, null, 10, true, true, true, 100)
+  ('Premium', 47, 97, 5, true, false, false, 50),
+  ('VIP', 97, 497, 10, true, true, true, 100)
 on conflict (plan_name) do nothing;
 
 -- ============================================

@@ -26,11 +26,11 @@ https://catwmqztvgmdwiusroar.supabase.co
 
 ## Default Plans
 
-| Plan | Monthly | Yearly | Images | Coupon | Video | Banner |
-|------|---------|--------|--------|--------|-------|--------|
-| Free | $0 | $0 | 1 | ❌ | ❌ | ❌ |
-| Premium | $97 | $997 | 5 | ❌ | ❌ | ❌ |
-| VIP | $497 | - | 10 | ✅ | ✅ | ✅ |
+| Plan | Monthly | Yearly | Images | Analytics | Coupon | Video | Banner |
+|------|---------|--------|--------|-----------|--------|-------|--------|
+| Free | $0 | $0 | 1 | ❌ | ❌ | ❌ | ❌ |
+| Premium | $47 | $97 | 5 | ✅ | ❌ | ❌ | ❌ |
+| VIP | $97 | $497 | 10 | ✅ | ✅ | ✅ | ✅ |
 
 ## RLS Policies
 
