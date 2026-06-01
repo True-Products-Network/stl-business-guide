@@ -29,7 +29,8 @@ const plans = [
   {
     name: "Premium",
     icon: Zap,
-    price: "$97",
+    price: "$47",
+    regularPrice: "$97",
     period: "/month",
     description: "Enhanced visibility & features",
     features: [
@@ -41,33 +42,43 @@ const plans = [
       "Social media links",
       "Business hours",
       "Customer reviews",
+      "Analytics Dashboard",
+      "Weekly performance report",
+      "Email Support",
     ],
     cta: "Start Premium Trial",
     href: "/submit-listing?plan=premium",
     popular: true,
     color: "blue",
+    foundingMember: true,
   },
   {
     name: "VIP",
     icon: Crown,
-    price: "$497",
+    price: "$97",
+    regularPrice: "$497",
     period: "/month",
     description: "Maximum exposure & leads",
     features: [
       "Everything in Premium, plus:",
+      "VIP badge & branding",
       "Unlimited categories",
       "10 photos + 1 video",
       "Top search placement",
       "Featured on homepage",
       "Banner ad placement",
-      "Analytics dashboard",
-      "Coupon/Deal listing",
+      "Enhanced Analytics dashboard",
+      "Coupon/Deal listing (10% revenue share)",
+      "Featured in Weekly Newsletter",
+      "Social media promotion",
       "Priority support",
+      "Dedicated Account Manager",
     ],
     cta: "Go VIP",
     href: "/submit-listing?plan=vip",
     popular: false,
     color: "gold",
+    foundingMember: true,
   },
 ];
 
@@ -208,10 +219,23 @@ export default function PricingContent() {
 
                 {/* Price */}
                 <div className="p-6 border-b">
-                  <div className="flex items-baseline">
-                    <span className="text-4xl font-bold text-[#371a5b]">{plan.price}</span>
-                    <span className="text-gray-500 ml-1">{plan.period}</span>
-                  </div>
+                  {plan.foundingMember ? (
+                    <div>
+                      <div className="flex items-baseline">
+                        <span className="text-4xl font-bold text-[#371a5b]">{plan.price}</span>
+                        <span className="text-gray-500 ml-1">{plan.period}</span>
+                      </div>
+                      <div className="mt-2">
+                        <span className="text-gray-400 line-through text-sm">{plan.regularPrice}{plan.period}</span>
+                        <span className="ml-2 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-semibold">Founding Member</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-baseline">
+                      <span className="text-4xl font-bold text-[#371a5b]">{plan.price}</span>
+                      <span className="text-gray-500 ml-1">{plan.period}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Features */}

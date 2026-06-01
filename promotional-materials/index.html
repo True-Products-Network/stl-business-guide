@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STL Business Guide - Launch Materials</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .material-content { display: none; }
+        .material-content.active { display: block; }
+        .nav-item.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-lg">
+        <div class="container mx-auto px-6 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-rocket text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">STL Business Guide</h1>
+                        <p class="text-white/80 text-sm">Launch Materials & Promotional Assets</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-sm text-white/80">Production Launch</p>
+                    <p class="font-semibold">May 31, 2026</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-6 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl shadow-sm p-4 sticky top-6">
+                    <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Materials</h3>
+                    <nav class="space-y-2">
+                        <button onclick="showMaterial('overview')" class="nav-item active w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 transition-all" data-material="overview">
+                            <i class="fas fa-home w-5"></i>
+                            <span class="font-medium">Overview</span>
+                        </button>
+                        <button onclick="showMaterial('email')" class="nav-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 text-gray-600 hover:bg-gray-100 transition-all" data-material="email">
+                            <i class="fas fa-envelope w-5"></i>
+                            <span class="font-medium">Email Sequence</span>
+                            <span class="ml-auto text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded-full">5</span>
+                        </button>
+                        <button onclick="showMaterial('social')" class="nav-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 text-gray-600 hover:bg-gray-100 transition-all" data-material="social">
+                            <i class="fas fa-share-alt w-5"></i>
+                            <span class="font-medium">Social Media</span>
+                            <span class="ml-auto text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">12</span>
+                        </button>
+                        <button onclick="showMaterial('sales')" class="nav-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 text-gray-600 hover:bg-gray-100 transition-all" data-material="sales">
+                            <i class="fas fa-handshake w-5"></i>
+                            <span class="font-medium">Sales Materials</span>
+                            <span class="ml-auto text-xs bg-green-100 text-green-600 px-2 py-1 rounded-full">2</span>
+                        </button>
+                        <button onclick="showMaterial('chamber')" class="nav-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 text-gray-600 hover:bg-gray-100 transition-all" data-material="chamber">
+                            <i class="fas fa-building w-5"></i>
+                            <span class="font-medium">Chamber Outreach</span>
+                            <span class="ml-auto text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded-full">3 tiers</span>
+                        </button>
+                        <button onclick="showMaterial('association')" class="nav-item w-full text-left px-4 py-3 rounded-xl flex items-center space-x-3 text-gray-600 hover:bg-gray-100 transition-all" data-material="association">
+                            <i class="fas fa-users w-5"></i>
+                            <span class="font-medium">Association Outreach</span>
+                            <span class="ml-auto text-xs bg-red-100 text-red-600 px-2 py-1 rounded-full">5 orgs</span>
+                        </button>
+                    </nav>
+
+                    <div class="mt-6 pt-6 border-t border-gray-100">
+                        <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Documents</h3>
+                        <div class="space-y-2">
+                            <a href="email-announcement-10k-list.md" target="_blank" class="flex items-center space-x-2 text-sm text-gray-600 hover:text-purple-600 transition-colors">
+                                <i class="fas fa-file-alt text-xs"></i>
+                                <span>Email Sequence (MD)</span>
+                            </a>
+                            <a href="social-media-posts.md" target="_blank" class="flex items-center space-x-2 text-sm text-gray-600 hover:text-purple-600 transition-colors">
+                                <i class="fas fa-file-alt text-xs"></i>
+                                <span>Social Posts (MD)</span>
+                            </a>
+                            <a href="business-owner-pitch.md" target="_blank" class="flex items-center space-x-2 text-sm text-gray-600 hover:text-purple-600 transition-colors">
+                                <i class="fas fa-file-alt text-xs"></i>
+                                <span>Sales Pitch (MD)</span>
+                            </a>
+                            <a href="why-list-one-pager.md" target="_blank" class="flex items-center space-x-2 text-sm text-gray-600 hover:text-purple-600 transition-colors">
+                                <i class="fas fa-file-alt text-xs"></i>
+                                <span>One-Pager (MD)</span>
+                            </a>
+                            <a href="chamber-outreach-email.md" target="_blank" class="flex items-center space-x-2 text-sm text-gray-600 hover:text-purple-600 transition-colors">
+                                <i class="fas fa-file-alt text-xs"></i>
+                                <span>Chamber Outreach (MD)</span>
+                            </a>
+                            <a href="association-outreach-specific.md" target="_blank" class="flex items-center space-x-2 text-sm text-gray-600 hover:text-purple-600 transition-colors">
+                                <i class="fas fa-file-alt text-xs"></i>
+                                <span>Association Outreach (MD)</span>
+                            </a>
+                            <a href="README.md" target="_blank" class="flex items-center space-x-2 text-sm text-gray-600 hover:text-purple-600 transition-colors">
+                                <i class="fas fa-info-circle text-xs"></i>
+                                <span>README</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="lg:col-span-3">
+                <!-- Overview -->
+                <div id="overview" class="material-content active">
+                    <div class="bg-white rounded-2xl shadow-sm p-8 mb-6">
+                        <h2 class="text-3xl font-bold gradient-text mb-4">Launch Materials Dashboard</h2>
+                        <p class="text-gray-600 mb-6">All promotional materials for the STL Business Guide production launch. Click any card to view details.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                            <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 card-hover cursor-pointer" onclick="showMaterial('email')">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i class="fas fa-envelope text-3xl text-purple-600"></i>
+                                    <span class="text-2xl font-bold text-purple-700">5</span>
+                                </div>
+                                <h3 class="font-semibold text-gray-800">Email Sequence</h3>
+                                <p class="text-sm text-gray-600 mt-1">Launch to 10K list</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 card-hover cursor-pointer" onclick="showMaterial('social')">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i class="fas fa-share-alt text-3xl text-blue-600"></i>
+                                    <span class="text-2xl font-bold text-blue-700">12</span>
+                                </div>
+                                <h3 class="font-semibold text-gray-800">Social Posts</h3>
+                                <p class="text-sm text-gray-600 mt-1">LinkedIn + Facebook</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 card-hover cursor-pointer" onclick="showMaterial('sales')">
+                                <div class="flex items-center justify-between mb-4">
+                                    <i class="fas fa-file-alt text-3xl text-green-600"></i>
+                                    <span class="text-2xl font-bold text-green-700">7</span>
+                                </div>
+                                <h3 class="font-semibold text-gray-800">Documents</h3>
+                                <p class="text-sm text-gray-600 mt-1">Sales & outreach</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-xl p-6">
+                            <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>
+                                Launch Checklist
+                            </h3>
+                            <div class="space-y-3">
+                                <label class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="checkbox" class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500">
+                                    <span class="text-gray-700">DNS cutover to stlbusinessguide.com</span>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="checkbox" class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500">
+                                    <span class="text-gray-700">Update Vercel environment variables</span>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="checkbox" class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500">
+                                    <span class="text-gray-700">Update Stripe webhook URL</span>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="checkbox" class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500">
+                                    <span class="text-gray-700">Add domain to Supabase auth redirects</span>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="checkbox" class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500">
+                                    <span class="text-gray-700">Send Email 1 to 10K list</span>
+                                </label>
+                                <label class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="checkbox" class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500">
+                                    <span class="text-gray-700">Post LinkedIn + Facebook launch posts</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Section -->
+                <div id="email" class="material-content">
+                    <div class="bg-white rounded-2xl shadow-sm p-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Email Sequence</h2>
+                        <p class="text-gray-600 mb-6">5-email sequence for your 10,000 contact list</p>
+
+                        <div class="space-y-6">
+                            <div class="border-l-4 border-purple-500 bg-purple-50 rounded-r-xl p-6">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="font-semibold text-gray-800">Email 1: Launch Announcement</h3>
+                                    <span class="text-sm text-purple-600 font-medium">Day 1</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3"><strong>Subject:</strong> St. Louis Business Guide is Live - Get Your Business Listed (Free)</p>
+                                <p class="text-sm text-gray-500">Introduces the directory, explains the three tiers (Free/Premium/VIP), and includes CTA to submit listing.</p>
+                            </div>
+
+                            <div class="border-l-4 border-blue-500 bg-blue-50 rounded-r-xl p-6">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="font-semibold text-gray-800">Email 2: Follow-Up</h3>
+                                    <span class="text-sm text-blue-600 font-medium">Day 3-4</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3"><strong>Subject:</strong> Did you see this? Free business listing for St. Louis</p>
+                                <p class="text-sm text-gray-500">Short follow-up for non-openers. Brief value prop and link.</p>
+                            </div>
+
+                            <div class="border-l-4 border-green-500 bg-green-50 rounded-r-xl p-6">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="font-semibold text-gray-800">Email 3: Value-Focused</h3>
+                                    <span class="text-sm text-green-600 font-medium">Day 7</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3"><strong>Subject:</strong> The problem with most business directories (and what I did about it)</p>
+                                <p class="text-sm text-gray-500">Problem/solution framework. Contrasts big national directories vs STL Business Guide.</p>
+                            </div>
+
+                            <div class="border-l-4 border-orange-500 bg-orange-50 rounded-r-xl p-6">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="font-semibold text-gray-800">Email 4: Social Proof</h3>
+                                    <span class="text-sm text-orange-600 font-medium">Day 14</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3"><strong>Subject:</strong> [First Name], businesses are already getting found</p>
+                                <p class="text-sm text-gray-500">Shares stats and testimonials. Creates urgency about early listing advantages.</p>
+                            </div>
+
+                            <div class="border-l-4 border-red-500 bg-red-50 rounded-r-xl p-6">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="font-semibold text-gray-800">Email 5: Final Call</h3>
+                                    <span class="text-sm text-red-600 font-medium">Day 21</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-3"><strong>Subject:</strong> Last call: Free listings won't stay this open forever</p>
+                                <p class="text-sm text-gray-500">Final opportunity. Soft urgency. Option to opt-out of future emails.</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                            <p class="text-sm text-yellow-800"><i class="fas fa-lightbulb mr-2"></i><strong>Tip:</strong> Remove subscribers who submit a listing from the sequence. Set up automation to pause sequence on conversion.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social Section -->
+                <div id="social" class="material-content">
+                    <div class="bg-white rounded-2xl shadow-sm p-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Social Media Posts</h2>
+                        <p class="text-gray-600 mb-6">3-week posting schedule for LinkedIn and Facebook</p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
+                                    <i class="fab fa-linkedin text-blue-600 mr-2"></i>LinkedIn (6 posts)
+                                </h3>
+                                <div class="space-y-3">
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <span class="text-xs font-medium text-purple-600">Day 1</span>
+                                        <p class="text-sm font-medium text-gray-800 mt-1">Launch Announcement</p>
+                                        <p class="text-xs text-gray-500">"New St. Louis Business Directory is LIVE"</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <span class="text-xs font-medium text-blue-600">Day 3</span>
+                                        <p class="text-sm font-medium text-gray-800 mt-1">Problem/Solution</p>
+                                        <p class="text-xs text-gray-500">"The problem with most business directories"</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <span class="text-xs font-medium text-green-600">Day 5</span>
+                                        <p class="text-sm font-medium text-gray-800 mt-1">Feature Highlight</p>
+                                        <p class="text-xs text-gray-500">Analytics dashboard for VIP</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <span class="text-xs font-medium text-orange-600">Day 7</span>
+                                        <p class="text-sm font-medium text-gray-800 mt-1">Social Proof</p>
+                                        <p class="text-xs text-gray-500">Stats and early results</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <span class="text-xs font-medium text-pink-600">Day 10</span>
+                                        <p class="text-sm font-medium text-gray-800 mt-1">Behind the Scenes</p>
+                                        <p class="text-xs text-gray-500">Why personal review matters</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <span class="text-xs font-medium text-red-600">Day 14</span>
+                                        <p class="text-sm font-medium text-gray-800 mt-1">CTA - Premium/VIP</p>
+                                        <p class="text-xs text-gray-500">Feature comparison and upgrade CTA</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
+                                    <i class="fab fa-facebook text-blue-600 mr-2"></i>Facebook (6 posts)
+                                </h3>
+                                <div class="space-y-3">
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <span class="text-xs font-medium text-purple-600">Day 1</span>
+                                        <p class="text-sm font-medium text-gray-800 mt-1">Launch Announcement</p>
+                                        <p class="text-xs text-gray-500">"Big news for St. Louis business owners!"</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <span class="text-xs font-medium text-blue-600">Day 4</span>
+                                        <p class="text-sm font-medium text-gray-800 mt-1">Local Focus</p>
+                                        <p class="text-xs text-gray-500">"St. Louis is a community"</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <span class="text-xs font-medium text-green-600">Day 6</span>
+                                        <p class="text-sm font-medium text-gray-800 mt-1">Simple Explanation</p>
+                                        <p class="text-xs text-gray-500">How it works in 4 steps</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <span class="text-xs font-medium text-orange-600">Day 8</span>
+                                        <p class="text-sm font-medium text-gray-800 mt-1">Testimonials</p>
+                                        <p class="text-xs text-gray-500">What business owners are saying</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <span class="text-xs font-medium text-pink-600">Day 12</span>
+                                        <p class="text-sm font-medium text-gray-800 mt-1">Feature Spotlight</p>
+                                        <p class="text-xs text-gray-500">Business hours & Open Now badge</p>
+                                    </div>
+                                    <div class="bg-gray-50 rounded-lg p-4">
+                                        <span class="text-xs font-medium text-red-600">Day 15</span>
+                                        <p class="text-sm font-medium text-gray-800 mt-1">Community Call</p>
+                                        <p class="text-xs text-gray-500">"Help me spread the word"</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales Section -->
+                <div id="sales" class="material-content">
+                    <div class="bg-white rounded-2xl shadow-sm p-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Sales Materials</h2>
+                        <p class="text-gray-600 mb-6">Pitch guides and one-pager for business conversations</p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6">
+                                <div class="flex items-center space-x-3 mb-4">
+                                    <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-comments text-white"></i>
+                                    </div>
+                                    <h3 class="font-semibold text-gray-800">Business Owner Pitch Guide</h3>
+                                </div>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i>30-second elevator pitch</li>
+                                    <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i>2-minute detailed explanation</li>
+                                    <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i>Objection handling scripts</li>
+                                    <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i>Feature comparison table</li>
+                                    <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i>Closing techniques</li>
+                                    <li class="flex items-start"><i class="fas fa-check text-green-500 mr-2 mt-1"></i>Follow-up strategy</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6">
+                                <div class="flex items-center space-x-3 mb-4">
+                                    <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-file-alt text-white"></i>
+                                    </div>
+                                    <h3 class="font-semibold text-gray-800">Why List One-Pager</h3>
+                                </div>
+                                <ul class="space-y-2 text-sm text-gray-600">
+                                    <li class="flex items-start"><i class="fas fa-check text-blue-500 mr-2 mt-1"></i>What is STL Business Guide</li>
+                                    <li class="flex items-start"><i class="fas fa-check text-blue-500 mr-2 mt-1"></i>Three listing options explained</li>
+                                    <li class="flex items-start"><i class="fas fa-check text-blue-500 mr-2 mt-1"></i>Feature comparison</li>
+                                    <li class="flex items-start"><i class="fas fa-check text-blue-500 mr-2 mt-1"></i>How it works (4 steps)</li>
+                                    <li class="flex items-start"><i class="fas fa-check text-blue-500 mr-2 mt-1"></i>Partnership opportunities</li>
+                                    <li class="flex items-start"><i class="fas fa-check text-blue-500 mr-2 mt-1"></i>Print-ready format</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 bg-gray-50 rounded-xl p-6">
+                            <h3 class="font-semibold text-gray-800 mb-4">Key Objections Covered</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-shield-alt text-green-500"></i>
+                                    <span class="text-sm text-gray-700">"I already have Google Business Profile"</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-clock text-green-500"></i>
+                                    <span class="text-sm text-gray-700">"I don't have time"</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-laptop text-green-500"></i>
+                                    <span class="text-sm text-gray-700">"I'm not technical"</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-ban text-green-500"></i>
+                                    <span class="text-sm text-gray-700">"I got nothing but spam before"</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-dollar-sign text-green-500"></i>
+                                    <span class="text-sm text-gray-700">"Is free really free?"</span>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-chart-line text-green-500"></i>
+                                    <span class="text-sm text-gray-700">"How do I know it works?"</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chamber Section -->
+                <div id="chamber" class="material-content">
+                    <div class="bg-white rounded-2xl shadow-sm p-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Chamber of Commerce Outreach</h2>
+                        <p class="text-gray-600 mb-6">3-email sequence, phone scripts, and partnership tiers</p>
+
+                        <div class="space-y-6">
+                            <div class="border border-gray-200 rounded-xl p-6">
+                                <h3 class="font-semibold text-gray-800 mb-4">Email Sequence</h3>
+                                <div class="space-y-4">
+                                    <div class="flex items-start space-x-4">
+                                        <span class="w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-semibold text-sm">1</span>
+                                        <div>
+                                            <p class="font-medium text-gray-800">Initial Introduction</p>
+                                            <p class="text-sm text-gray-600">Partnership opportunity introduction</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start space-x-4">
+                                        <span class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-semibold text-sm">2</span>
+                                        <div>
+                                            <p class="font-medium text-gray-800">Follow-Up</p>
+                                            <p class="text-sm text-gray-600">Reminder with value proposition</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-start space-x-4">
+                                        <span class="w-8 h-8 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center font-semibold text-sm">3</span>
+                                        <div>
+                                            <p class="font-medium text-gray-800">Final Follow-Up</p>
+                                            <p class="text-sm text-gray-600">Last attempt, no pressure</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="bg-gray-50 rounded-xl p-5">
+                                    <h4 class="font-semibold text-gray-800 mb-2">Basic Partnership</h4>
+                                    <p class="text-sm text-gray-600 mb-3">Free partnership option</p>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• Partner mention</li>
+                                        <li>• Quarterly newsletter feature</li>
+                                        <li>• Special referral link</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-blue-50 rounded-xl p-5">
+                                    <h4 class="font-semibold text-gray-800 mb-2">Enhanced Partnership</h4>
+                                    <p class="text-sm text-gray-600 mb-3">Revenue share model</p>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• Featured partner status</li>
+                                        <li>• Custom landing page</li>
+                                        <li>• Member discount (20%)</li>
+                                    </ul>
+                                </div>
+                                <div class="bg-purple-50 rounded-xl p-5">
+                                    <h4 class="font-semibold text-gray-800 mb-2">Strategic Partnership</h4>
+                                    <p class="text-sm text-gray-600 mb-3">Custom agreement</p>
+                                    <ul class="text-sm text-gray-600 space-y-1">
+                                        <li>• Co-branded materials</li>
+                                        <li>• Event sponsorship</li>
+                                        <li>• Revenue sharing</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Association Section -->
+                <div id="association" class="material-content">
+                    <div class="bg-white rounded-2xl shadow-sm p-8">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-2">Association Outreach</h2>
+                        <p class="text-gray-600 mb-6">Targeted emails for 5 key St. Louis associations</p>
+
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-4 bg-purple-50 rounded-xl">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-calculator text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-800">Missouri Society of CPAs</h3>
+                                        <p class="text-sm text-gray-600">Contact: Leslie Colegg (lcolegg@mocpa.org)</p>
+                                    </div>
+                                </div>
+                                <span class="px-3 py-1 bg-purple-200 text-purple-700 rounded-full text-sm">Accountants</span>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 bg-blue-50 rounded-xl">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-gavel text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-800">Missouri Bar Association</h3>
+                                        <p class="text-sm text-gray-600">MoBarCLE - Education Director</p>
+                                    </div>
+                                </div>
+                                <span class="px-3 py-1 bg-blue-200 text-blue-700 rounded-full text-sm">Lawyers</span>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 bg-green-50 rounded-xl">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-hospital text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-800">Missouri Hospital Association</h3>
+                                        <p class="text-sm text-gray-600">Events/Education Director</p>
+                                    </div>
+                                </div>
+                                <span class="px-3 py-1 bg-green-200 text-green-700 rounded-full text-sm">Healthcare</span>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 bg-orange-50 rounded-xl">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-home text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-800">St. Louis Realtors Association</h3>
+                                        <p class="text-sm text-gray-600">Education/Membership Director</p>
+                                    </div>
+                                </div>
+                                <span class="px-3 py-1 bg-orange-200 text-orange-700 rounded-full text-sm">Real Estate</span>
+                            </div>
+
+                            <div class="flex items-center justify-between p-4 bg-red-50 rounded-xl">
+                                <div class="flex items-center space-x-4">
+                                    <div class="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-city text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-800">St. Louis Regional Chamber</h3>
+                                        <p class="text-sm text-gray-600">Small Business/Membership Director</p>
+                                    </div>
+                                </div>
+                                <span class="px-3 py-1 bg-red-200 text-red-700 rounded-full text-sm">General</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                            <p class="text-sm text-yellow-800"><i class="fas fa-info-circle mr-2"></i>Each association has a customized email sequence in the association-outreach-specific.md file.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showMaterial(materialId) {
+            // Hide all content
+            document.querySelectorAll('.material-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Remove active from all nav items
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active');
+                el.classList.add('text-gray-600');
+            });
+            
+            // Show selected content
+            document.getElementById(materialId).classList.add('active');
+            
+            // Activate nav item
+            document.querySelector(`[data-material="${materialId}"]`).classList.add('active');
+            document.querySelector(`[data-material="${materialId}"]`).classList.remove('text-gray-600');
+        }
+    </script>
+</body>
+</html>

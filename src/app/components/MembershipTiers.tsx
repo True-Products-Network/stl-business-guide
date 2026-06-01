@@ -31,7 +31,8 @@ const tiers = [
   },
   {
     name: "Premium",
-    price: "$97",
+    price: "$47",
+    regularPrice: "$97",
     period: "per month",
     description: "Great for growing businesses seeking more visibility",
     icon: Zap,
@@ -40,9 +41,10 @@ const tiers = [
       "Everything in Free, plus:",
       "Featured placement on homepage",
       "Photo gallery (up to 5 photos)",
-      "3 category inclusions",
+      "5 category inclusions",
       "Customer reviews showcase",
       "Social media integration",
+      "Analytics Dashboard",
       "Weekly performance report",
       "Email support",
     ],
@@ -54,10 +56,12 @@ const tiers = [
     cta: "Upgrade to Premium",
     popular: true,
     planKey: "premium",
+    foundingMember: true,
   },
   {
     name: "VIP",
-    price: "$497",
+    price: "$97",
+    regularPrice: "$497",
     period: "per month",
     description: "Maximum exposure for serious business growth",
     icon: Crown,
@@ -66,18 +70,20 @@ const tiers = [
       "Everything in Premium, plus:",
       "VIP badge & branding",
       "Top priority in all searches",
-      "Up to 10 photos + 1 brand video",
+      "Up to 10 photos + 1 video",
       "Unlimited categories",
       "Featured in newsletter",
       "Social media promotion",
-      "Analytics dashboard",
-      "Coupon/Deal listing",
+      "Enhanced Analytics dashboard",
+      "Coupon/Deal listing (10% revenue share)",
       "Priority support",
+      "Dedicated Account Manager",
     ],
     notIncluded: [],
     cta: "Become VIP",
     popular: false,
     planKey: "vip",
+    foundingMember: true,
   },
 ];
 
@@ -132,8 +138,23 @@ export default function MembershipTiers() {
 
                 {/* Price */}
                 <div className="text-center mb-8">
-                  <span className="text-5xl font-bold text-[#371a5b]">{tier.price}</span>
-                  <span className="text-gray-500 ml-2">/{tier.period}</span>
+                  {tier.foundingMember ? (
+                    <div>
+                      <div>
+                        <span className="text-5xl font-bold text-[#371a5b]">{tier.price}</span>
+                        <span className="text-gray-500 ml-2">/{tier.period}</span>
+                      </div>
+                      <div className="mt-2">
+                        <span className="text-gray-400 line-through">{tier.regularPrice}/{tier.period}</span>
+                        <span className="ml-2 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-semibold">Founding Member Rate</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="text-5xl font-bold text-[#371a5b]">{tier.price}</span>
+                      <span className="text-gray-500 ml-2">/{tier.period}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Features */}

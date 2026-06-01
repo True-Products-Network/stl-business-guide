@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createCheckoutSession, STRIPE_PRICE_IDS } from '@/lib/stripe';
+import { checkFoundingMemberAvailability, markAsFoundingMember } from '@/lib/subscription-utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +13,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Check if founding member pricing is available
+    const foundingMemberStatus = await checkFoundingMemberAvailability();
+    const isFoundingMember = foundingMemberStatus.isAvailable;
 
     let priceId: string;
     if (plan === 'premium') {
@@ -37,7 +42,8 @@ export async function POST(request: NextRequest) {
       businessId,
       businessName,
       customerEmail,
-      planName
+      planName,
+      isFoundingMember
     );
 
     if (!result.success) {
@@ -51,6 +57,11 @@ export async function POST(request: NextRequest) {
       success: true,
       sessionId: result.sessionId,
       url: result.url,
+      isFoundingMember,
+      foundingMemberInfo: isFoundingMember ? {
+        spotsRemaining: foundingMemberStatus.spotsRemaining,
+        deadline: foundingMemberStatus.deadline,
+      } : null,
     });
   } catch (error: any) {
     console.error('Checkout API error:', error);

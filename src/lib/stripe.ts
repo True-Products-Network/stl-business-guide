@@ -35,7 +35,8 @@ export async function createCheckoutSession(
   businessId: string,
   businessName: string,
   customerEmail?: string,
-  planName?: string
+  planName?: string,
+  isFoundingMember?: boolean
 ) {
   try {
     const stripe = getStripe();
@@ -52,6 +53,7 @@ export async function createCheckoutSession(
         businessId,
         businessName,
         planName: planName || 'Unknown',
+        isFoundingMember: isFoundingMember ? 'true' : 'false',
       },
       customer_email: customerEmail,
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,

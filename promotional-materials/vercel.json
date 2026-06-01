@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "stl-business-guide-materials",
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
+}
