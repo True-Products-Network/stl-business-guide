@@ -377,6 +377,21 @@ export default function EditBusinessPage() {
             setError('Failed to update location: ' + locationError.message);
           } else {
             console.log('Location updated successfully');
+            // Verify the update by fetching the data back
+            const { data: verifyData, error: verifyError } = await supabase
+              .from('business_locations')
+              .select('city, state')
+              .eq('id', locationId)
+              .single();
+            if (verifyError) {
+              console.error('Error verifying update:', verifyError);
+            } else {
+              console.log('Verified location data:', verifyData);
+              if (verifyData.city !== location.city) {
+                console.error('MISMATCH! Saved city:', location.city, 'but DB shows:', verifyData.city);
+                setError('Warning: Location may not have saved correctly. Please try again.');
+              }
+            }
           }
         } else {
           // Insert new location
