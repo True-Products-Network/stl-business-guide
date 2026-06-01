@@ -59,7 +59,7 @@ export default function FeaturedBusinesses() {
         .select('*')
         .in('plan_key', ['premium', 'vip'])
         .order('is_featured', { ascending: false })
-        .limit(6);
+        .limit(12);
 
       if (error) {
         console.error('Error fetching featured businesses:', error);
@@ -75,16 +75,21 @@ export default function FeaturedBusinesses() {
             : business.gallery_images
         }));
         
-        // Sort: VIP first, then Premium, then shuffle randomly within each plan level
+        // Sort: VIP first (by featured status), then Premium
+        // Within each tier, sort by is_featured first, then randomly
         const sorted = parsedData.sort((a: FeaturedBusiness, b: FeaturedBusiness) => {
           const planOrder: { [key: string]: number } = { 'vip': 0, 'premium': 1 };
           const planA = planOrder[a.plan_key || 'premium'] ?? 1;
           const planB = planOrder[b.plan_key || 'premium'] ?? 1;
           
-          // If different plans, sort by plan
+          // First sort by plan (VIP before Premium)
           if (planA !== planB) return planA - planB;
           
-          // Same plan level - shuffle randomly
+          // Same plan - sort by is_featured (featured first)
+          if (a.is_featured && !b.is_featured) return -1;
+          if (!a.is_featured && b.is_featured) return 1;
+          
+          // Same plan and featured status - shuffle randomly
           return Math.random() - 0.5;
         });
         setBusinesses(sorted);
