@@ -29,8 +29,8 @@ https://catwmqztvgmdwiusroar.supabase.co
 | Plan | Monthly | Yearly | Images | Coupon | Video | Banner |
 |------|---------|--------|--------|--------|-------|--------|
 | Free | $0 | $0 | 1 | ❌ | ❌ | ❌ |
-| Premium | $97 | $997 | 3 | ✅ | ❌ | ❌ |
-| VIP | $297 | - | 10 | ✅ | ✅ | ✅ |
+| Premium | $97 | $997 | 5 | ❌ | ❌ | ❌ |
+| VIP | $497 | - | 10 | ✅ | ✅ | ✅ |
 
 ## RLS Policies
 
