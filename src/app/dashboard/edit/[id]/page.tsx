@@ -287,13 +287,21 @@ export default function EditBusinessPage() {
       // Fetch plan info from business_listings
       const { data: listingData } = await supabase
         .from('business_listings')
-        .select('plan_id, listing_plans!inner(plan_key)')
+        .select('plan_id')
         .eq('business_id', id)
         .single();
       
-      if (listingData && listingData.listing_plans) {
-        const plan = (listingData.listing_plans as any).plan_key || 'free';
-        setPlanKey(plan);
+      if (listingData?.plan_id) {
+        // Fetch plan key separately
+        const { data: planData } = await supabase
+          .from('listing_plans')
+          .select('plan_key')
+          .eq('id', listingData.plan_id)
+          .single();
+        
+        if (planData) {
+          setPlanKey(planData.plan_key || 'free');
+        }
       }
     } catch (err) {
       setError('An error occurred while loading the business.');
@@ -385,7 +393,10 @@ export default function EditBusinessPage() {
       }
 
       if (selectedCategories.length > 0) {
-        const categoryInserts = selectedCategories.map(catId => ({
+        // Remove any duplicates from selected categories
+        const uniqueCategories = [...new Set(selectedCategories)];
+        
+        const categoryInserts = uniqueCategories.map(catId => ({
           business_id: businessId,
           category_id: catId,
         }));
