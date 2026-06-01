@@ -397,7 +397,7 @@ export default function ImagesPage() {
                       </h2>
                       <p className="text-gray-600">
                         {selectedBusinessObj.max_images === 0 ? (
-                          <span className="text-red-600">Free plans cannot upload images</span>
+                          <span className="text-red-600">0 Images Allowed - Upgrade to upload images</span>
                         ) : (
                           <span>
                             {totalImages} of {selectedBusinessObj.max_images} images used
