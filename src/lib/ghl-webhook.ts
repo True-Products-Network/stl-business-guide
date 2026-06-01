@@ -1,6 +1,7 @@
 // GHL Webhook Integration for Coupon Redemptions
+// Webhook URL is stored in integration_configs table
 
-const GHL_WEBHOOK_URL = process.env.NEXT_PUBLIC_GHL_WEBHOOK_URL;
+import { createClient } from '@/lib/supabase';
 
 interface GHLRedemptionPayload {
   name: string;
@@ -15,10 +16,32 @@ interface GHLRedemptionPayload {
   tags: string[];
 }
 
+/**
+ * Get GHL claim webhook URL from integration configs
+ */
+async function getGHLClaimWebhookUrl(): Promise<string | null> {
+  const supabase = createClient();
+  
+  const { data, error } = await supabase
+    .from('integration_configs')
+    .select('config_value')
+    .eq('config_key', 'ghl_claim_webhook_url')
+    .single();
+  
+  if (error || !data?.config_value) {
+    console.error('GHL claim webhook URL not found in integration configs');
+    return null;
+  }
+  
+  return data.config_value;
+}
+
 export async function sendRedemptionToGHL(payload: GHLRedemptionPayload): Promise<{ success: boolean; error?: string }> {
   try {
+    const GHL_WEBHOOK_URL = await getGHLClaimWebhookUrl();
+    
     if (!GHL_WEBHOOK_URL) {
-      console.error('GHL_WEBHOOK_URL not configured');
+      console.error('GHL_WEBHOOK_URL not configured in integration configs');
       return { success: false, error: 'GHL webhook URL not configured' };
     }
     
