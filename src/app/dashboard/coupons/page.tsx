@@ -296,7 +296,7 @@ export default function CouponsPage() {
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-500 text-sm">STL Fees Earned</p>
+                <p className="text-gray-500 text-sm">STL Fees Paid</p>
                 <p className="text-3xl font-bold text-[#bb7ce4]">
                   ${coupons.reduce((sum, c) => sum + c.stl_fee_earned, 0).toFixed(2)}
                 </p>
