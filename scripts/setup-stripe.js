@@ -9,7 +9,7 @@
  *   node scripts/setup-stripe.js
  * 
  * Required environment variable:
- *   STRIPE_SECRET_KEY=sk_live_...
+ *   STRIPE_SECRET_KEY=*** (your Stripe secret key)
  */
 
 const Stripe = require('stripe');
@@ -18,7 +18,7 @@ const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 
 if (!STRIPE_SECRET_KEY) {
   console.error('❌ Error: STRIPE_SECRET_KEY environment variable is required');
-  console.error('   Set it with: export STRIPE_SECRET_KEY=sk_live_...');
+  console.error('   Set it with: export STRIPE_SECRET_KEY=***');
   process.exit(1);
 }
 
