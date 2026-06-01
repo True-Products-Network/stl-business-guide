@@ -40,6 +40,8 @@ interface Business {
   id: string;
   business_name: string;
   plan_key: string;
+  plan_name: string;
+  allows_coupon: boolean;
 }
 
 export default function CouponsPage() {
@@ -100,24 +102,32 @@ export default function CouponsPage() {
       const businessIds = businessesData.map((b: any) => b.id);
       const { data: listingsData, error: listingsError } = await supabase
         .from("business_listings")
-        .select("business_id, plan_id, listing_plans(plan_key)")
+        .select("business_id, plan_id, listing_plans(plan_key, plan_name, allows_coupon)")
         .in("business_id", businessIds);
       
-      // Create a map of business_id to plan_key
+      // Create a map of business_id to plan details
       const planMap = new Map();
       if (listingsData) {
         listingsData.forEach((listing: any) => {
-          const planKey = listing.listing_plans?.plan_key || 'free';
-          planMap.set(listing.business_id, planKey);
+          const planDetails = {
+            plan_key: listing.listing_plans?.plan_key || 'free',
+            plan_name: listing.listing_plans?.plan_name || 'Free',
+            allows_coupon: listing.listing_plans?.allows_coupon || false
+          };
+          planMap.set(listing.business_id, planDetails);
         });
       }
       
-      // Transform data to include plan_key
-      const transformedData = businessesData.map((b: any) => ({
-        id: b.id,
-        business_name: b.business_name,
-        plan_key: planMap.get(b.id) || 'free'
-      }));
+      // Transform data to include plan details - filter for coupon-enabled plans only
+      const transformedData = businessesData
+        .map((b: any) => ({
+          id: b.id,
+          business_name: b.business_name,
+          plan_key: planMap.get(b.id)?.plan_key || 'free',
+          plan_name: planMap.get(b.id)?.plan_name || 'Free',
+          allows_coupon: planMap.get(b.id)?.allows_coupon || false
+        }))
+        .filter((b: Business) => b.allows_coupon); // Only show businesses with coupon-enabled plans
       
       setBusinesses(transformedData);
 
@@ -150,8 +160,8 @@ export default function CouponsPage() {
     }
   }
 
-  function canCreateCoupon(planKey: string) {
-    return planKey === "vip";
+  function canCreateCoupon(allowsCoupon: boolean) {
+    return allowsCoupon === true;
   }
 
   function getStatusBadge(status: string) {
@@ -296,10 +306,30 @@ export default function CouponsPage() {
           </div>
         </div>
 
+        {/* Plan Info Banner */}
+        {businesses.length > 0 && (
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 border border-yellow-200 mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-yellow-800 mb-1">
+                  {businesses[0]?.plan_name} Plan
+                </h3>
+                <p className="text-yellow-700 text-sm">
+                  Coupon management is included with your plan
+                </p>
+              </div>
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-200 text-yellow-800">
+                <Tag className="w-4 h-4 mr-1" />
+                Coupons Enabled
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-2xl font-bold text-[#371a5b]">Your Coupons</h2>
-          {businesses.some((b) => canCreateCoupon(b.plan_key)) ? (
+          {businesses.some((b) => canCreateCoupon(b.allows_coupon)) ? (
             <a
               href="/dashboard/coupons/new"
               className="inline-flex items-center bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
@@ -330,7 +360,7 @@ export default function CouponsPage() {
             <p className="text-gray-500 mb-6">
               Create your first coupon to attract more customers
             </p>
-            {businesses.some((b) => canCreateCoupon(b.plan_key)) && (
+            {businesses.some((b) => canCreateCoupon(b.allows_coupon)) && (
               <a
                 href="/dashboard/coupons/new"
                 className="inline-flex items-center bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
