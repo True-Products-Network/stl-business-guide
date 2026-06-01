@@ -282,7 +282,8 @@ export default function EditBusinessPage() {
       
       if (categoryData) {
         // Deduplicate categories from database
-        const uniqueCategoryIds: string[] = [...new Set(categoryData.map((c: { category_id: string }) => c.category_id))];
+        const categoryIds = categoryData.map((c: { category_id: string }) => c.category_id);
+        const uniqueCategoryIds = Array.from(new Set(categoryIds));
         setSelectedCategories(uniqueCategoryIds);
       }
 
