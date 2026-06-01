@@ -1,7 +1,7 @@
 // GHL Webhook Integration for Coupon Redemptions
 // Webhook URL is stored in integration_configs table
 
-import { createClient } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 interface GHLRedemptionPayload {
   name: string;
@@ -20,8 +20,6 @@ interface GHLRedemptionPayload {
  * Get GHL claim webhook URL from integration configs
  */
 async function getGHLClaimWebhookUrl(): Promise<string | null> {
-  const supabase = createClient();
-  
   const { data, error } = await supabase
     .from('integration_configs')
     .select('config_value')
