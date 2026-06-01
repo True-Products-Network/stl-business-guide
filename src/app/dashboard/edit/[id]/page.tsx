@@ -47,7 +47,7 @@ export default function EditBusinessPage() {
   const router = useRouter();
   const params = useParams();
   const businessId = params.id as string;
-  
+
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -55,7 +55,7 @@ export default function EditBusinessPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     business_name: '',
     description_short: '',
@@ -82,16 +82,16 @@ export default function EditBusinessPage() {
   // Location and Categories state
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [location, setLocation] = useState<{ 
+  const [location, setLocation] = useState<{
     address_line_1: string;
     address_line_2: string;
-    city: string; 
+    city: string;
     state: string;
     zip_code: string;
-  }>({ 
+  }>({
     address_line_1: '',
     address_line_2: '',
-    city: '', 
+    city: '',
     state: 'MO',
     zip_code: ''
   });
@@ -188,12 +188,12 @@ export default function EditBusinessPage() {
 
   async function checkAuthAndLoadBusiness() {
     const { data: { user } } = await supabase.auth.getUser();
-    
+
     if (!user) {
       router.push('/auth/login');
       return;
     }
-    
+
     await loadBusiness(businessId, user.email || '');
   }
 
@@ -204,7 +204,7 @@ export default function EditBusinessPage() {
         .select('*')
         .eq('is_active', true)
         .order('name');
-      
+
       if (!error && data) {
         setCategories(data);
       }
@@ -222,20 +222,20 @@ export default function EditBusinessPage() {
         .eq('id', id)
         .eq('email', userEmail)
         .single();
-      
+
       if (error || !data) {
         setError('Business not found or you do not have permission to edit it.');
         setLoading(false);
         return;
       }
-      
+
       // Only allow editing if status is active/approved
       if (data.status !== 'active') {
         setError('You can only edit approved listings.');
         setLoading(false);
         return;
       }
-      
+
       setBusiness(data);
       setFormData({
         business_name: data.business_name || '',
@@ -249,7 +249,7 @@ export default function EditBusinessPage() {
         linkedin_url: data.linkedin_url || '',
         youtube_url: data.youtube_url || '',
       });
-      
+
       // Load business hours if they exist
       if (data.business_hours) {
         setBusinessHours(data.business_hours);
@@ -261,7 +261,7 @@ export default function EditBusinessPage() {
         .select('*')
         .eq('business_id', id)
         .single();
-      
+
       if (locationData) {
         setLocationId(locationData.id);
         setLocation({
@@ -279,7 +279,7 @@ export default function EditBusinessPage() {
         .from('business_categories')
         .select('category_id')
         .eq('business_id', id);
-      
+
       if (categoryData) {
         // Deduplicate categories from database
         const categoryIds: string[] = categoryData.map((c: { category_id: string }) => c.category_id);
@@ -293,7 +293,7 @@ export default function EditBusinessPage() {
         .select('plan_id')
         .eq('business_id', id)
         .single();
-      
+
       if (listingData?.plan_id) {
         // Fetch plan key separately
         const { data: planData } = await supabase
@@ -301,7 +301,7 @@ export default function EditBusinessPage() {
           .select('plan_key')
           .eq('id', listingData.plan_id)
           .single();
-        
+
         if (planData) {
           setPlanKey(planData.plan_key || 'free');
         }
@@ -318,7 +318,7 @@ export default function EditBusinessPage() {
     setSaving(true);
     setError('');
     setSuccess(false);
-    
+
     try {
       // Update business data
       const { error: businessError } = await supabase
@@ -338,7 +338,7 @@ export default function EditBusinessPage() {
           updated_at: new Date().toISOString(),
         })
         .eq('id', businessId);
-      
+
       if (businessError) {
         setError('Failed to save changes: ' + businessError.message);
         setSaving(false);
@@ -363,7 +363,7 @@ export default function EditBusinessPage() {
               updated_at: new Date().toISOString(),
             })
             .eq('id', locationId);
-          
+
           if (locationError) {
             console.error('Error updating location:', locationError);
             setError('Failed to update location: ' + locationError.message);
@@ -387,7 +387,7 @@ export default function EditBusinessPage() {
             })
             .select()
             .single();
-          
+
           if (locationError) {
             console.error('Error inserting location:', locationError);
             setError('Failed to save location: ' + locationError.message);
@@ -403,38 +403,38 @@ export default function EditBusinessPage() {
       // Update categories - only if categories were actually changed
       // Skip category update if just editing other fields
       console.log('Selected categories count:', selectedCategories.length);
-      
+
       // First check what categories currently exist
       const { data: existingCats } = await supabase
         .from('business_categories')
         .select('category_id')
         .eq('business_id', businessId);
-      
+
       const existingCatIds = existingCats?.map((c: any) => c.category_id) || [];
       const newCatIds = [...new Set(selectedCategories)];
-      
+
       // Only update if different
-      const hasChanges = existingCatIds.length !== newCatIds.length || 
-        !existingCatIds.every(id => newCatIds.includes(id));
-      
+      const hasChanges = existingCatIds.length !== newCatIds.length ||
+        !existingCatIds.every((id: string) => newCatIds.includes(id));
+
       if (hasChanges) {
         console.log('Categories changed, updating...');
-        
+
         // Delete existing
         const { error: deleteCatError } = await supabase
           .from('business_categories')
           .delete()
           .eq('business_id', businessId);
-        
+
         if (deleteCatError) {
           console.error('Error deleting categories:', deleteCatError);
         } else {
           console.log('Deleted existing categories');
         }
-        
+
         // Small delay to ensure delete is committed
         await new Promise(resolve => setTimeout(resolve, 100));
-        
+
         // Insert new categories
         if (newCatIds.length > 0) {
           for (const catId of newCatIds) {
@@ -444,7 +444,7 @@ export default function EditBusinessPage() {
                 business_id: businessId,
                 category_id: catId,
               });
-            
+
             if (catError) {
               console.error(`Error inserting category ${catId}:`, catError);
             } else {
@@ -455,7 +455,7 @@ export default function EditBusinessPage() {
       } else {
         console.log('Categories unchanged, skipping update');
       }
-      
+
       setSuccess(true);
     } catch (err) {
       setError('An error occurred while saving.');
@@ -467,20 +467,20 @@ export default function EditBusinessPage() {
   async function handleDelete() {
     setDeleting(true);
     setError('');
-    
+
     try {
       // Delete related records first (analytics, coupons, etc.)
       await supabase.from('business_analytics').delete().eq('business_id', businessId);
       await supabase.from('business_listings').delete().eq('business_id', businessId);
       await supabase.from('business_categories').delete().eq('business_id', businessId);
       await supabase.from('business_locations').delete().eq('business_id', businessId);
-      
+
       // Finally delete the business
       const { error } = await supabase
         .from('businesses')
         .delete()
         .eq('id', businessId);
-      
+
       if (error) {
         setError('Failed to delete listing: ' + error.message);
         setDeleting(false);
@@ -534,7 +534,7 @@ export default function EditBusinessPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       {/* Hero */}
       <div className="bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white pt-32 pb-12">
         <div className="max-w-4xl mx-auto px-4">
@@ -557,7 +557,7 @@ export default function EditBusinessPage() {
             {error}
           </div>
         )}
-        
+
         {/* Success Modal */}
         {success && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -696,7 +696,7 @@ export default function EditBusinessPage() {
             <div id="location-section" className="border-t border-gray-200 pt-6 mt-6">
               <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Location & Service Area</h3>
               <p className="text-sm text-gray-500 mb-4">Select your primary location and describe your service area.</p>
-              
+
               {/* Street Address */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -792,7 +792,7 @@ export default function EditBusinessPage() {
               <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Business Categories</h3>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                 <p className="text-sm text-blue-800">
-                  <strong>Your Plan:</strong> {planKey?.toUpperCase() || 'FREE'} | 
+                  <strong>Your Plan:</strong> {planKey?.toUpperCase() || 'FREE'} |
                   <strong> Categories:</strong> {selectedCategories.length} of {categoryLimit === Infinity ? 'Unlimited' : categoryLimit} selected
                   {planKey === 'free' && (
                     <span className="block mt-1 text-xs">
@@ -807,18 +807,18 @@ export default function EditBusinessPage() {
                 </p>
               </div>
               <p className="text-sm text-gray-500 mb-4">Select categories that apply to your business.</p>
-              
+
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {categories.map((category) => {
                   const isSelected = selectedCategories.includes(category.id);
                   const isDisabled = !isSelected && !canSelectMoreCategories;
-                  
+
                   return (
-                    <label 
-                      key={category.id} 
+                    <label
+                      key={category.id}
                       className={`flex items-center p-3 border rounded-lg cursor-pointer transition ${
-                        isDisabled 
-                          ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed' 
+                        isDisabled
+                          ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
                           : 'border-gray-200 hover:bg-gray-50'
                       }`}
                     >
@@ -850,7 +850,7 @@ export default function EditBusinessPage() {
             <div id="social-media-section" className="border-t border-gray-200 pt-6 mt-6">
               <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Social Media Links</h3>
               <p className="text-sm text-gray-500 mb-4">Add your social media profiles to help customers connect with you.</p>
-              
+
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -914,18 +914,18 @@ export default function EditBusinessPage() {
             <div id="business-hours-section" className="border-t border-gray-200 pt-6 mt-6">
               <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Business Hours</h3>
               <p className="text-sm text-gray-500 mb-4">Set your operating hours so customers know when you're open.</p>
-              
+
               <div className="space-y-3">
                 {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => {
                   const dayLabel = day.charAt(0).toUpperCase() + day.slice(1);
                   const hours = businessHours[day] || { open: '09:00', close: '17:00', closed: false };
-                  
+
                   return (
                     <div key={day} className="flex items-center space-x-4">
                       <div className="w-24">
                         <span className="text-sm font-medium text-gray-700">{dayLabel}</span>
                       </div>
-                      
+
                       <label className="flex items-center">
                         <input
                           type="checkbox"
@@ -940,7 +940,7 @@ export default function EditBusinessPage() {
                         />
                         <span className="text-sm text-gray-600">Closed</span>
                       </label>
-                      
+
                       {!hours.closed && (
                         <>
                           <input
