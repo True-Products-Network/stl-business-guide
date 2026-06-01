@@ -42,6 +42,13 @@ interface Business {
   updated_at: string;
   location_name: string | null;
   category_name: string | null;
+  plan_details?: {
+    plan_name: string;
+    plan_key: string;
+    monthly_price: number;
+    allows_analytics: boolean;
+    allows_coupon: boolean;
+  } | null;
 }
 
 export default function DashboardPage() {
@@ -148,7 +155,7 @@ export default function DashboardPage() {
             plan_id,
             listing_status,
             is_featured,
-            plan:listing_plans!left(plan_key)
+            plan:listing_plans!left(plan_name, plan_key, monthly_price, allows_analytics, allows_coupon)
           ),
           business_locations!left(
             city,
@@ -207,6 +214,13 @@ export default function DashboardPage() {
             updated_at: item.updated_at,
             location_name: location ? `${location.city}, ${location.state}` : null,
             category_name: categoryLink?.category?.name || null,
+            plan_details: listing?.plan ? {
+              plan_name: listing.plan.plan_name,
+              plan_key: listing.plan.plan_key,
+              monthly_price: listing.plan.monthly_price,
+              allows_analytics: listing.plan.allows_analytics,
+              allows_coupon: listing.plan.allows_coupon,
+            } : null,
           };
         });
         console.log("Transformed businesses:", transformed);
@@ -385,8 +399,8 @@ export default function DashboardPage() {
             Add New Listing
           </a>
 
-          {/* Analytics - VIP only */}
-          {businesses.some(b => b.plan_tier?.toLowerCase() === 'vip') && (
+          {/* Analytics - Plans with allows_analytics only */}
+          {businesses.some(b => b.plan_details?.allows_analytics) && (
             <a
               href="/dashboard/analytics"
               className="inline-flex items-center bg-white text-[#371a5b] border-2 border-[#371a5b] px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition"
@@ -412,8 +426,8 @@ export default function DashboardPage() {
             Account Settings
           </a>
 
-          {/* Business Owner Coupons Button - VIP only */}
-          {!isAdmin && businesses.some(b => b.plan_tier?.toLowerCase() === 'vip') && (
+          {/* Business Owner Coupons Button - Plans with allows_coupon only */}
+          {!isAdmin && businesses.some(b => b.plan_details?.allows_coupon) && (
             <a
               href="/dashboard/coupons"
               className="inline-flex items-center bg-gradient-to-r from-[#ffc107] to-[#f68712] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
@@ -586,9 +600,30 @@ export default function DashboardPage() {
                         </p>
                         <div className="flex items-center space-x-3 mt-2">
                           {getStatusBadge(business.status)}
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {business.plan_tier || "Free"}
-                          </span>
+                          {business.plan_details ? (
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              business.plan_details.plan_key === 'vip' 
+                                ? 'bg-yellow-100 text-yellow-800' 
+                                : business.plan_details.plan_key === 'premium'
+                                ? 'bg-purple-100 text-purple-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {business.plan_details.plan_name}
+                              {business.plan_details.monthly_price > 0 && (
+                                <span className="ml-1">(${business.plan_details.monthly_price}/mo)</span>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              Free
+                            </span>
+                          )}
+                          {business.plan_details?.allows_analytics && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800" title="Analytics enabled">
+                              <BarChart3 className="w-3 h-3 mr-1" />
+                              Analytics
+                            </span>
+                          )}
                           {business.is_featured && (
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                               <Star className="w-3 h-3 mr-1" />
