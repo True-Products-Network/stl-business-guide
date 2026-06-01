@@ -40,6 +40,12 @@ interface Business {
   business_name: string;
   slug: string;
   plan_tier: string;
+  plan_name: string;
+  plan_details?: {
+    plan_key: string;
+    plan_name: string;
+    allows_analytics: boolean;
+  } | null;
 }
 
 export default function AnalyticsDashboardPage() {
@@ -125,7 +131,7 @@ export default function AnalyticsDashboardPage() {
       // Now get the listings for these businesses with plan info
       const { data: listingsData, error: listingsError } = await supabase
         .from("business_listings")
-        .select("id, business_id, listing_status, listing_plans(plan_key)")
+        .select("id, business_id, listing_status, listing_plans(plan_key, plan_name, allows_analytics)")
         .in("business_id", businessIds)
         .order("created_at", { ascending: false });
 
@@ -144,15 +150,15 @@ export default function AnalyticsDashboardPage() {
       }
       const businessMap = new Map<string, BusinessData>((businessesData as BusinessData[] | null)?.map((b) => [b.id, b]) || []);
 
-      // Transform data to match expected format - VIP ONLY
+      // Transform data to match expected format - Analytics-enabled plans only
       interface ListingData {
         id: string;
         business_id: string;
         listing_status: string;
-        listing_plans?: { plan_key: string };
+        listing_plans?: { plan_key: string; plan_name: string; allows_analytics: boolean };
       }
       const transformedData = ((listingsData as ListingData[] | null) || [])
-        .filter((item) => item.listing_plans?.plan_key === "vip")
+        .filter((item) => item.listing_plans?.allows_analytics === true)
         .map((item) => {
           const business = businessMap.get(item.business_id);
           return {
@@ -160,6 +166,12 @@ export default function AnalyticsDashboardPage() {
             business_name: business?.business_name || "Unnamed Business",
             slug: business?.slug || "",
             plan_tier: item.listing_plans?.plan_key || "free",
+            plan_name: item.listing_plans?.plan_name || "Unknown",
+            plan_details: item.listing_plans ? {
+              plan_key: item.listing_plans.plan_key,
+              plan_name: item.listing_plans.plan_name,
+              allows_analytics: item.listing_plans.allows_analytics,
+            } : null,
           };
         });
 
@@ -336,7 +348,7 @@ export default function AnalyticsDashboardPage() {
                   >
                     {businesses.map((biz) => (
                       <option key={biz.id} value={biz.id}>
-                        {biz.business_name}
+                        {biz.business_name} ({biz.plan_name})
                       </option>
                     ))}
                   </select>
@@ -640,31 +652,25 @@ export default function AnalyticsDashboardPage() {
               </div>
             </div>
 
-            {/* Upgrade CTA */}
-            {selectedBusiness &&
-              businesses.find((b) => b.id === selectedBusiness)?.plan_tier
-                ?.toLowerCase() === "free" && (
-                <div className="bg-gradient-to-r from-[#54afe6]/10 to-[#bb7ce4]/10 rounded-xl p-6 border border-[#54afe6]/20">
-                  <div className="flex flex-col md:flex-row items-center justify-between">
-                    <div>
-                      <h3 className="text-xl font-bold text-[#371a5b] mb-2">
-                        Get Detailed Analytics
-                      </h3>
-                      <p className="text-gray-600">
-                        Upgrade to Premium or VIP for advanced analytics, export
-                        reports, and more.
-                      </p>
-                    </div>
-                    <a
-                      href={`/pricing?upgrade=${selectedBusiness}`}
-                      className="mt-4 md:mt-0 inline-flex items-center bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition"
-                    >
-                      <TrendingUp className="w-5 h-5 mr-2" />
-                      Upgrade Now
-                    </a>
+            {/* Plan Info */}
+            {selectedBusiness && (
+              <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-6 border border-green-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-green-800 mb-1">
+                      {businesses.find((b) => b.id === selectedBusiness)?.plan_name} Plan
+                    </h3>
+                    <p className="text-green-700 text-sm">
+                      Analytics dashboard is included with your plan
+                    </p>
                   </div>
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-200 text-green-800">
+                    <BarChart3 className="w-4 h-4 mr-1" />
+                    Analytics Enabled
+                  </span>
                 </div>
-              )}
+              </div>
+            )}
           </>
         )}
       </div>
