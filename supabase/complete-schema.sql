@@ -44,6 +44,7 @@ create table if not exists listing_plans (
   allows_coupon boolean not null default false,
   allows_video boolean not null default false,
   allows_banner_ads boolean not null default false,
+  allows_analytics boolean not null default false,
   featured_priority integer not null default 0,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
@@ -51,11 +52,11 @@ create table if not exists listing_plans (
 );
 
 -- Insert default plans
-insert into listing_plans (plan_name, monthly_price, yearly_price, max_images, allows_coupon, allows_video, allows_banner_ads, featured_priority)
+insert into listing_plans (plan_name, monthly_price, yearly_price, max_images, allows_coupon, allows_video, allows_banner_ads, allows_analytics, featured_priority)
 values
-  ('Free', 0, 0, 1, false, false, false, 0),
-  ('Premium', 47, 97, 5, true, false, false, 50),
-  ('VIP', 97, 497, 10, true, true, true, 100)
+  ('Free', 0, 0, 1, false, false, false, false, 0),
+  ('Premium', 47, 97, 5, true, false, false, true, 50),
+  ('VIP', 97, 497, 10, true, true, true, true, 100)
 on conflict (plan_name) do nothing;
 
 -- ============================================
