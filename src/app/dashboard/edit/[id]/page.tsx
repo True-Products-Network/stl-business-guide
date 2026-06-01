@@ -399,47 +399,60 @@ export default function EditBusinessPage() {
         console.log('No city provided, skipping location save');
       }
 
-      // Update categories - delete existing and insert new
-      console.log('Deleting existing categories for business:', businessId);
-      const { error: deleteCatError } = await supabase
+      // Update categories - only if categories were actually changed
+      // Skip category update if just editing other fields
+      console.log('Selected categories count:', selectedCategories.length);
+      
+      // First check what categories currently exist
+      const { data: existingCats } = await supabase
         .from('business_categories')
-        .delete()
+        .select('category_id')
         .eq('business_id', businessId);
       
-      if (deleteCatError) {
-        console.error('Error deleting categories:', deleteCatError);
-      } else {
-        console.log('Successfully deleted existing categories');
-      }
-
-      if (selectedCategories.length > 0) {
-        // Aggressively remove any duplicates from selected categories
-        const uniqueCategories = [...new Set(selectedCategories)];
+      const existingCatIds = existingCats?.map((c: any) => c.category_id) || [];
+      const newCatIds = [...new Set(selectedCategories)];
+      
+      // Only update if different
+      const hasChanges = existingCatIds.length !== newCatIds.length || 
+        !existingCatIds.every(id => newCatIds.includes(id));
+      
+      if (hasChanges) {
+        console.log('Categories changed, updating...');
         
-        if (uniqueCategories.length !== selectedCategories.length) {
-          console.warn('Found and removed duplicate categories:', selectedCategories.length - uniqueCategories.length, 'duplicates');
-          // Update state to remove duplicates for future saves
-          setSelectedCategories(uniqueCategories);
+        // Delete existing
+        const { error: deleteCatError } = await supabase
+          .from('business_categories')
+          .delete()
+          .eq('business_id', businessId);
+        
+        if (deleteCatError) {
+          console.error('Error deleting categories:', deleteCatError);
+        } else {
+          console.log('Deleted existing categories');
         }
         
-        console.log('Inserting categories:', uniqueCategories);
+        // Small delay to ensure delete is committed
+        await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Insert one at a time to avoid batch issues
-        for (const catId of uniqueCategories) {
-          const { error: catError } = await supabase
-            .from('business_categories')
-            .insert({
-              business_id: businessId,
-              category_id: catId,
-            });
-          
-          if (catError) {
-            console.error(`Error inserting category ${catId}:`, catError);
-            // Continue with other categories even if one fails
+        // Insert new categories
+        if (newCatIds.length > 0) {
+          for (const catId of newCatIds) {
+            const { error: catError } = await supabase
+              .from('business_categories')
+              .insert({
+                business_id: businessId,
+                category_id: catId,
+              });
+            
+            if (catError) {
+              console.error(`Error inserting category ${catId}:`, catError);
+            } else {
+              console.log(`Inserted category ${catId}`);
+            }
           }
         }
-        
-        console.log('Finished inserting categories');
+      } else {
+        console.log('Categories unchanged, skipping update');
       }
       
       setSuccess(true);
