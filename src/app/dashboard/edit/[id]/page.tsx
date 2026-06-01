@@ -35,8 +35,11 @@ interface Category {
 
 interface BusinessLocation {
   id: string;
+  address_line_1: string | null;
+  address_line_2: string | null;
   city: string;
   state: string;
+  zip_code: string | null;
   service_area: string | null;
 }
 
@@ -79,7 +82,19 @@ export default function EditBusinessPage() {
   // Location and Categories state
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [location, setLocation] = useState<{ city: string; state: string }>({ city: '', state: 'MO' });
+  const [location, setLocation] = useState<{ 
+    address_line_1: string;
+    address_line_2: string;
+    city: string; 
+    state: string;
+    zip_code: string;
+  }>({ 
+    address_line_1: '',
+    address_line_2: '',
+    city: '', 
+    state: 'MO',
+    zip_code: ''
+  });
   const [serviceArea, setServiceArea] = useState('');
   const [locationId, setLocationId] = useState<string | null>(null);
   const [planKey, setPlanKey] = useState<string>('free');
@@ -250,8 +265,11 @@ export default function EditBusinessPage() {
       if (locationData) {
         setLocationId(locationData.id);
         setLocation({
+          address_line_1: locationData.address_line_1 || '',
+          address_line_2: locationData.address_line_2 || '',
           city: locationData.city || '',
-          state: locationData.state || 'MO'
+          state: locationData.state || 'MO',
+          zip_code: locationData.zip_code || ''
         });
         setServiceArea(locationData.service_area || '');
       }
@@ -323,8 +341,11 @@ export default function EditBusinessPage() {
           const { error: locationError } = await supabase
             .from('business_locations')
             .update({
+              address_line_1: location.address_line_1 || null,
+              address_line_2: location.address_line_2 || null,
               city: location.city,
               state: location.state,
+              zip_code: location.zip_code || null,
               service_area: serviceArea || null,
               updated_at: new Date().toISOString(),
             })
@@ -339,8 +360,11 @@ export default function EditBusinessPage() {
             .from('business_locations')
             .insert({
               business_id: businessId,
+              address_line_1: location.address_line_1 || null,
+              address_line_2: location.address_line_2 || null,
               city: location.city,
               state: location.state,
+              zip_code: location.zip_code || null,
               service_area: serviceArea || null,
             });
           
@@ -616,7 +640,28 @@ export default function EditBusinessPage() {
               <h3 className="text-lg font-semibold text-[#371a5b] mb-4">Location & Service Area</h3>
               <p className="text-sm text-gray-500 mb-4">Select your primary location and describe your service area.</p>
               
-              <div className="grid md:grid-cols-2 gap-6 mb-4">
+              {/* Street Address */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Street Address
+                </label>
+                <input
+                  type="text"
+                  value={location.address_line_1}
+                  onChange={(e) => setLocation({ ...location, address_line_1: e.target.value })}
+                  placeholder="123 Main Street"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-transparent mb-2"
+                />
+                <input
+                  type="text"
+                  value={location.address_line_2}
+                  onChange={(e) => setLocation({ ...location, address_line_2: e.target.value })}
+                  placeholder="Suite 100 (optional)"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-transparent"
+                />
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     City *
@@ -652,6 +697,19 @@ export default function EditBusinessPage() {
                     ))}
                   </select>
                   <p className="text-xs text-gray-500 mt-1">2-letter state code</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    ZIP Code
+                  </label>
+                  <input
+                    type="text"
+                    value={location.zip_code}
+                    onChange={(e) => setLocation({ ...location, zip_code: e.target.value })}
+                    placeholder="63101"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#54afe6] focus:border-transparent"
+                  />
                 </div>
               </div>
 
