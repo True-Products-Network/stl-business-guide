@@ -38,7 +38,7 @@ export default function Hero() {
       // Remove duplicates and sort
       const uniqueLocations = [...new Map(
         (data || []).map((l: Location) => [`${l.city}, ${l.state}`, l])
-      ).values()].sort((a, b) => a.city.localeCompare(b.city));
+      ).values()].sort((a: Location, b: Location) => a.city.localeCompare(b.city));
 
       setLocations(uniqueLocations);
     } catch (err) {
