@@ -408,7 +408,7 @@ export default function ImagesPage() {
                     </div>
                     {selectedBusinessObj.plan_key === 'free' && (
                       <a
-                        href="/pricing"
+                        href={`/pricing?upgrade=${selectedBusinessObj.id}`}
                         className="bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white px-6 py-2 rounded-lg font-semibold hover:opacity-90 transition"
                       >
                         Upgrade Plan
