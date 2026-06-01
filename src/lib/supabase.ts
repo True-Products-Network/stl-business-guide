@@ -52,6 +52,7 @@ export interface ListingPlan {
   allows_coupon: boolean;
   allows_video: boolean;
   allows_banner_ads: boolean;
+  allows_analytics: boolean;
   featured_priority: number;
 }
 
