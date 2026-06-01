@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
         state: location.state,
         zip_code: location.zip_code || null,
         service_area: location.service_area || null,
+        is_primary: true,
         updated_at: new Date().toISOString(),
       })
       .eq('id', locationId);
