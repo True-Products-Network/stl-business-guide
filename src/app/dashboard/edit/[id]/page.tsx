@@ -256,13 +256,19 @@ export default function EditBusinessPage() {
       }
 
       // Fetch location data
-      const { data: locationData } = await supabase
+      console.log('Fetching location for business:', id);
+      const { data: locationData, error: locationError } = await supabase
         .from('business_locations')
         .select('*')
         .eq('business_id', id)
         .single();
 
+      if (locationError) {
+        console.error('Error loading location:', locationError);
+      }
+
       if (locationData) {
+        console.log('Loaded location data:', locationData);
         setLocationId(locationData.id);
         setLocation({
           address_line_1: locationData.address_line_1 || '',
@@ -272,6 +278,8 @@ export default function EditBusinessPage() {
           zip_code: locationData.zip_code || ''
         });
         setServiceArea(locationData.service_area || '');
+      } else {
+        console.log('No location data found for business:', id);
       }
 
       // Fetch business categories
