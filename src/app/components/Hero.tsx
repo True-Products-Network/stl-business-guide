@@ -36,9 +36,13 @@ export default function Hero() {
       }
 
       // Remove duplicates and sort
-      const uniqueLocations = [...new Map(
-        (data || []).map((l: Location) => [`${l.city}, ${l.state}`, l])
-      ).values()].sort((a: Location, b: Location) => a.city.localeCompare(b.city));
+      const locationsList: Location[] = (data || []);
+      const uniqueLocationsMap = new Map<string, Location>();
+      locationsList.forEach((l: Location) => {
+        uniqueLocationsMap.set(`${l.city}, ${l.state}`, l);
+      });
+      const uniqueLocations = Array.from(uniqueLocationsMap.values())
+        .sort((a, b) => a.city.localeCompare(b.city));
 
       setLocations(uniqueLocations);
     } catch (err) {
