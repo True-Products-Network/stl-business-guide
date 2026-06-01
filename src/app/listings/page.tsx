@@ -234,7 +234,16 @@ function ListingsContent() {
     
     // Filter by city
     if (selectedCity) {
-      results = results.filter((b: PublicListing) => b.city === selectedCity);
+      console.log('Filtering by city:', selectedCity);
+      console.log('Total businesses before city filter:', results.length);
+      results = results.filter((b: PublicListing) => {
+        const match = b.city === selectedCity;
+        if (!match) {
+          console.log('City mismatch:', b.business_name, 'has city:', b.city, 'looking for:', selectedCity);
+        }
+        return match;
+      });
+      console.log('Businesses after city filter:', results.length);
     }
     
     // Sort by plan: VIP first, then Premium, then Free
