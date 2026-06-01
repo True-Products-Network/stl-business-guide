@@ -7,15 +7,15 @@ ADD COLUMN IF NOT EXISTS allows_analytics BOOLEAN NOT NULL DEFAULT false;
 
 -- Update existing plans with correct analytics permissions
 UPDATE listing_plans 
-SET allows_analytics = false 
+SET allows_analytics = false, allows_coupon = false
 WHERE plan_name = 'Free';
 
 UPDATE listing_plans 
-SET allows_analytics = true 
+SET allows_analytics = true, allows_coupon = false
 WHERE plan_name = 'Premium';
 
 UPDATE listing_plans 
-SET allows_analytics = true 
+SET allows_analytics = true, allows_coupon = true
 WHERE plan_name = 'VIP';
 
 -- Show updated plans
