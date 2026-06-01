@@ -1,7 +1,6 @@
 // GHL Webhook Integration for Coupon Redemptions
 
-const GHL_WEBHOOK_URL = process.env.NEXT_PUBLIC_GHL_WEBHOOK_URL || 
-  'https://services.leadconnectorhq.com/hooks/Y75D8z0j5aPHXtDyWr3y/webhook-trigger/gE9SUk2vCZhDPRq3p4H3';
+const GHL_WEBHOOK_URL = process.env.NEXT_PUBLIC_GHL_WEBHOOK_URL;
 
 interface GHLRedemptionPayload {
   name: string;
@@ -18,6 +17,11 @@ interface GHLRedemptionPayload {
 
 export async function sendRedemptionToGHL(payload: GHLRedemptionPayload): Promise<{ success: boolean; error?: string }> {
   try {
+    if (!GHL_WEBHOOK_URL) {
+      console.error('GHL_WEBHOOK_URL not configured');
+      return { success: false, error: 'GHL webhook URL not configured' };
+    }
+    
     const response = await fetch(GHL_WEBHOOK_URL, {
       method: 'POST',
       headers: {
