@@ -480,26 +480,32 @@ export default function EditBusinessPage() {
     setError('');
 
     try {
-      // Delete related records first (analytics, coupons, etc.)
-      await supabase.from('business_analytics').delete().eq('business_id', businessId);
-      await supabase.from('business_listings').delete().eq('business_id', businessId);
-      await supabase.from('business_categories').delete().eq('business_id', businessId);
-      await supabase.from('business_locations').delete().eq('business_id', businessId);
-
-      // Finally delete the business
-      const { error } = await supabase
-        .from('businesses')
-        .delete()
-        .eq('id', businessId);
-
-      if (error) {
-        setError('Failed to delete listing: ' + error.message);
+      console.log('Starting deletion for business:', businessId);
+      
+      // Use API route to delete with admin privileges
+      const response = await fetch('/api/business/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId,
+          userEmail: business?.email
+        })
+      });
+      
+      const result = await response.json();
+      console.log('Delete API response:', result);
+      
+      if (!response.ok || !result.success) {
+        console.error('Delete failed:', result.error);
+        setError('Failed to delete listing: ' + (result.error || 'Unknown error'));
         setDeleting(false);
       } else {
+        console.log('Delete successful, redirecting...');
         router.push('/dashboard');
       }
-    } catch (err) {
-      setError('An error occurred while deleting.');
+    } catch (err: any) {
+      console.error('Delete error:', err);
+      setError('An error occurred while deleting: ' + err.message);
       setDeleting(false);
     }
   }
