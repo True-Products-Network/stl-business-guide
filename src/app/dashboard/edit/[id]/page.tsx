@@ -413,25 +413,33 @@ export default function EditBusinessPage() {
       }
 
       if (selectedCategories.length > 0) {
-        // Remove any duplicates from selected categories
+        // Aggressively remove any duplicates from selected categories
         const uniqueCategories = [...new Set(selectedCategories)];
+        
+        if (uniqueCategories.length !== selectedCategories.length) {
+          console.warn('Found and removed duplicate categories:', selectedCategories.length - uniqueCategories.length, 'duplicates');
+          // Update state to remove duplicates for future saves
+          setSelectedCategories(uniqueCategories);
+        }
+        
         console.log('Inserting categories:', uniqueCategories);
         
-        const categoryInserts = uniqueCategories.map(catId => ({
-          business_id: businessId,
-          category_id: catId,
-        }));
-        
-        const { error: catError } = await supabase
-          .from('business_categories')
-          .insert(categoryInserts);
-        
-        if (catError) {
-          console.error('Error inserting categories:', catError);
-          // Don't throw error, just log it - the business data was saved
-        } else {
-          console.log('Successfully inserted categories');
+        // Insert one at a time to avoid batch issues
+        for (const catId of uniqueCategories) {
+          const { error: catError } = await supabase
+            .from('business_categories')
+            .insert({
+              business_id: businessId,
+              category_id: catId,
+            });
+          
+          if (catError) {
+            console.error(`Error inserting category ${catId}:`, catError);
+            // Continue with other categories even if one fails
+          }
         }
+        
+        console.log('Finished inserting categories');
       }
       
       setSuccess(true);
