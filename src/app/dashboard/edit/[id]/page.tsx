@@ -383,6 +383,7 @@ export default function EditBusinessPage() {
       }
 
       // Update categories - delete existing and insert new
+      console.log('Deleting existing categories for business:', businessId);
       const { error: deleteCatError } = await supabase
         .from('business_categories')
         .delete()
@@ -390,11 +391,14 @@ export default function EditBusinessPage() {
       
       if (deleteCatError) {
         console.error('Error deleting categories:', deleteCatError);
+      } else {
+        console.log('Successfully deleted existing categories');
       }
 
       if (selectedCategories.length > 0) {
         // Remove any duplicates from selected categories
         const uniqueCategories = [...new Set(selectedCategories)];
+        console.log('Inserting categories:', uniqueCategories);
         
         const categoryInserts = uniqueCategories.map(catId => ({
           business_id: businessId,
@@ -407,6 +411,9 @@ export default function EditBusinessPage() {
         
         if (catError) {
           console.error('Error inserting categories:', catError);
+          // Don't throw error, just log it - the business data was saved
+        } else {
+          console.log('Successfully inserted categories');
         }
       }
       
@@ -782,7 +789,7 @@ export default function EditBusinessPage() {
                         disabled={isDisabled}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            if (canSelectMoreCategories) {
+                            if (canSelectMoreCategories && !selectedCategories.includes(category.id)) {
                               setSelectedCategories([...selectedCategories, category.id]);
                             }
                           } else {
