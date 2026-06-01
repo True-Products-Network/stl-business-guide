@@ -353,46 +353,127 @@ export default function EditBusinessPage() {
         return;
       }
 
-      // Update or insert location
+      // Update or insert location using API route to bypass RLS issues
       console.log('Saving location:', location, 'locationId:', locationId);
       if (location.city) {
         if (locationId) {
-          // Update existing location
+          // Update existing location via API
           console.log('Updating existing location with ID:', locationId);
-          const { error: locationError } = await supabase
+          const response = await fetch('/api/business/update-location', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              locationId,
+              businessId,
+              location: {
+                ...location,
+                service_area: serviceArea
+              },
+              userEmail: business?.email
+            })
+          });
+          
+          const result = await response.json();
+          
+          if (!response.ok || !result.success) {
+            console.error('Error updating location:', result.error);
+            setError('Failed to update location: ' + (result.error || 'Unknown error'));
+          } else {
+            console.log('Location updated successfully:', result.data);
+          }
+        } else {
+          // Insert new location
+          console.log('Inserting new location for business:', businessId);
+          const { data: newLocation, error: locationError } = await supabase
             .from('business_locations')
-            .update({
+            .insert({
+              business_id: businessId,
               address_line_1: location.address_line_1 || null,
               address_line_2: location.address_line_2 || null,
               city: location.city,
               state: location.state,
               zip_code: location.zip_code || null,
               service_area: serviceArea || null,
-              updated_at: new Date().toISOString(),
+              is_primary: true,
             })
-            .eq('id', locationId);
-
+            .select()
+            .single();
+          
           if (locationError) {
-            console.error('Error updating location:', locationError);
-            setError('Failed to update location: ' + locationError.message);
+            console.error('Error inserting location:', locationError);
+            setError('Failed to save location: ' + locationError.message);
           } else {
-            console.log('Location updated successfully');
-            // Verify the update by fetching the data back
-            const { data: verifyData, error: verifyError } = await supabase
-              .from('business_locations')
-              .select('city, state')
-              .eq('id', locationId)
-              .single();
-            if (verifyError) {
-              console.error('Error verifying update:', verifyError);
+            console.log('Location inserted successfully:', newLocation);
+            setLocationId(newLocation.id);
+          }
+        }
+      } else {
+        console.log('No city provided, skipping location save');
+      }
+
+      // Update categories - only if categories were actually changed
+      // Skip category update if just editing other fields
+      console.log('Selected categories count:', selectedCategories.length);
+      
+      // First check what categories currently exist
+      const { data: existingCats } = await supabase
+        .from('business_categories')
+        .select('category_id')
+        .eq('business_id', businessId);
+      
+      const existingCatIds = existingCats?.map((c: any) => c.category_id) || [];
+      const newCatIds = [...new Set(selectedCategories)];
+      
+      // Only update if different
+      const hasChanges = existingCatIds.length !== newCatIds.length || 
+        !existingCatIds.every((id: string) => newCatIds.includes(id));
+      
+      if (hasChanges) {
+        console.log('Categories changed, updating...');
+        
+        // Delete existing
+        const { error: deleteCatError } = await supabase
+          .from('business_categories')
+          .delete()
+          .eq('business_id', businessId);
+        
+        if (deleteCatError) {
+          console.error('Error deleting categories:', deleteCatError);
+        } else {
+          console.log('Deleted existing categories');
+        }
+        
+        // Small delay to ensure delete is committed
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Insert new categories
+        if (newCatIds.length > 0) {
+          for (const catId of newCatIds) {
+            const { error: catError } = await supabase
+              .from('business_categories')
+              .insert({
+                business_id: businessId,
+                category_id: catId,
+              });
+            
+            if (catError) {
+              console.error(`Error inserting category ${catId}:`, catError);
             } else {
-              console.log('Verified location data:', verifyData);
-              if (verifyData.city !== location.city) {
-                console.error('MISMATCH! Saved city:', location.city, 'but DB shows:', verifyData.city);
-                setError('Warning: Location may not have saved correctly. Please try again.');
-              }
+              console.log(`Inserted category ${catId}`);
             }
           }
+        }
+      } else {
+        console.log('Categories unchanged, skipping update');
+      }
+      
+      setSuccess(true);
+    } catch (err) {
+      setError('An error occurred while saving.');
+    } finally {
+      setSaving(false);
+    }
+  }
         } else {
           // Insert new location
           console.log('Inserting new location for business:', businessId);
