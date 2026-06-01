@@ -281,7 +281,9 @@ export default function EditBusinessPage() {
         .eq('business_id', id);
       
       if (categoryData) {
-        setSelectedCategories(categoryData.map((c: { category_id: string }) => c.category_id));
+        // Deduplicate categories from database
+        const uniqueCategoryIds = [...new Set(categoryData.map((c: { category_id: string }) => c.category_id))];
+        setSelectedCategories(uniqueCategoryIds);
       }
 
       // Fetch plan info from business_listings
@@ -343,9 +345,11 @@ export default function EditBusinessPage() {
       }
 
       // Update or insert location
+      console.log('Saving location:', location, 'locationId:', locationId);
       if (location.city) {
         if (locationId) {
           // Update existing location
+          console.log('Updating existing location with ID:', locationId);
           const { error: locationError } = await supabase
             .from('business_locations')
             .update({
@@ -361,10 +365,14 @@ export default function EditBusinessPage() {
           
           if (locationError) {
             console.error('Error updating location:', locationError);
+            setError('Failed to update location: ' + locationError.message);
+          } else {
+            console.log('Location updated successfully');
           }
         } else {
           // Insert new location
-          const { error: locationError } = await supabase
+          console.log('Inserting new location for business:', businessId);
+          const { data: newLocation, error: locationError } = await supabase
             .from('business_locations')
             .insert({
               business_id: businessId,
@@ -374,12 +382,21 @@ export default function EditBusinessPage() {
               state: location.state,
               zip_code: location.zip_code || null,
               service_area: serviceArea || null,
-            });
+              is_primary: true,
+            })
+            .select()
+            .single();
           
           if (locationError) {
             console.error('Error inserting location:', locationError);
+            setError('Failed to save location: ' + locationError.message);
+          } else {
+            console.log('Location inserted successfully:', newLocation);
+            setLocationId(newLocation.id);
           }
         }
+      } else {
+        console.log('No city provided, skipping location save');
       }
 
       // Update categories - delete existing and insert new
