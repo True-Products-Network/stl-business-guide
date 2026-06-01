@@ -76,28 +76,63 @@ export default function NewCouponPage() {
     if (businessesError) {
       setError("Failed to load businesses");
     } else if (businessesData && businessesData.length > 0) {
-      // Get plan info for each business
+      // Get plan info for each business - using separate queries
       const businessIds = businessesData.map((b: any) => b.id);
-      const { data: listingsData } = await supabase
+      
+      // Get listings
+      const { data: listingsData, error: listingsError } = await supabase
         .from("business_listings")
-        .select("business_id, plan_id, listing_plans(plan_key)")
+        .select("business_id, plan_id")
         .in("business_id", businessIds);
       
-      // Create a map of business_id to plan_key
-      const planMap = new Map();
-      if (listingsData) {
-        listingsData.forEach((listing: any) => {
-          const planKey = listing.listing_plans?.plan_key || 'free';
-          planMap.set(listing.business_id, planKey);
-        });
+      if (listingsError) {
+        console.error("Error fetching listings:", listingsError);
       }
       
-      // Transform data to include plan_key
-      const transformedData = businessesData.map((b: any) => ({
-        id: b.id,
-        business_name: b.business_name,
-        plan_key: planMap.get(b.id) || 'free'
-      }));
+      // Get plan IDs
+      const planIds = listingsData?.map((l: any) => l.plan_id).filter(Boolean) || [];
+      
+      // Fetch plan details separately
+      let plansData: any[] = [];
+      if (planIds.length > 0) {
+        const { data: plans, error: plansError } = await supabase
+          .from("listing_plans")
+          .select("id, plan_key, allows_coupon")
+          .in("id", planIds);
+        
+        if (!plansError && plans) {
+          plansData = plans;
+        }
+      }
+      
+      // Create lookup maps
+      const planMap = new Map();
+      plansData.forEach((plan: any) => {
+        planMap.set(plan.id, {
+          plan_key: plan.plan_key || 'free',
+          allows_coupon: plan.allows_coupon || false
+        });
+      });
+      
+      // Create business to plan mapping
+      const businessPlanMap = new Map();
+      listingsData?.forEach((listing: any) => {
+        const planDetails = planMap.get(listing.plan_id) || {
+          plan_key: 'free',
+          allows_coupon: false
+        };
+        businessPlanMap.set(listing.business_id, planDetails);
+      });
+      
+      // Transform data to include plan_key and filter for coupon-enabled plans only
+      const transformedData = businessesData
+        .map((b: any) => ({
+          id: b.id,
+          business_name: b.business_name,
+          plan_key: businessPlanMap.get(b.id)?.plan_key || 'free',
+          allows_coupon: businessPlanMap.get(b.id)?.allows_coupon || false
+        }))
+        .filter((b: any) => b.allows_coupon); // Only show businesses with coupon-enabled plans
       
       setBusinesses(transformedData);
       if (transformedData.length > 0) {
