@@ -14,7 +14,7 @@ interface Location {
 export default function Hero() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("St. Louis, MO");
+  const [selectedLocation, setSelectedLocation] = useState("");
   const [locations, setLocations] = useState<Location[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
@@ -111,7 +111,7 @@ export default function Hero() {
             {/* Search Bar */}
             <form onSubmit={handleSearch} className="bg-white rounded-2xl p-2 shadow-2xl mb-8">
               <div className="flex flex-col sm:flex-row gap-2">
-                <div className="flex-1 flex items-center px-4 py-3 bg-gray-50 rounded-xl">
+                <div className="flex-[2] flex items-center px-4 py-3 bg-gray-50 rounded-xl">
                   <Search className="w-5 h-5 text-gray-400 mr-3" />
                   <input
                     type="text"
@@ -121,13 +121,14 @@ export default function Hero() {
                     className="flex-1 bg-transparent outline-none text-gray-700 placeholder-gray-400"
                   />
                 </div>
-                <div className="flex items-center px-4 py-3 bg-gray-50 rounded-xl sm:w-64">
+                <div className="flex-1 flex items-center px-4 py-3 bg-gray-50 rounded-xl sm:w-48">
                   <MapPin className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
                   <select
                     value={selectedLocation}
                     onChange={(e) => setSelectedLocation(e.target.value)}
                     className="flex-1 bg-transparent outline-none text-gray-700 cursor-pointer"
                   >
+                    <option value="">All Locations</option>
                     {locations.map((loc, idx) => (
                       <option key={idx} value={`${loc.city}, ${loc.state}`}>
                         {loc.city}, {loc.state}
@@ -146,6 +147,7 @@ export default function Hero() {
             </form>
 
             {/* Categories */}
+            <h3 className="text-white/90 text-sm font-medium mb-3">Quick Search Categories</h3>
             <div className="flex flex-wrap gap-2 justify-center lg:justify-start">
               {categories.map((category) => (
                 <button
