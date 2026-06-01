@@ -1,15 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Search, MapPin, Star, TrendingUp, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+
+interface Location {
+  city: string;
+  state: string;
+}
 
 export default function Hero() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [location, setLocation] = useState("St. Louis, MO");
+  const [selectedLocation, setSelectedLocation] = useState("St. Louis, MO");
+  const [locations, setLocations] = useState<Location[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    loadLocations();
+  }, []);
+
+  async function loadLocations() {
+    try {
+      const { data, error } = await supabase
+        .from('public_approved_listings')
+        .select('city, state')
+        .not('city', 'is', null)
+        .not('state', 'is', null);
+
+      if (error) {
+        console.error('Error fetching locations:', error);
+        return;
+      }
+
+      // Remove duplicates and sort
+      const uniqueLocations = [...new Map(
+        (data || []).map((l: Location) => [`${l.city}, ${l.state}`, l])
+      ).values()].sort((a, b) => a.city.localeCompare(b.city));
+
+      setLocations(uniqueLocations);
+    } catch (err) {
+      console.error('Error loading locations:', err);
+    }
+  }
 
   const categories = [
     "Restaurants",
@@ -24,12 +59,12 @@ export default function Hero() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim() || location.trim()) {
+    if (searchQuery.trim() || selectedLocation) {
       setIsSearching(true);
       const params = new URLSearchParams();
       if (searchQuery.trim()) params.set("q", searchQuery.trim());
-      if (location.trim()) {
-        const [city, state] = location.split(",").map(s => s.trim());
+      if (selectedLocation) {
+        const [city, state] = selectedLocation.split(",").map(s => s.trim());
         if (city) params.set("city", city);
       }
       router.push(`/listings?${params.toString()}`);
@@ -83,14 +118,18 @@ export default function Hero() {
                   />
                 </div>
                 <div className="flex items-center px-4 py-3 bg-gray-50 rounded-xl sm:w-64">
-                  <MapPin className="w-5 h-5 text-gray-400 mr-3" />
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="City, State"
-                    className="flex-1 bg-transparent outline-none text-gray-700"
-                  />
+                  <MapPin className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" />
+                  <select
+                    value={selectedLocation}
+                    onChange={(e) => setSelectedLocation(e.target.value)}
+                    className="flex-1 bg-transparent outline-none text-gray-700 cursor-pointer"
+                  >
+                    {locations.map((loc, idx) => (
+                      <option key={idx} value={`${loc.city}, ${loc.state}`}>
+                        {loc.city}, {loc.state}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <button 
                   type="submit"
