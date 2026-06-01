@@ -26,6 +26,7 @@ interface PublicListing {
   plan_key: string | null;
   is_featured: boolean | null;
   category: string | null;
+  primary_category: string | null;
   location: string | null;
   categories: { name: string; slug: string }[] | null;
   google_rating?: number | null;
@@ -130,12 +131,32 @@ function ListingsContent() {
 
   function filterByQuery(data: PublicListing[], query: string) {
     const lowerQuery = query.toLowerCase();
-    return data.filter((b: PublicListing) =>
-      b.business_name?.toLowerCase().includes(lowerQuery) ||
-      b.description_short?.toLowerCase().includes(lowerQuery) ||
-      b.description_long?.toLowerCase().includes(lowerQuery) ||
-      b.category?.toLowerCase().includes(lowerQuery)
-    );
+    return data.filter((b: PublicListing) => {
+      // Parse categories if it's a string
+      let categoriesArray = b.categories;
+      if (typeof categoriesArray === 'string') {
+        try {
+          categoriesArray = JSON.parse(categoriesArray);
+        } catch {
+          categoriesArray = null;
+        }
+      }
+      
+      // Check if query matches category name in categories array
+      const matchesCategory = categoriesArray?.some((c: any) => 
+        c.name?.toLowerCase().includes(lowerQuery) ||
+        c.slug?.toLowerCase().includes(lowerQuery)
+      );
+      
+      return (
+        b.business_name?.toLowerCase().includes(lowerQuery) ||
+        b.description_short?.toLowerCase().includes(lowerQuery) ||
+        b.description_long?.toLowerCase().includes(lowerQuery) ||
+        b.category?.toLowerCase().includes(lowerQuery) ||
+        b.primary_category?.toLowerCase().includes(lowerQuery) ||
+        matchesCategory
+      );
+    });
   }
 
   function filterByCategory(data: PublicListing[], categoryName: string) {
@@ -145,15 +166,31 @@ function ListingsContent() {
     const lowerCategoryName = categoryName.toLowerCase();
     
     const filtered = data.filter((b: PublicListing) => {
+      // Check if category matches the primary_category field
+      if (b.primary_category && b.primary_category.toLowerCase() === lowerCategoryName) {
+        console.log('Matched by primary_category:', b.business_name, b.primary_category);
+        return true;
+      }
+      
       // Check if category matches the simple category field (case insensitive)
       if (b.category && b.category.toLowerCase() === lowerCategoryName) {
         console.log('Matched by category field:', b.business_name, b.category);
         return true;
       }
       
+      // Parse categories if it's a string
+      let categoriesArray = b.categories;
+      if (typeof categoriesArray === 'string') {
+        try {
+          categoriesArray = JSON.parse(categoriesArray);
+        } catch {
+          categoriesArray = null;
+        }
+      }
+      
       // Check if category matches in categories array
-      if (b.categories && Array.isArray(b.categories) && b.categories.length > 0) {
-        const match = b.categories.some((c: any) => {
+      if (categoriesArray && Array.isArray(categoriesArray) && categoriesArray.length > 0) {
+        const match = categoriesArray.some((c: any) => {
           if (typeof c === 'string') {
             return c.toLowerCase() === lowerCategoryName;
           }
