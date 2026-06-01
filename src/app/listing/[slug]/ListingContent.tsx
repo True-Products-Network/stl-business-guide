@@ -102,11 +102,27 @@ export default function ListingContent({ business }: ListingContentProps) {
   const [showSocialModal, setShowSocialModal] = useState(false);
   const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
   const [sending, setSending] = useState(false);
+  const [googleMapsKey, setGoogleMapsKey] = useState<string>("");
 
-  // Load coupons on mount
+  // Load coupons and Google Maps key on mount
   useEffect(() => {
     loadCoupons();
+    loadGoogleMapsKey();
   }, [business?.id]);
+
+  async function loadGoogleMapsKey() {
+    try {
+      const response = await fetch('/api/config/google-maps-key');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.key) {
+          setGoogleMapsKey(data.key);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading Google Maps key:', err);
+    }
+  }
 
   async function loadCoupons() {
     if (!business?.id) return;
@@ -1028,7 +1044,7 @@ export default function ListingContent({ business }: ListingContentProps) {
                 height="100%"
                 frameBorder="0"
                 style={{ border: 0 }}
-                src={`https://www.google.com/maps/embed/v1/place?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''}&q=${encodeURIComponent(mapAddress)}`}
+                src={`https://www.google.com/maps/embed/v1/place?key=${googleMapsKey}&q=${encodeURIComponent(mapAddress)}`}
                 allowFullScreen
               />
             </div>
