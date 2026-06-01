@@ -37,6 +37,7 @@ function ListingsContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
   const initialCategory = searchParams.get('category') || '';
+  const initialCity = searchParams.get('city') || '';
 
   const [businesses, setBusinesses] = useState<PublicListing[]>([]);
   const [allBusinesses, setAllBusinesses] = useState<PublicListing[]>([]);
@@ -45,7 +46,7 @@ function ListingsContent() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
-  const [selectedCity, setSelectedCity] = useState('');
+  const [selectedCity, setSelectedCity] = useState(initialCity);
 
   useEffect(() => {
     loadInitialData();
@@ -80,6 +81,13 @@ function ListingsContent() {
         // Apply initial category filter
         if (initialCategory) {
           results = filterByCategory(results, initialCategory);
+        }
+
+        // Apply initial city filter
+        if (initialCity) {
+          console.log('Applying initial city filter:', initialCity);
+          results = results.filter((b: PublicListing) => b.city === initialCity);
+          console.log('Results after city filter:', results.length);
         }
 
         // Sort by plan: VIP first, then Premium, then Free
