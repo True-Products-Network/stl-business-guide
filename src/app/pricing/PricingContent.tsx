@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -88,9 +88,12 @@ export default function PricingContent() {
   const [loading, setLoading] = useState<string | null>(null);
   const [canceled, setCanceled] = useState(false);
   const [upgradeBusinessId, setUpgradeBusinessId] = useState<string | null>(null);
+  const hasProcessedCanceled = useRef(false);
 
   // Handle initial load and URL changes
   useEffect(() => {
+    if (hasProcessedCanceled.current) return;
+    
     const urlParams = new URLSearchParams(window.location.search);
     const canceledParam = urlParams.get('canceled');
     console.log('Pricing page loaded, canceledParam:', canceledParam);
@@ -98,6 +101,7 @@ export default function PricingContent() {
     if (canceledParam === 'true') {
       console.log('Payment was canceled - showing modal');
       setCanceled(true);
+      hasProcessedCanceled.current = true;
     } else {
       setCanceled(false);
     }
@@ -189,9 +193,8 @@ export default function PricingContent() {
               <button 
                 onClick={() => {
                   setCanceled(false);
-                  // Clear the canceled parameter from URL
-                  const newUrl = window.location.pathname + window.location.search.replace(/[?&]canceled=true/, '').replace('?&', '?').replace(/\?$/, '');
-                  window.history.replaceState({}, '', newUrl);
+                  // Clear the canceled parameter from URL using router
+                  router.replace('/pricing', { scroll: false });
                 }}
                 className="w-full bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white py-3 rounded-xl font-semibold hover:opacity-90 transition"
               >
