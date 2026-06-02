@@ -86,17 +86,22 @@ export default function PricingContent() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState<string | null>(null);
   const [canceled, setCanceled] = useState(false);
+  const [upgradeBusinessId, setUpgradeBusinessId] = useState<string | null>(null);
 
   useEffect(() => {
     const canceledParam = searchParams.get('canceled');
     if (canceledParam === 'true') {
       setCanceled(true);
     }
+    
+    // Store upgrade parameter in state so it persists after cancellation
+    const upgradeParam = searchParams.get('upgrade');
+    if (upgradeParam) {
+      setUpgradeBusinessId(upgradeParam);
+    }
   }, [searchParams]);
 
   const handleCheckout = async (planKey: string, planName: string) => {
-    const upgradeBusinessId = searchParams.get('upgrade');
-    
     if (upgradeBusinessId) {
       // This is an upgrade - go straight to Stripe checkout
       setLoading(planKey);
