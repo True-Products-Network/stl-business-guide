@@ -64,6 +64,16 @@ const usStates = [
   { code: 'WY', name: 'Wyoming' }
 ];
 
+interface PricingSettings {
+  premium_monthly_price: number;
+  vip_monthly_price: number;
+  premium_regular_price: number;
+  vip_regular_price: number;
+  founding_member_discount_percent: number;
+  founding_member_end_date: string | null;
+  founding_member_enabled: boolean;
+}
+
 function SubmitListingForm() {
   const searchParams = useSearchParams();
   const planParam = searchParams.get('plan');
@@ -78,6 +88,8 @@ function SubmitListingForm() {
   const [success, setSuccess] = useState(false);
   const [hasAccount, setHasAccount] = useState<boolean | null>(null);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [pricingSettings, setPricingSettings] = useState<PricingSettings | null>(null);
+  const [isFoundingMember, setIsFoundingMember] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   // Form data
@@ -134,30 +146,113 @@ function SubmitListingForm() {
   }
 
   async function loadData() {
-    const [plansData, categoriesData, locationsData] = await Promise.all([
+    // Fetch plans and pricing settings in parallel
+    const [plansData, categoriesData, locationsData, pricingData] = await Promise.all([
       getListingPlans(),
       getCategories(),
-      getLocations()
+      getLocations(),
+      fetchPricingSettings()
     ]);
-    setPlans(plansData);
+    
+    // Override plan prices with dynamic pricing from settings
+    const updatedPlans = plansData.map(plan => {
+      if (pricingData && plan.plan_key === 'premium') {
+        return { ...plan, monthly_price: getDisplayPrice('premium', pricingData) };
+      }
+      if (pricingData && plan.plan_key === 'vip') {
+        return { ...plan, monthly_price: getDisplayPrice('vip', pricingData) };
+      }
+      return plan;
+    });
+    
+    setPlans(updatedPlans);
     setCategories(categoriesData);
     setLocations(locationsData);
     
     // If planParam is provided (e.g., 'free', 'premium', 'vip'), find matching plan ID
-    if (planParam && plansData.length > 0) {
-      const matchingPlan = plansData.find(p => p.plan_key === planParam);
+    if (planParam && updatedPlans.length > 0) {
+      const matchingPlan = updatedPlans.find(p => p.plan_key === planParam);
       if (matchingPlan) {
         setSelectedPlan(matchingPlan.id);
       } else {
         // Default to free plan if no match found
-        const freePlan = plansData.find(p => p.plan_key === 'free');
+        const freePlan = updatedPlans.find(p => p.plan_key === 'free');
         if (freePlan) setSelectedPlan(freePlan.id);
       }
-    } else if (plansData.length > 0) {
+    } else if (updatedPlans.length > 0) {
       // Default to free plan if no planParam
-      const freePlan = plansData.find(p => p.plan_key === 'free');
+      const freePlan = updatedPlans.find(p => p.plan_key === 'free');
       if (freePlan) setSelectedPlan(freePlan.id);
     }
+  }
+
+  async function fetchPricingSettings(): Promise<PricingSettings | null> {
+    try {
+      const { data: settingsData, error } = await supabase
+        .from('system_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', [
+          'premium_monthly_price',
+          'vip_monthly_price',
+          'premium_regular_price',
+          'vip_regular_price',
+          'founding_member_discount_percent',
+          'founding_member_end_date',
+          'founding_member_enabled'
+        ]);
+
+      if (error) {
+        console.error('Error fetching pricing:', error);
+        return null;
+      }
+
+      const settings: Record<string, any> = {};
+      settingsData?.forEach((s: any) => {
+        settings[s.setting_key] = s.setting_value;
+      });
+
+      const isEnabled = settings.founding_member_enabled === 'true' || settings.founding_member_enabled === 'enabled';
+      
+      const pricing = {
+        premium_monthly_price: parseFloat(settings.premium_monthly_price) || 47,
+        vip_monthly_price: parseFloat(settings.vip_monthly_price) || 97,
+        premium_regular_price: parseFloat(settings.premium_regular_price) || 97,
+        vip_regular_price: parseFloat(settings.vip_regular_price) || 497,
+        founding_member_discount_percent: parseInt(settings.founding_member_discount_percent) || 50,
+        founding_member_end_date: settings.founding_member_end_date,
+        founding_member_enabled: isEnabled
+      };
+
+      setPricingSettings(pricing);
+
+      // Check if founding member pricing is active
+      if (isEnabled && settings.founding_member_end_date) {
+        const endDate = new Date(settings.founding_member_end_date);
+        const isActive = endDate > new Date();
+        setIsFoundingMember(isActive);
+        return pricing;
+      } else {
+        setIsFoundingMember(false);
+        return pricing;
+      }
+    } catch (err) {
+      console.error('Exception fetching pricing:', err);
+      return null;
+    }
+  }
+
+  function getDisplayPrice(planKey: 'premium' | 'vip', pricing: PricingSettings): number {
+    // Calculate if founding member pricing is active directly from data
+    const endDate = pricing.founding_member_end_date ? new Date(pricing.founding_member_end_date) : null;
+    const isActive = pricing.founding_member_enabled && endDate ? endDate > new Date() : false;
+    
+    // If founding member is active, use the discounted price
+    if (isActive) {
+      return planKey === 'premium' ? pricing.premium_monthly_price : pricing.vip_monthly_price;
+    }
+    
+    // Otherwise use regular price
+    return planKey === 'premium' ? pricing.premium_regular_price : pricing.vip_regular_price;
   }
 
   const formatPhoneNumber = (value: string) => {
@@ -460,7 +555,16 @@ function SubmitListingForm() {
         {/* Step 1: Select Plan */}
         {step === 1 && (
           <div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Choose Your Listing Plan</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Listing Plan</h2>
+            
+            {isFoundingMember && pricingSettings && (
+              <div className="mb-6 bg-gradient-to-r from-[#ffc107]/20 to-[#f68712]/20 rounded-xl p-4">
+                <p className="font-semibold text-[#371a5b]">🎉 Founding Member Special!</p>
+                <p className="text-sm text-gray-700">
+                  Save up to {Math.round(((pricingSettings.vip_regular_price - pricingSettings.vip_monthly_price) / pricingSettings.vip_regular_price) * 100)}% on VIP - Best Value!
+                </p>
+              </div>
+            )}
             
             <div className="grid md:grid-cols-3 gap-6">
               {plans.map((plan) => (
@@ -485,10 +589,24 @@ function SubmitListingForm() {
                   </div>
                   
                   <div className="mb-4">
-                    <span className="text-3xl font-bold text-gray-900">
-                      ${plan.monthly_price}
-                    </span>
-                    <span className="text-gray-500">/month</span>
+                    <div className="flex items-baseline">
+                      <span className="text-3xl font-bold text-gray-900">
+                        ${plan.monthly_price}
+                      </span>
+                      <span className="text-gray-500 ml-1">/month</span>
+                    </div>
+                    {isFoundingMember && pricingSettings && plan.plan_key !== 'free' && (
+                      <div className="mt-1">
+                        <span className="text-sm text-gray-400 line-through">
+                          ${plan.plan_key === 'premium' ? pricingSettings.premium_regular_price : pricingSettings.vip_regular_price}/month
+                        </span>
+                        <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold ${plan.plan_key === 'vip' ? 'bg-gradient-to-r from-[#ffc107] to-[#f68712] text-white' : 'bg-green-100 text-green-700'}`}>
+                          {plan.plan_key === 'vip' 
+                            ? `⭐ BEST VALUE - Save ${Math.round(((pricingSettings.vip_regular_price - pricingSettings.vip_monthly_price) / pricingSettings.vip_regular_price) * 100)}%` 
+                            : `Save ${Math.round(((pricingSettings.premium_regular_price - pricingSettings.premium_monthly_price) / pricingSettings.premium_regular_price) * 100)}%`}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   <ul className="space-y-2 text-sm text-gray-600">

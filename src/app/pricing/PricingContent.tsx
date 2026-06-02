@@ -6,87 +6,64 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { Check, Crown, Star, Zap, Loader2, XCircle } from "lucide-react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
-const plans = [
-  {
-    name: "Free",
-    icon: Star,
-    price: "$0",
-    period: "/month",
-    description: "Get started with a basic listing",
-    features: [
-      "Business name and contact info",
-      "1 category",
-      "Basic description",
-      "Standard search placement",
-      "Phone & email display",
-    ],
-    cta: "Get Started Free",
-    href: "/submit-listing?plan=free",
-    popular: false,
-    color: "gray",
-  },
-  {
-    name: "Premium",
-    icon: Zap,
-    price: "$47",
-    regularPrice: "$97",
-    period: "/month",
-    description: "Enhanced visibility & features",
-    features: [
-      "Everything in Free, plus:",
-      "Up to 5 categories",
-      "5 photos/images",
-      "Priority search placement",
-      "Website link",
-      "Social media links",
-      "Business hours",
-      "Customer reviews",
-      "Analytics Dashboard",
-      "Weekly performance report",
-      "Email Support",
-    ],
-    cta: "Start Premium Trial",
-    href: "/submit-listing?plan=premium",
-    popular: true,
-    color: "blue",
-    foundingMember: true,
-  },
-  {
-    name: "VIP",
-    icon: Crown,
-    price: "$97",
-    regularPrice: "$497",
-    period: "/month",
-    description: "Maximum exposure & leads",
-    features: [
-      "Everything in Premium, plus:",
-      "VIP badge & branding",
-      "Unlimited categories",
-      "10 photos + 1 video",
-      "Top search placement",
-      "Featured on homepage",
-      "Banner ad placement",
-      "Enhanced Analytics dashboard",
-      "Coupon/Deal listing (10% revenue share)",
-      "Featured in Weekly Newsletter",
-      "Social media promotion",
-      "Priority support",
-      "Dedicated Account Manager",
-    ],
-    cta: "Go VIP",
-    href: "/submit-listing?plan=vip",
-    popular: false,
-    color: "gold",
-    foundingMember: true,
-  },
-];
+interface PricingData {
+  premium_monthly_price: number;
+  vip_monthly_price: number;
+  premium_regular_price: number;
+  vip_regular_price: number;
+  founding_member_discount_percent: number;
+  founding_member_end_date: string | null;
+  founding_member_enabled: boolean;
+}
+
+const planFeatures = {
+  free: [
+    "Business name and contact info",
+    "1 category",
+    "Basic description",
+    "Standard search placement",
+    "Phone & email display",
+  ],
+  premium: [
+    "Everything in Free, plus:",
+    "Up to 5 categories",
+    "5 photos/images",
+    "Priority search placement",
+    "Website link",
+    "Social media links",
+    "Business hours",
+    "Customer reviews",
+    "Analytics Dashboard",
+    "Weekly performance report",
+    "Email Support",
+  ],
+  vip: [
+    "Everything in Premium, plus:",
+    "VIP badge & branding",
+    "Unlimited categories",
+    "10 photos + 1 video",
+    "Top search placement",
+    "Featured on homepage",
+    "Banner ad placement",
+    "Enhanced Analytics dashboard",
+    "Coupon/Deal listing (10% revenue share)",
+    "Featured in Weekly Newsletter",
+    "Social media promotion",
+    "Priority support",
+    "Dedicated Account Manager",
+  ]
+};
 
 export default function PricingContent() {
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState<string | null>(null);
   const [canceled, setCanceled] = useState(false);
   const [upgradeBusinessId, setUpgradeBusinessId] = useState<string | null>(null);
+  const [pricingData, setPricingData] = useState<PricingData | null>(null);
+  const [isFoundingMember, setIsFoundingMember] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     const canceledParam = searchParams.get('canceled');
@@ -98,7 +75,77 @@ export default function PricingContent() {
     if (upgradeParam) {
       setUpgradeBusinessId(upgradeParam);
     }
+
+    fetchPricingData();
   }, [searchParams]);
+
+  const fetchPricingData = async () => {
+    try {
+      const { data: settingsData, error } = await supabase
+        .from('system_settings')
+        .select('setting_key, setting_value')
+        .in('setting_key', [
+          'premium_monthly_price',
+          'vip_monthly_price',
+          'premium_regular_price',
+          'vip_regular_price',
+          'founding_member_discount_percent',
+          'founding_member_end_date',
+          'founding_member_enabled'
+        ]);
+
+      if (error) {
+        console.error('Error fetching pricing:', error);
+        return;
+      }
+
+      const settings: Record<string, any> = {};
+      settingsData?.forEach((s: any) => {
+        settings[s.setting_key] = s.setting_value;
+      });
+
+      const isEnabled = settings.founding_member_enabled === 'true' || settings.founding_member_enabled === 'enabled';
+      const endDate = settings.founding_member_end_date ? new Date(settings.founding_member_end_date) : null;
+      const isActive = isEnabled && endDate ? endDate > new Date() : false;
+      
+      setPricingData({
+        premium_monthly_price: parseFloat(settings.premium_monthly_price) || 47,
+        vip_monthly_price: parseFloat(settings.vip_monthly_price) || 97,
+        premium_regular_price: parseFloat(settings.premium_regular_price) || 97,
+        vip_regular_price: parseFloat(settings.vip_regular_price) || 497,
+        founding_member_discount_percent: parseInt(settings.founding_member_discount_percent) || 50,
+        founding_member_end_date: settings.founding_member_end_date,
+        founding_member_enabled: isEnabled
+      });
+
+      setIsFoundingMember(isActive);
+    } catch (err) {
+      console.error('Exception fetching pricing:', err);
+    } finally {
+      setDataLoading(false);
+    }
+  };
+
+  // Calculate display price based on whether founding member pricing is active
+  const getDisplayPrice = (planKey: 'premium' | 'vip') => {
+    if (!pricingData) return planKey === 'premium' ? 47 : 97;
+    
+    // If founding member is active, use the discounted price
+    if (isFoundingMember && pricingData.founding_member_enabled) {
+      return planKey === 'premium' ? pricingData.premium_monthly_price : pricingData.vip_monthly_price;
+    }
+    
+    // Otherwise use regular price
+    return planKey === 'premium' ? pricingData.premium_regular_price : pricingData.vip_regular_price;
+  };
+
+  // Get the "regular" price for strikethrough display (only shown when founding member is active)
+  const getRegularPrice = (planKey: 'premium' | 'vip') => {
+    if (!isFoundingMember || !pricingData || !pricingData.founding_member_enabled) {
+      return null;
+    }
+    return planKey === 'premium' ? pricingData.premium_regular_price : pricingData.vip_regular_price;
+  };
 
   const handleCheckout = async (planKey: string, planName: string) => {
     if (upgradeBusinessId) {
@@ -133,6 +180,76 @@ export default function PricingContent() {
     }
   };
 
+  if (dataLoading) {
+    return (
+      <main className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-12 h-12 animate-spin text-[#54afe6]" />
+        </div>
+        <Footer />
+      </main>
+    );
+  }
+
+  const premiumDisplayPrice = getDisplayPrice('premium');
+  const vipDisplayPrice = getDisplayPrice('vip');
+  const premiumRegularPrice = getRegularPrice('premium');
+  const vipRegularPrice = getRegularPrice('vip');
+
+  // Calculate savings percentages
+  const premiumSavings = pricingData && isFoundingMember
+    ? Math.round(((pricingData.premium_regular_price - pricingData.premium_monthly_price) / pricingData.premium_regular_price) * 100)
+    : 0;
+  const vipSavings = pricingData && isFoundingMember
+    ? Math.round(((pricingData.vip_regular_price - pricingData.vip_monthly_price) / pricingData.vip_regular_price) * 100)
+    : 0;
+
+  const plans = [
+    {
+      name: "Free",
+      icon: Star,
+      price: "$0",
+      displayPrice: "$0",
+      period: "/month",
+      description: "Get started with a basic listing",
+      features: planFeatures.free,
+      cta: "Get Started Free",
+      href: "/submit-listing?plan=free",
+      popular: false,
+      color: "gray",
+      foundingMember: false,
+    },
+    {
+      name: "Premium",
+      icon: Zap,
+      price: `$${premiumDisplayPrice}`,
+      regularPrice: premiumRegularPrice ? `$${premiumRegularPrice}` : null,
+      period: "/month",
+      description: "Enhanced visibility & features",
+      features: planFeatures.premium,
+      cta: "Start Premium Trial",
+      href: "/submit-listing?plan=premium",
+      popular: true,
+      color: "blue",
+      foundingMember: isFoundingMember,
+    },
+    {
+      name: "VIP",
+      icon: Crown,
+      price: `$${vipDisplayPrice}`,
+      regularPrice: vipRegularPrice ? `$${vipRegularPrice}` : null,
+      period: "/month",
+      description: "Maximum exposure & leads",
+      features: planFeatures.vip,
+      cta: "Go VIP",
+      href: "/submit-listing?plan=vip",
+      popular: false,
+      color: "gold",
+      foundingMember: isFoundingMember,
+    },
+  ];
+
   return (
     <main className="min-h-screen bg-gray-50">
       <Navbar />
@@ -146,6 +263,12 @@ export default function PricingContent() {
             Get your business in front of thousands of local customers. 
             Upgrade anytime to unlock more features.
           </p>
+          {isFoundingMember && pricingData && (
+            <div className="mt-6 bg-white/20 rounded-xl p-4 inline-block">
+              <p className="font-semibold">🎉 Founding Member Special!</p>
+              <p className="text-sm">Save up to {vipSavings}% on VIP - Best Value!</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -220,7 +343,7 @@ export default function PricingContent() {
                 </div>
 
                 <div className="p-6 border-b">
-                  {plan.foundingMember ? (
+                  {plan.foundingMember && plan.regularPrice ? (
                     <div>
                       <div className="flex items-baseline">
                         <span className="text-4xl font-bold text-[#371a5b]">{plan.price}</span>
@@ -228,7 +351,7 @@ export default function PricingContent() {
                       </div>
                       <div className="mt-2">
                         <span className="text-gray-400 line-through text-sm">{plan.regularPrice}{plan.period}</span>
-                        <span className="ml-2 bg-green-100 text-green-700 px-2 py-0.5 rounded-full text-xs font-semibold">Founding Member</span>
+                        <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold ${plan.name === 'VIP' ? 'bg-gradient-to-r from-[#ffc107] to-[#f68712] text-white' : 'bg-green-100 text-green-700'}`}>{plan.name === 'VIP' ? `⭐ BEST VALUE - Save ${vipSavings}%` : `Save ${premiumSavings}%`}</span>
                       </div>
                     </div>
                   ) : (
