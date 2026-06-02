@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { Check, Crown, Star, Zap, Loader2, XCircle } from "lucide-react";
@@ -84,51 +84,24 @@ const plans = [
 
 export default function PricingContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [canceled, setCanceled] = useState(false);
   const [upgradeBusinessId, setUpgradeBusinessId] = useState<string | null>(null);
-  const hasProcessedCanceled = useRef(false);
 
-  // Handle initial load and URL changes
   useEffect(() => {
-    if (hasProcessedCanceled.current) return;
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const canceledParam = urlParams.get('canceled');
-    console.log('Pricing page loaded, canceledParam:', canceledParam);
-    
+    const canceledParam = searchParams.get('canceled');
     if (canceledParam === 'true') {
-      console.log('Payment was canceled - showing modal');
       setCanceled(true);
-      hasProcessedCanceled.current = true;
-    } else {
-      setCanceled(false);
     }
     
-    // Store upgrade parameter in state and localStorage so it persists after cancellation
     const upgradeParam = searchParams.get('upgrade');
-    console.log('upgradeParam from URL:', upgradeParam);
-    
     if (upgradeParam) {
-      console.log('Setting upgradeBusinessId:', upgradeParam);
       setUpgradeBusinessId(upgradeParam);
-      localStorage.setItem('upgradeBusinessId', upgradeParam);
-      console.log('Stored in localStorage');
-    } else {
-      // Try to get from localStorage if not in URL (e.g., after Stripe cancellation)
-      const storedId = localStorage.getItem('upgradeBusinessId');
-      console.log('storedId from localStorage:', storedId);
-      if (storedId) {
-        console.log('Using stored upgradeBusinessId:', storedId);
-        setUpgradeBusinessId(storedId);
-      }
     }
-  }, [searchParams]); // Run when searchParams change
+  }, [searchParams]);
 
   const handleCheckout = async (planKey: string, planName: string) => {
     if (upgradeBusinessId) {
-      // This is an upgrade - go straight to Stripe checkout
       setLoading(planKey);
       try {
         const response = await fetch('/api/stripe/create-checkout', {
@@ -156,7 +129,6 @@ export default function PricingContent() {
         setLoading(null);
       }
     } else {
-      // New listing - redirect to submit listing page
       window.location.href = `/submit-listing?plan=${planKey}`;
     }
   };
@@ -165,7 +137,6 @@ export default function PricingContent() {
     <main className="min-h-screen bg-gray-50">
       <Navbar />
 
-      {/* Header */}
       <div className="bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white pt-32 pb-20">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -178,7 +149,6 @@ export default function PricingContent() {
         </div>
       </div>
 
-      {/* Canceled Modal */}
       {canceled && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
@@ -188,24 +158,19 @@ export default function PricingContent() {
               </div>
               <h3 className="text-2xl font-bold text-[#371a5b] mb-2">Payment Canceled</h3>
               <p className="text-gray-600 mb-6">
-                No worries! You can try again anytime or choose a different plan.
+                No worries! Click the button below to return to your dashboard and try again.
               </p>
-              <button 
-                onClick={() => {
-                  setCanceled(false);
-                  // Clear the canceled parameter from URL using router
-                  router.replace('/pricing', { scroll: false });
-                }}
-                className="w-full bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white py-3 rounded-xl font-semibold hover:opacity-90 transition"
+              <a 
+                href="/dashboard"
+                className="block w-full bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white py-3 rounded-xl font-semibold hover:opacity-90 transition text-center"
               >
-                Got it, thanks!
-              </button>
+                Return to Dashboard
+              </a>
             </div>
           </div>
         </div>
       )}
 
-      {/* Pricing Cards */}
       <div className="max-w-7xl mx-auto px-4 pb-20 pt-6">
         <div className="grid md:grid-cols-3 gap-8">
           {plans.map((plan) => {
@@ -217,7 +182,6 @@ export default function PricingContent() {
                   plan.popular ? 'ring-4 ring-[#54afe6] transform md:-translate-y-4' : ''
                 }`}
               >
-                {/* Plan Header */}
                 <div
                   className={`p-6 ${
                     plan.color === 'gold'
@@ -255,7 +219,6 @@ export default function PricingContent() {
                   </p>
                 </div>
 
-                {/* Price */}
                 <div className="p-6 border-b">
                   {plan.foundingMember ? (
                     <div>
@@ -276,7 +239,6 @@ export default function PricingContent() {
                   )}
                 </div>
 
-                {/* Features */}
                 <div className="p-6">
                   <ul className="space-y-3">
                     {plan.features.map((feature, idx) => (
@@ -295,7 +257,6 @@ export default function PricingContent() {
                     ))}
                   </ul>
 
-                  {/* CTA */}
                   {plan.name === 'Free' ? (
                     <Link
                       href={plan.href}
@@ -329,38 +290,6 @@ export default function PricingContent() {
               </div>
             );
           })}
-        </div>
-
-        {/* FAQ Section */}
-        <div className="mt-20">
-          <h2 className="text-3xl font-bold text-[#371a5b] text-center mb-12" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-            Frequently Asked Questions
-          </h2>
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {[
-              {
-                q: "Can I upgrade or downgrade anytime?",
-                a: "Yes! You can upgrade to Premium or VIP at any time. Your new features will be activated immediately.",
-              },
-              {
-                q: "How do I get featured on the homepage?",
-                a: "VIP listings automatically get featured placement on the homepage. Premium listings may also be featured based on availability.",
-              },
-              {
-                q: "Is there a setup fee?",
-                a: "No setup fees! Just choose your plan and start listing your business right away.",
-              },
-              {
-                q: "What payment methods do you accept?",
-                a: "We accept all major credit cards. Monthly billing is automatic.",
-              },
-            ].map((faq, idx) => (
-              <div key={idx} className="bg-white rounded-xl p-6 shadow-sm">
-                <h3 className="font-semibold text-[#371a5b] mb-2">{faq.q}</h3>
-                <p className="text-gray-600 text-sm">{faq.a}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
