@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { Check, Crown, Star, Zap, Loader2, XCircle } from "lucide-react";
@@ -84,6 +84,7 @@ const plans = [
 
 export default function PricingContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [canceled, setCanceled] = useState(false);
   const [upgradeBusinessId, setUpgradeBusinessId] = useState<string | null>(null);
@@ -96,6 +97,12 @@ export default function PricingContent() {
     if (canceledParam === 'true') {
       console.log('Payment was canceled');
       setCanceled(true);
+      // Clear the canceled parameter from URL without reloading
+      const newUrl = window.location.pathname + window.location.search.replace(/[?&]canceled=true/, '');
+      window.history.replaceState({}, '', newUrl);
+    } else {
+      // Clear canceled state if not in URL
+      setCanceled(false);
     }
     
     // Store upgrade parameter in state and localStorage so it persists after cancellation
@@ -116,7 +123,7 @@ export default function PricingContent() {
         setUpgradeBusinessId(storedId);
       }
     }
-  }, []); // Run once on mount
+  }, [searchParams]); // Run when searchParams change
 
   const handleCheckout = async (planKey: string, planName: string) => {
     if (upgradeBusinessId) {
