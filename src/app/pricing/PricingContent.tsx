@@ -96,20 +96,10 @@ export default function PricingContent() {
     console.log('Pricing page loaded, canceledParam:', canceledParam);
     
     if (canceledParam === 'true') {
-      // Check if we've already shown the banner this session
-      const bannerShown = sessionStorage.getItem('canceledBannerShown');
-      if (!bannerShown) {
-        console.log('Payment was canceled - showing banner');
-        setCanceled(true);
-        sessionStorage.setItem('canceledBannerShown', 'true');
-      } else {
-        console.log('Banner already shown this session');
-        setCanceled(false);
-      }
+      console.log('Payment was canceled - showing modal');
+      setCanceled(true);
     } else {
       setCanceled(false);
-      // Clear the flag if canceled param is not present
-      sessionStorage.removeItem('canceledBannerShown');
     }
     
     // Store upgrade parameter in state and localStorage so it persists after cancellation
@@ -184,25 +174,30 @@ export default function PricingContent() {
         </div>
       </div>
 
-      {/* Canceled Banner */}
+      {/* Canceled Modal */}
       {canceled && (
-        <div className="max-w-7xl mx-auto px-4 pt-8 pb-4 relative z-50">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center gap-3 shadow-lg">
-            <XCircle className="w-6 h-6 text-yellow-600 flex-shrink-0" />
-            <div>
-              <p className="font-semibold text-yellow-800">Payment Canceled</p>
-              <p className="text-yellow-700 text-sm">No worries! You can try again anytime or choose a different plan.</p>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <XCircle className="w-8 h-8 text-yellow-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-[#371a5b] mb-2">Payment Canceled</h3>
+              <p className="text-gray-600 mb-6">
+                No worries! You can try again anytime or choose a different plan.
+              </p>
+              <button 
+                onClick={() => {
+                  setCanceled(false);
+                  // Clear the canceled parameter from URL
+                  const newUrl = window.location.pathname + window.location.search.replace(/[?&]canceled=true/, '').replace('?&', '?').replace(/\?$/, '');
+                  window.history.replaceState({}, '', newUrl);
+                }}
+                className="w-full bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white py-3 rounded-xl font-semibold hover:opacity-90 transition"
+              >
+                Got it, thanks!
+              </button>
             </div>
-            <button 
-              onClick={() => {
-                setCanceled(false);
-                // Clear the session flag so banner won't show again
-                sessionStorage.removeItem('canceledBannerShown');
-              }}
-              className="ml-auto text-yellow-600 hover:text-yellow-800"
-            >
-              ✕
-            </button>
           </div>
         </div>
       )}
