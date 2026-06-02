@@ -91,19 +91,14 @@ export default function PricingContent() {
 
   // Handle initial load and URL changes
   useEffect(() => {
-    console.log('Pricing page loaded, searchParams:', window.location.search);
+    const urlParams = new URLSearchParams(window.location.search);
+    const canceledParam = urlParams.get('canceled');
+    console.log('Pricing page loaded, canceledParam:', canceledParam);
     
-    const canceledParam = searchParams.get('canceled');
     if (canceledParam === 'true') {
       console.log('Payment was canceled');
       setCanceled(true);
-      // Clear the canceled parameter from URL after a short delay
-      setTimeout(() => {
-        const newUrl = window.location.pathname + window.location.search.replace(/[?&]canceled=true/, '').replace('?&', '?').replace(/\?$/, '');
-        window.history.replaceState({}, '', newUrl);
-      }, 100);
     } else {
-      // Clear canceled state if not in URL
       setCanceled(false);
     }
     
@@ -189,7 +184,12 @@ export default function PricingContent() {
               <p className="text-yellow-700 text-sm">No worries! You can try again anytime or choose a different plan.</p>
             </div>
             <button 
-              onClick={() => setCanceled(false)}
+              onClick={() => {
+                setCanceled(false);
+                // Clear the canceled parameter from URL
+                const newUrl = window.location.pathname + window.location.search.replace(/[?&]canceled=true/, '').replace('?&', '?').replace(/\?$/, '');
+                window.history.replaceState({}, '', newUrl);
+              }}
               className="ml-auto text-yellow-600 hover:text-yellow-800"
             >
               ✕
