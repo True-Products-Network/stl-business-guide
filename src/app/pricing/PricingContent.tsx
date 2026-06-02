@@ -88,18 +88,35 @@ export default function PricingContent() {
   const [canceled, setCanceled] = useState(false);
   const [upgradeBusinessId, setUpgradeBusinessId] = useState<string | null>(null);
 
+  // Handle initial load and URL changes
   useEffect(() => {
+    console.log('Pricing page loaded, searchParams:', window.location.search);
+    
     const canceledParam = searchParams.get('canceled');
     if (canceledParam === 'true') {
+      console.log('Payment was canceled');
       setCanceled(true);
     }
     
-    // Store upgrade parameter in state so it persists after cancellation
+    // Store upgrade parameter in state and localStorage so it persists after cancellation
     const upgradeParam = searchParams.get('upgrade');
+    console.log('upgradeParam from URL:', upgradeParam);
+    
     if (upgradeParam) {
+      console.log('Setting upgradeBusinessId:', upgradeParam);
       setUpgradeBusinessId(upgradeParam);
+      localStorage.setItem('upgradeBusinessId', upgradeParam);
+      console.log('Stored in localStorage');
+    } else {
+      // Try to get from localStorage if not in URL (e.g., after Stripe cancellation)
+      const storedId = localStorage.getItem('upgradeBusinessId');
+      console.log('storedId from localStorage:', storedId);
+      if (storedId) {
+        console.log('Using stored upgradeBusinessId:', storedId);
+        setUpgradeBusinessId(storedId);
+      }
     }
-  }, [searchParams]);
+  }, []); // Run once on mount
 
   const handleCheckout = async (planKey: string, planName: string) => {
     if (upgradeBusinessId) {
