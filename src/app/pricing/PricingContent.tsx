@@ -172,7 +172,7 @@ export default function PricingContent() {
 
       {/* Canceled Banner */}
       {canceled && (
-        <div className="max-w-7xl mx-auto px-4 mt-6 relative z-50">
+        <div className="max-w-7xl mx-auto px-4 pt-8 pb-4 relative z-50">
           <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex items-center gap-3 shadow-lg">
             <XCircle className="w-6 h-6 text-yellow-600 flex-shrink-0" />
             <div>
@@ -190,7 +190,7 @@ export default function PricingContent() {
       )}
 
       {/* Pricing Cards */}
-      <div className="max-w-7xl mx-auto px-4 -mt-10 pb-20 pt-6">
+      <div className="max-w-7xl mx-auto px-4 pb-20 pt-6">
         <div className="grid md:grid-cols-3 gap-8">
           {plans.map((plan) => {
             const Icon = plan.icon;
