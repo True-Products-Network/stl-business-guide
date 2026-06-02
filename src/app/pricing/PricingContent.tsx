@@ -97,9 +97,11 @@ export default function PricingContent() {
     if (canceledParam === 'true') {
       console.log('Payment was canceled');
       setCanceled(true);
-      // Clear the canceled parameter from URL without reloading
-      const newUrl = window.location.pathname + window.location.search.replace(/[?&]canceled=true/, '');
-      window.history.replaceState({}, '', newUrl);
+      // Clear the canceled parameter from URL after a short delay
+      setTimeout(() => {
+        const newUrl = window.location.pathname + window.location.search.replace(/[?&]canceled=true/, '').replace('?&', '?').replace(/\?$/, '');
+        window.history.replaceState({}, '', newUrl);
+      }, 100);
     } else {
       // Clear canceled state if not in URL
       setCanceled(false);
