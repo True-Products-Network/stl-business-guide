@@ -109,7 +109,8 @@ export default function Hero() {
 
             <p className="text-lg sm:text-xl text-white/80 mb-8 max-w-2xl mx-auto lg:mx-0">
               Your ultimate community resource for finding top-rated local businesses, 
-              exclusive deals, and premium services. Shop Local – Buy Local – Support Local.
+              exclusive deals, and premium services.<br />
+              <span className="text-[#ffc107] font-semibold">Shop Local – Buy Local – Support Local</span>
             </p>
 
             {/* Search Bar */}
