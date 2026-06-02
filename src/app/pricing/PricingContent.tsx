@@ -96,10 +96,20 @@ export default function PricingContent() {
     console.log('Pricing page loaded, canceledParam:', canceledParam);
     
     if (canceledParam === 'true') {
-      console.log('Payment was canceled');
-      setCanceled(true);
+      // Check if we've already shown the banner this session
+      const bannerShown = sessionStorage.getItem('canceledBannerShown');
+      if (!bannerShown) {
+        console.log('Payment was canceled - showing banner');
+        setCanceled(true);
+        sessionStorage.setItem('canceledBannerShown', 'true');
+      } else {
+        console.log('Banner already shown this session');
+        setCanceled(false);
+      }
     } else {
       setCanceled(false);
+      // Clear the flag if canceled param is not present
+      sessionStorage.removeItem('canceledBannerShown');
     }
     
     // Store upgrade parameter in state and localStorage so it persists after cancellation
@@ -186,9 +196,8 @@ export default function PricingContent() {
             <button 
               onClick={() => {
                 setCanceled(false);
-                // Clear the canceled parameter from URL
-                const newUrl = window.location.pathname + window.location.search.replace(/[?&]canceled=true/, '').replace('?&', '?').replace(/\?$/, '');
-                window.history.replaceState({}, '', newUrl);
+                // Clear the session flag so banner won't show again
+                sessionStorage.removeItem('canceledBannerShown');
               }}
               className="ml-auto text-yellow-600 hover:text-yellow-800"
             >
