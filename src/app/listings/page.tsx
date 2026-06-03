@@ -279,7 +279,22 @@ function ListingsContent() {
     setSelectedCategory(categoryName);
     setLoading(true);
     
-    const results = filterByCategory(allBusinesses, categoryName);
+    let results = filterByCategory(allBusinesses, categoryName);
+    
+    // Sort by plan: VIP first, then Premium, then Free
+    const vipListings = results.filter((b: PublicListing) => (b.plan_key || 'free').toLowerCase() === 'vip');
+    const premiumListings = results.filter((b: PublicListing) => (b.plan_key || 'free').toLowerCase() === 'premium');
+    const freeListings = results.filter((b: PublicListing) => {
+      const key = (b.plan_key || 'free').toLowerCase();
+      return key !== 'vip' && key !== 'premium';
+    });
+    
+    // Shuffle each group
+    const shuffle = (arr: PublicListing[]) => arr.sort(() => Math.random() - 0.5);
+    
+    // Combine: VIP first, then Premium, then Free
+    results = [...shuffle(vipListings), ...shuffle(premiumListings), ...shuffle(freeListings)];
+    
     setBusinesses(results);
     setLoading(false);
   }
