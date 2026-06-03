@@ -60,11 +60,11 @@ export default function Testimonials() {
 
   const fetchStats = async () => {
     try {
-      // Get approved businesses count
+      // Get approved businesses count from business_listings
       const { count: businessCount } = await supabase
-        .from("businesses")
+        .from("business_listings")
         .select("*", { count: "exact", head: true })
-        .eq("status", "approved");
+        .in("listing_status", ["approved", "active"]);
 
       // Get total profile views from analytics
       const { data: analyticsData } = await supabase
