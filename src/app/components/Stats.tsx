@@ -30,11 +30,11 @@ export default function Stats() {
 
   const fetchStats = async () => {
     try {
-      // Get approved businesses count
+      // Get approved businesses count from business_listings
       const { count: businessCount } = await supabase
-        .from("businesses")
+        .from("business_listings")
         .select("*", { count: "exact", head: true })
-        .eq("status", "approved");
+        .in("listing_status", ["approved", "active"]);
 
       // Get total profile views from analytics
       const { data: analyticsData } = await supabase
@@ -79,18 +79,19 @@ export default function Stats() {
       const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
       const { count: thisMonthCount } = await supabase
-        .from("businesses")
+        .from("business_listings")
         .select("*", { count: "exact", head: true })
         .gte("created_at", thisMonthStart.toISOString())
-        .eq("status", "approved");
+        .in("listing_status", ["approved", "active"]);
 
       const { count: lastMonthCount } = await supabase
-        .from("businesses")
+        .from("business_listings")
         .select("*", { count: "exact", head: true })
         .gte("created_at", lastMonthStart.toISOString())
         .lt("created_at", thisMonthStart.toISOString())
-        .eq("status", "approved");
+        .in("listing_status", ["approved", "active"]);
 
+      // For first week/month, show 100% growth if there are new listings
       const growthRate =
         lastMonthCount && lastMonthCount > 0
           ? Math.round(
