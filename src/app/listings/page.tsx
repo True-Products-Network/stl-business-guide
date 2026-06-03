@@ -303,7 +303,23 @@ function ListingsContent() {
     setSearchQuery('');
     setSelectedCategory('');
     setSelectedCity('');
-    setBusinesses(allBusinesses);
+    
+    // Sort all businesses by plan: VIP first, then Premium, then Free
+    let results = [...allBusinesses];
+    const vipListings = results.filter((b: PublicListing) => (b.plan_key || 'free').toLowerCase() === 'vip');
+    const premiumListings = results.filter((b: PublicListing) => (b.plan_key || 'free').toLowerCase() === 'premium');
+    const freeListings = results.filter((b: PublicListing) => {
+      const key = (b.plan_key || 'free').toLowerCase();
+      return key !== 'vip' && key !== 'premium';
+    });
+    
+    // Shuffle each group
+    const shuffle = (arr: PublicListing[]) => arr.sort(() => Math.random() - 0.5);
+    
+    // Combine: VIP first, then Premium, then Free
+    results = [...shuffle(vipListings), ...shuffle(premiumListings), ...shuffle(freeListings)];
+    
+    setBusinesses(results);
   }
 
   function getPlanBadge(planKey?: string | null) {
