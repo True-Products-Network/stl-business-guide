@@ -91,15 +91,23 @@ export default function Stats() {
         .lt("created_at", thisMonthStart.toISOString())
         .in("listing_status", ["approved", "active"]);
 
-      // For first week/month, show 100% growth if there are new listings
-      const growthRate =
-        lastMonthCount && lastMonthCount > 0
-          ? Math.round(
-              (((thisMonthCount || 0) - lastMonthCount) / lastMonthCount) * 100
-            )
-          : thisMonthCount && thisMonthCount > 0
-          ? 100
-          : 0;
+      // Calculate growth rate
+      let growthRate = 0;
+      if (lastMonthCount && lastMonthCount > 0) {
+        // Normal month-over-month growth
+        growthRate = Math.round(
+          (((thisMonthCount || 0) - lastMonthCount) / lastMonthCount) * 100
+        );
+      } else if ((thisMonthCount || 0) > 0) {
+        // First month or no previous month - show as new growth
+        growthRate = 100;
+      }
+      
+      // If we have total businesses but no growth calculated, 
+      // show total count as baseline growth for launch period
+      if (growthRate === 0 && (businessCount || 0) > 0) {
+        growthRate = 100; // New platform growth
+      }
 
       setStats({
         businessCount: businessCount || 0,
