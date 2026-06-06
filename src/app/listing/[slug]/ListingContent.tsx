@@ -106,6 +106,8 @@ export default function ListingContent({ business }: ListingContentProps) {
 
   // Load coupons and Google Maps key on mount
   useEffect(() => {
+    console.log('ListingContent mounted, business:', business);
+    console.log('Business ID:', business?.id);
     loadCoupons();
     loadGoogleMapsKey();
   }, [business?.id]);
@@ -125,9 +127,15 @@ export default function ListingContent({ business }: ListingContentProps) {
   }
 
   async function loadCoupons() {
-    if (!business?.id) return;
+    if (!business?.id) {
+      console.log('No business ID available for coupon loading');
+      return;
+    }
+    
+    console.log('Loading coupons for business ID:', business.id);
     
     try {
+      // First try with status filter
       const { data, error } = await supabase
         .from("coupons")
         .select("*")
@@ -135,13 +143,79 @@ export default function ListingContent({ business }: ListingContentProps) {
         .eq("status", "active")
         .order("created_at", { ascending: false });
 
-      if (!error && data) {
+      console.log('Coupon query result (status=active):', { data, error, count: data?.length });
+
+      if (error) {
+        console.error("Error loading coupons:", error);
+        return;
+      }
+
+      // If no results, try without status filter to see all coupons
+      if (!data || data.length === 0) {
+        const { data: allData, error: allError } = await supabase
+          .from("coupons")
+          .select("*")
+          .eq("business_id", business.id)
+          .order("created_at", { ascending: false });
+        
+        console.log('All coupons for business (no status filter):', { 
+          data: allData, 
+          error: allError, 
+          count: allData?.length 
+        });
+        
+        if (allData && allData.length > 0) {
+          console.log('Found coupons with different status:', allData.map((c: any) => ({ 
+            code: c.code, 
+            status: c.status,
+            end_date: c.end_date 
+          })));
+        }
+        
+        // Also search by coupon code to see if it exists with different business_id
+        const { data: birthdayCoupon, error: birthdayError } = await supabase
+          .from("coupons")
+          .select("*")
+          .ilike("code", "BIRTHDAY")
+          .limit(5);
+        
+        console.log('Searching for BIRTHDAY coupon by code:', {
+          data: birthdayCoupon,
+          error: birthdayError,
+          count: birthdayCoupon?.length
+        });
+        
+        if (birthdayCoupon && birthdayCoupon.length > 0) {
+          console.log('BIRTHDAY coupon details:', birthdayCoupon.map((c: any) => ({
+            id: c.id,
+            code: c.code,
+            business_id: c.business_id,
+            status: c.status,
+            title: c.title
+          })));
+        }
+      }
+
+      if (data) {
         // Filter out expired coupons client-side
         const today = new Date().toISOString().split('T')[0];
+        console.log('Today for coupon filtering:', today);
+        
         const activeCoupons = data.filter((coupon: any) => {
-          if (!coupon.end_date) return true;
-          return coupon.end_date >= today;
+          if (!coupon.end_date) {
+            console.log('Coupon has no end_date:', coupon.code);
+            return true;
+          }
+          const isValid = coupon.end_date >= today;
+          console.log('Coupon end_date check:', { 
+            code: coupon.code, 
+            end_date: coupon.end_date, 
+            today, 
+            isValid 
+          });
+          return isValid;
         });
+        console.log('Active coupons after filtering:', activeCoupons);
         setCoupons(activeCoupons);
       }
     } catch (err) {
@@ -205,6 +279,14 @@ export default function ListingContent({ business }: ListingContentProps) {
         })
         .eq('id', selectedCoupon.id);
 
+      // Fetch business location data
+      const { data: locationData } = await supabase
+        .from('business_locations')
+        .select('address_line_1, city, state')
+        .eq('business_id', business.id)
+        .eq('is_primary', true)
+        .single();
+
       // Send to GHL
       const { sendRedemptionToGHL, formatRedemptionForGHL } = await import('@/lib/ghl-webhook');
       const ghlPayload = formatRedemptionForGHL(
@@ -213,7 +295,16 @@ export default function ListingContent({ business }: ListingContentProps) {
         redeemForm.phone,
         redemptionCode,
         { code: selectedCoupon.code, title: selectedCoupon.title, end_date: selectedCoupon.end_date },
-        { id: business.id, business_name: business.business_name }
+        { 
+          id: business.id, 
+          business_name: business.business_name, 
+          slug: business.slug,
+          location: locationData ? {
+            address: locationData.address_line_1,
+            city: locationData.city,
+            state: locationData.state
+          } : undefined
+        }
       );
       
       await sendRedemptionToGHL(ghlPayload);
@@ -339,12 +430,12 @@ export default function ListingContent({ business }: ListingContentProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
 
         {/* Back Link */}
-        <div className="absolute top-4 left-4 z-10">
+        <div className="absolute top-6 left-6 z-10">
           <Link
             href="/listings"
-            className="inline-flex items-center text-white/80 hover:text-white bg-black/30 backdrop-blur-sm px-4 py-2 rounded-full transition"
+            className="inline-flex items-center text-white hover:text-white bg-black/50 hover:bg-black/70 backdrop-blur-sm px-5 py-3 rounded-full transition font-medium shadow-lg"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="w-5 h-5 mr-2" />
             Back to Directory
           </Link>
         </div>

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { supabase } from '@/lib/supabase';
-import { Star, MapPin, Phone, Mail, Globe, Crown, BadgeCheck, ExternalLink } from 'lucide-react';
+import { Star, MapPin, Phone, Mail, Globe, Crown, BadgeCheck, ExternalLink, LayoutGrid, List } from 'lucide-react';
 import type { Category } from '@/lib/supabase';
 
 interface PublicListing {
@@ -31,6 +31,7 @@ interface PublicListing {
   categories: { name: string; slug: string }[] | null;
   google_rating?: number | null;
   google_reviews_count?: number | null;
+  owner_profile_id?: string | null;
 }
 
 function ListingsContent() {
@@ -47,6 +48,21 @@ function ListingsContent() {
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState(initialCategory);
   const [selectedCity, setSelectedCity] = useState(initialCity);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  // Load saved view mode from localStorage on mount
+  useEffect(() => {
+    const savedViewMode = localStorage.getItem('directoryViewMode');
+    if (savedViewMode === 'grid' || savedViewMode === 'list') {
+      setViewMode(savedViewMode);
+    }
+  }, []);
+
+  // Save view mode to localStorage when it changes
+  const handleViewModeChange = (mode: 'grid' | 'list') => {
+    setViewMode(mode);
+    localStorage.setItem('directoryViewMode', mode);
+  };
 
   useEffect(() => {
     loadInitialData();
@@ -445,14 +461,41 @@ function ListingsContent() {
                 {searchQuery && ` matching "${searchQuery}"`}
                 {selectedCategory && ` in ${selectedCategory}`}
               </p>
-              {(searchQuery || selectedCategory || selectedCity) && (
-                <button
-                  onClick={clearFilters}
-                  className="text-[#54afe6] hover:text-[#371a5b] font-medium text-sm underline"
-                >
-                  Clear filters
-                </button>
-              )}
+              <div className="flex items-center gap-4">
+                {(searchQuery || selectedCategory || selectedCity) && (
+                  <button
+                    onClick={clearFilters}
+                    className="text-[#54afe6] hover:text-[#371a5b] font-medium text-sm underline"
+                  >
+                    Clear filters
+                  </button>
+                )}
+                {/* View Toggle */}
+                <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                  <button
+                    onClick={() => handleViewModeChange('grid')}
+                    className={`p-2 rounded-md transition ${
+                      viewMode === 'grid'
+                        ? 'bg-white text-[#371a5b] shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                    title="Grid view"
+                  >
+                    <LayoutGrid className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleViewModeChange('list')}
+                    className={`p-2 rounded-md transition ${
+                      viewMode === 'list'
+                        ? 'bg-white text-[#371a5b] shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                    title="List view"
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </div>
 
             {businesses.length === 0 ? (
@@ -465,7 +508,8 @@ function ListingsContent() {
                   Clear filters
                 </button>
               </div>
-            ) : (
+            ) : viewMode === 'grid' ? (
+              /* GRID VIEW */
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {businesses.map((business) => (
                   <div
@@ -591,6 +635,104 @@ function ListingsContent() {
                         >
                           View Listing
                         </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* LIST VIEW */
+              <div className="space-y-4">
+                {businesses.map((business) => (
+                  <div
+                    key={business.id}
+                    className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden"
+                  >
+                    <div className="p-4 flex flex-col md:flex-row gap-4">
+                      {/* Square Image */}
+                      <div className="w-20 h-20 md:w-24 md:h-24 flex-shrink-0 bg-gradient-to-br from-[#371a5b] to-[#bb7ce4] rounded-lg overflow-hidden">
+                        {(business.logo_url || business.featured_image_url) ? (
+                          <img
+                            src={business.logo_url || business.featured_image_url || ''}
+                            alt={business.business_name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-white/50 text-2xl font-bold">
+                              {business.business_name?.[0]?.toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Business Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Link href={`/listing/${business.slug}`}>
+                            <h3 className="text-lg font-bold text-[#371a5b] hover:text-[#54afe6] transition">
+                              {business.business_name}
+                            </h3>
+                          </Link>
+                          {getPlanBadge(business.plan_key)}
+                        </div>
+                        
+                        <p className="text-gray-600 text-sm mb-2 line-clamp-1">
+                          {business.description_short || 'No description available'}
+                        </p>
+
+                        {/* Category | Location | Website - One Line */}
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                          {/* Category - check multiple possible fields */}
+                          {(business.primary_category || business.category || (business.categories && business.categories.length > 0)) && (
+                            <span className="flex items-center">
+                              <span className="px-2 py-0.5 bg-[#54afe6]/10 text-[#54afe6] text-xs rounded-full font-medium">
+                                {business.primary_category || 
+                                 business.category || 
+                                 (typeof business.categories?.[0] === 'string' ? business.categories[0] : business.categories?.[0]?.name) ||
+                                 'Business'}
+                              </span>
+                            </span>
+                          )}
+                          {(business.city || business.state) && (
+                            <span className="flex items-center">
+                              <MapPin className="w-3 h-3 mr-1" />
+                              {business.city}, {business.state}
+                            </span>
+                          )}
+                          {business.website_url && (
+                            <a 
+                              href={business.website_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-[#54afe6] hover:text-[#371a5b] flex items-center"
+                            >
+                              <Globe className="w-3 h-3 mr-1" />
+                              <span className="truncate max-w-[150px]">
+                                {business.website_url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                              </span>
+                            </a>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-row md:flex-col gap-2 md:justify-center">
+                        <Link
+                          href={`/listing/${business.slug}`}
+                          className="px-4 py-2 bg-gradient-to-r from-[#371a5b] to-[#bb7ce4] text-white text-sm font-medium rounded-lg hover:opacity-90 transition text-center"
+                        >
+                          View Listing
+                        </Link>
+                        {/* Show Claim button only if no owner and plan is Free */}
+                        {!business.owner_profile_id && business.plan_key === 'free' && (
+                          <Link
+                            href={`/claim-listing?business=${business.id}`}
+                            className="px-4 py-2 bg-white border-2 border-[#54afe6] text-[#54afe6] text-sm font-medium rounded-lg hover:bg-[#54afe6]/10 transition text-center"
+                          >
+                            Claim Listing
+                          </Link>
+                        )}
                       </div>
                     </div>
                   </div>
